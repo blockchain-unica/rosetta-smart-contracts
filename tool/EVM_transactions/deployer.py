@@ -2,6 +2,16 @@ from EVM_transactions import compiler
 from web3 import Web3
 
 def deploy_sc(w3,sc_name,account,chainID,nonce, *params):
+    """Function to deploy a smart contract form source code
+    The function compile the source code via the compile
+    function in the compiler module.
+
+    Arguments:
+        w3 - web3 instance
+        sc_name - the smart contract filename without extention
+        *params - arguments for the constructor
+    """
+
     priv_key = account.key
     address = account.address
     # contract (name of the file without extention)

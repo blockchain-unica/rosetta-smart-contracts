@@ -5,6 +5,9 @@ import os
 #print(os.path.join(PROJECT_ROOT,"smart-contracts-cost-analysis/example.sol"))
 
 def compile(contractFile):
+    """Return ABI and Bytecode of a solidity file
+    present in the folder /solidity of this project"""
+
     #contractName= "Escrow" #without extention
     contractName = contractFile
     with open("solidity/"+contractName+".sol","r") as sc_file:

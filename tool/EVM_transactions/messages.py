@@ -6,7 +6,13 @@ import asyncio
 # function_call accept
 
 def function_call(w3,contract,function,account,chainID,nonce, *params):
-    # calls the method "function" passed as a string
+    """Returns the receipt of a transaction that involves the
+    smart contract calling.
+
+    The function calls the method "function" passed as a string,
+    create a raw transaction ans signs it via the account passed
+    as an argument
+    """
     transaction = getattr(contract.functions,function)(*params).build_transaction({"chainId": chainID, "from": account.address, "nonce": nonce})
     #transaction = contract.functions.function(10).build_transaction({"chainId": chainID, "from": account.address, "nonce": nonce(account.address)})
     signed_tx = w3.eth.account.sign_transaction(transaction, account.key)
@@ -16,6 +22,12 @@ def function_call(w3,contract,function,account,chainID,nonce, *params):
 
 
 def send_value(w3,account, to_address, value, chainID, nonce, *vals):
+    """Returns the receipt of a value transaction from the account
+    to to_addres.
+
+    The function creates a raw transaction and signs it via the a
+    account passed as an argument
+    """
     transaction = {
         'to': to_address,
         'value': value,
