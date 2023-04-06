@@ -13,7 +13,11 @@ def function_call(w3,contract,function,account,chainID,nonce, *params):
     create a raw transaction ans signs it via the account passed
     as an argument
     """
-    transaction = getattr(contract.functions,function)(*params).build_transaction({"chainId": chainID, "from": account.address, "nonce": nonce})
+    transaction = getattr(contract.functions,function)(*params).build_transaction(
+        {"chainId": chainID,
+         "from": account.address,
+         'gasPrice' : w3.eth.gas_price,
+         "nonce": nonce})
     #transaction = contract.functions.function(10).build_transaction({"chainId": chainID, "from": account.address, "nonce": nonce(account.address)})
     signed_tx = w3.eth.account.sign_transaction(transaction, account.key)
     tx_hash = w3.eth.send_raw_transaction(signed_tx.rawTransaction)

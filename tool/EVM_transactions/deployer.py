@@ -11,21 +11,20 @@ def deploy_sc(w3,sc_name,account,chainID,nonce, *params):
         sc_name - the smart contract filename without extention
         *params - arguments for the constructor
     """
-
     priv_key = account.key
     address = account.address
     # contract (name of the file without extention)
     abi, bytecode = compiler.compile(sc_name)
     contract = w3.eth.contract(abi=abi, bytecode=bytecode)
-    # creation of the tx https://web3py.readthedocs.io/en/stable/web3.contract.html
-    if params == ():
-        transaction = contract.constructor().build_transaction({"chainId": chainID, "from": from_address, "nonce": nonce})
-    else:
-        transaction = contract.constructor(*params).build_transaction(
-            {"chainId": chainID, "from": address, "nonce": nonce})
-    #transaction.update({ 'gas' : gasprice})
+    # creation of the tx. Docs: https://web3py.readthedocs.io/en/stable/web3.contract.html
+
+    transaction = contract.constructor(*params).build_transaction(
+            {"chainId": chainID,
+             "from": address,
+             "nonce": nonce,
+             'gasPrice' : w3.eth.gas_price})
+
     #transaction.update({ 'nonce' : w3.eth.get_transaction_count('Your_Wallet_Address') })
-    #transaction.update({ 'nonce' :nonce })
     signed_tx = w3.eth.account.sign_transaction(transaction, priv_key)
     tx_hash = w3.eth.send_raw_transaction(signed_tx.rawTransaction)
     tx_receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
