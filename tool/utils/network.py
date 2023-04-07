@@ -41,6 +41,17 @@ def avalancheFuji():
     account2 = w3.eth.account.from_key(pk_account2)
     return chainID, w3, account1, account2
 
+
+def hederaTest():
+    chainID = 296
+    w3 = Web3(web3.HTTPProvider('https://testnet.hashio.io/api'))
+    # TODO: create testnet accounts
+    #pk_account1 = ""
+    #pk_account2 = ""
+    #account1 = w3.eth.account.from_key(pk_account1)
+    #account2 = w3.eth.account.from_key(pk_account2)
+    #return chainID, w3, account1, account2
+
 # Accounts
 #pk_buyer = "90c8549ae45449bc204a43ff23b60096579f0ae34da3cf6f0cbd2ff2452b8d20"
 #pk_seller="6a56b69e3307f1d6351eb74346aa4e429d22817975ac3353156f0ce95cc2f3bc"

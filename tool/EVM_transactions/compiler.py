@@ -34,4 +34,3 @@ def saveAbi(contractFile):
     contractName = contractFile
     with open(contractName+".abi","w") as write_abi:
         write_abi.write(str(abi))
-

@@ -18,21 +18,14 @@ contract Escrow {
         _;
     }
 
-    constructor(uint256 _price){
+    constructor(uint256 _price, address _buyer, address payable _seller){
         admin = msg.sender;
         price = _price;
+        buyer = _buyer;
+        seller = _seller;
         state = States.IDLE;
 
     }
-    function setBuyer() public {
-        require(state == States.IDLE, "Invalid State");
-        buyer = msg.sender;
-    }
-    function setSeller() public {
-        require(state == States.IDLE, "Invalid State");
-        seller = payable(msg.sender);
-    }
-
     fallback() external payable onlyBuyer{
         require(state == States.IDLE, "Invalid State");
         require(msg.value == price, "Invalid value");
