@@ -4,7 +4,7 @@
 
 The Hash Timed Locked Contract (HTLC) involves two users,
 allows one participant to commit to a secret and reveal it afterwards.
-The commit is the SHA256 digest of the secret (a bitstring).
+The commit is the Keccak-256 digest of the secret (a bitstring).
 Upon contract creation, the committer:
 - deposits a collateral (in native cryptocurrency) in the contract;
 - specifies a deadline for the secret revelation;

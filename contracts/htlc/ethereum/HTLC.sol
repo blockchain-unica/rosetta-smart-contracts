@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: UNLICENSED
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.18;
 
 contract HTLC {
@@ -7,16 +7,12 @@ contract HTLC {
    bytes32 public hash;
    uint start;
  
-   constructor(address payable v) {
+   constructor(address payable v, bytes32 h) payable {
+       require (msg.value >= 1 ether);
        owner = payable(msg.sender);
        verifier = v;
-       start = block.number;
-   }
-
-   function commit(bytes32 h) public payable {
-       require (msg.sender==owner);
-       require (msg.value >= 1 ether);
        hash = h;
+       start = block.number;
    }
 
    function reveal(string memory s) public {
