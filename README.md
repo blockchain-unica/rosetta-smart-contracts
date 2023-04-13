@@ -1,4 +1,4 @@
-# Analysis of development and execution costs of smart contracts
+# Measuring execution costs of smart contracts
 
 ## Use cases
 
