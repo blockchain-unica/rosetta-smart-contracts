@@ -2,10 +2,10 @@
 
 ## Use cases
 
-- Simple transfer
+- [Simple transfer](contracts/simple_transfer)
 - Token transfer
 - [HTLC](contracts/htlc)
-- Escrow
+- [Escrow](contracts/escrow)
 - ...
 
 ## Experiments
