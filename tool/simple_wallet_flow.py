@@ -5,10 +5,15 @@ from utils import etherPrice, network
 # two accounts for this use case: the owner and a recipient
 # network can set to .truffle, .sepolia (Ethereum), .mordor(Ethereum classic), or .avalancheFuji
 chainID,w3,owner,recipient = network.truffle()
-print(owner.address)
+
 ### SET THE COINPRICE and the GASPRICE
-gasprice = etherPrice.getGasPrice("baseFee")  # GWei
-coinPrice = etherPrice.getEtherPrice()
+# set the value of coinPrice =
+#   etherPrice.getEtherPrice() * 10**-18 to have the cost in USD
+#   10**-18 to have the cost in ether
+#
+coinPrice = 10**-18 # cost in Ether
+gasprice = etherPrice.getGasPrice("baseFee")*(10**9)  # the method returns GWei
+
 print("network ID:", w3.net.version)
 print("gasprice: ",gasprice, " - CoinPrice: ", coinPrice)
 # cost lists
