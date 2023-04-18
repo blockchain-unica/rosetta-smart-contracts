@@ -14,7 +14,7 @@ def nextGasPrice (w3):
         pass
     return next_gas_price
 
-def function_call(w3,contract,function,account,chainID,nonce, *params):
+def function_call(w3,contract,function,account,chainID,nonce, value, *params):
     """Returns the receipt of a transaction that involves the
     smart contract calling.
 
@@ -25,6 +25,7 @@ def function_call(w3,contract,function,account,chainID,nonce, *params):
     transaction = getattr(contract.functions,function)(*params).build_transaction(
         {"chainId": chainID,
          "from": account.address,
+         "value": value,
          'gasPrice' : w3.eth.gas_price,
          "nonce": nonce})
     # 5777 truffle, 43113 Avalanche

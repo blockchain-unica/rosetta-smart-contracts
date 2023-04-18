@@ -7,7 +7,13 @@ def current_nonce(address,w3):
     and given web3 instance"""
     return w3.eth.get_transaction_count(address)
 
-def msg_execution(w3, coinPrice, contract, function, account, chainID, gasprice, totalcost,totalgas, *params):
+def msg_execution(chain_cost_data, contract, function, account, value, *params):
+    w3 = chain_cost_data[0]
+    coinPrice = chain_cost_data[1]
+    chainID = chain_cost_data[2]
+    gasprice = chain_cost_data[3]
+    totalcost = chain_cost_data[4]
+    totalgas = chain_cost_data[5]
     """Executes a contract function, saves and prints the cost.
     This function calls the function function_call of the module messages
     Arguments:
@@ -21,7 +27,7 @@ def msg_execution(w3, coinPrice, contract, function, account, chainID, gasprice,
         totalcost,totalgas - lists where the cost will be saved
         *params - arguments for the smart contract function
     """
-    tx_receipt = messages.function_call(w3, contract, function, account, chainID, current_nonce(account.address,w3), *params)
+    tx_receipt = messages.function_call(w3, contract, function, account, chainID, current_nonce(account.address,w3), value, *params)
     cost = gasprice * tx_receipt['gasUsed'] * coinPrice * (10 ** -9)
     totalcost.append(cost)
     totalgas.append(tx_receipt['gasUsed'])
@@ -29,7 +35,13 @@ def msg_execution(w3, coinPrice, contract, function, account, chainID, gasprice,
     print("cost USD: ", cost)
 
 
-def msg_transaction(w3, coinPrice,  account, destination, value, chainID, gasprice, totalcost,totalgas,):
+def msg_transaction(chain_cost_data, account, destination, value):
+    w3 = chain_cost_data[0]
+    coinPrice = chain_cost_data[1]
+    chainID = chain_cost_data[2]
+    gasprice = chain_cost_data[3]
+    totalcost = chain_cost_data[4]
+    totalgas = chain_cost_data[5]
     """Executes a simple value transaction, saves and prints the cost.
     This function calls the function send_value of the module messages
     Arguments:
@@ -51,7 +63,13 @@ def msg_transaction(w3, coinPrice,  account, destination, value, chainID, gaspri
     print("cost USD: ", cost)
 
 
-def deploy(w3, coinPrice, contractName, account, chainID,gasprice, totalcost,totalgas, *args):
+def deploy(chain_cost_data,contractName, account, *contract_args):
+    w3 = chain_cost_data[0]
+    coinPrice= chain_cost_data[1]
+    chainID= chain_cost_data[2]
+    gasprice=  chain_cost_data[3]
+    totalcost = chain_cost_data[4]
+    totalgas = chain_cost_data[5]
     """Executes the deploy of a contract, saves and prints the cost.
     This function calls the function deploy in the deployer module
     Arguments:
@@ -64,7 +82,7 @@ def deploy(w3, coinPrice, contractName, account, chainID,gasprice, totalcost,tot
         totalcost,totalgas - lists where the cost will be saved
         *args - arguments for the contract constructor
     """
-    tx_receipt, contract = deployer.deploy_sc(w3, contractName, account, chainID, current_nonce(account.address,w3), *args)
+    tx_receipt, contract = deployer.deploy_sc(w3, contractName, account, chainID, current_nonce(account.address,w3), *contract_args)
     contract_address = tx_receipt["contractAddress"]
     totalgas.append(tx_receipt['gasUsed'])
     cost = gasprice * tx_receipt['gasUsed'] * coinPrice * (10 ** -9)

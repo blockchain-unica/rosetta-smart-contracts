@@ -2,13 +2,12 @@
 pragma solidity ^0.8.0;
 
 contract Escrow {
-    enum States{IDLE, ACTIVE, WAITING_CONFIRMATION, PAYED}
+    enum States{WAIT_DEPOSIT, WAIT_RECIPIENT, CLOSED}
     address buyer;
     address payable seller;
-    address admin;
-    uint256 price;
+    uint256 amount;
     States state;
-    event Log(string func, uint value);
+
     modifier onlyBuyer(){
         require(msg.sender==buyer, "Only the buyer");
         _;
@@ -18,31 +17,33 @@ contract Escrow {
         _;
     }
 
-    constructor(uint256 _price, address _buyer, address payable _seller){
-        admin = msg.sender;
-        price = _price;
+    constructor(uint256 _amount, address payable _buyer, address payable _seller) {
+        require(_seller != address(0x0) && _buyer != address(0x0), "");
+        require(msg.sender == _seller, "The creator must be the seller");
+        amount = _amount;
         buyer = _buyer;
         seller = _seller;
-        state = States.IDLE;
-
-    }
-    fallback() external payable onlyBuyer{
-        require(state == States.IDLE, "Invalid State");
-        require(msg.value == price, "Invalid value");
-        require(seller != address(0x0) && buyer != address(0x0), "set buyer and seller first""");
-        emit Log("DEPOSIT", 0);
-        state = States.ACTIVE;
-    }
-    function shipped() public onlySeller{
-        require(state == States.ACTIVE, "Invalid State");
-        emit Log("Shipped",0);
-        state = States.WAITING_CONFIRMATION;
-    }
-    function payment() payable public onlyBuyer{
-        require(state == States.WAITING_CONFIRMATION, "Invalid State");
-        emit Log("Confirmation", msg.value);
-        state = States.PAYED;
-        seller.transfer(price);
+        state = States.WAIT_DEPOSIT;
     }
 
+    function deposit() public payable onlyBuyer {
+        require(state == States.WAIT_DEPOSIT, "Invalid State");
+        require(msg.value == amount, "Invalid amount");
+        state = States.WAIT_RECIPIENT;
+    }
+
+    function pay() public onlyBuyer {
+        require(state == States.WAIT_RECIPIENT, "Invalid State");
+        state = States.CLOSED;
+        (bool success, ) = seller.call{value: amount}("");
+        require(success, "Transfer failed.");
+
+    }
+
+    function refund() public onlySeller {
+        require(state == States.WAIT_RECIPIENT, "Invalid State");
+        state = States.CLOSED;
+        (bool success, ) = buyer.call{value: amount}("");
+        require(success, "Transfer failed.");
+    }
 }
