@@ -7,7 +7,7 @@ allows one participant to commit to a secret and reveal it afterwards.
 The commit is the Keccak-256 digest of the secret (a bitstring).
 At contract creation, the committer:
 - deposits a collateral (in native cryptocurrency) in the contract;
-- specifies a deadline for the secret revelation;
+- specifies a deadline for the secret revelation, in terms of a delay from the publication of the contract;
 - specifies the receiver of the collateral, 
 in case the deposit is not revealed within the deadline.
 

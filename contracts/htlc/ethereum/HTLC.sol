@@ -5,14 +5,14 @@ contract HTLC {
    address payable public owner;  
    address payable public verifier;
    bytes32 public hash;
-   uint start;
- 
-   constructor(address payable v, bytes32 h) payable {
+   uint reveal_timeout;
+       
+   constructor(address payable v, bytes32 h, uint delay) payable {
        require (msg.value >= 1 ether);
        owner = payable(msg.sender);
        verifier = v;
        hash = h;
-       start = block.number;
+       reveal_timeout = block.number + delay;
    }
 
    function reveal(string memory s) public {
@@ -23,7 +23,7 @@ contract HTLC {
    }
 
    function timeout() public {
-       require (block.number > start + 1000);
+       require (block.number > reveal_timeout);
        (bool success,) = verifier.call{value: address(this).balance}("");
        require (success, "Transfer failed.");
    }
