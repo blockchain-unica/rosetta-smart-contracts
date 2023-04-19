@@ -1,7 +1,7 @@
 from EVM_transactions import compiler
 from web3 import Web3
 
-def deploy_sc(w3,sc_name,account,chainID,nonce, *params):
+def deploy_sc(w3,contractInfo,account,chainID,nonce, *params):
     """Function to deploy a smart contract form source code
     The function compile the source code via the compile
     function in the compiler module.
@@ -14,7 +14,7 @@ def deploy_sc(w3,sc_name,account,chainID,nonce, *params):
     priv_key = account.key
     address = account.address
     # contract (name of the file without extention)
-    abi, bytecode = compiler.compile(sc_name)
+    abi, bytecode = compiler.compile(contractInfo)
     contract = w3.eth.contract(abi=abi, bytecode=bytecode)
     # creation of the tx. Docs: https://web3py.readthedocs.io/en/stable/web3.contract.html
 

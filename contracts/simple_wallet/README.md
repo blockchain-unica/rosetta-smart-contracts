@@ -1,4 +1,4 @@
-# Simple transfer
+# Simple Wallet
 
 Consider a simple wallet contract involving a single owner and the use of the blockchain's native cryptocurrency. The contract acts as a cryptocurrency deposit and allows for the creation and execution of transactions to a specific address. The owner can withdraw the total amount of cryptocurrency in the balance at any time.
 

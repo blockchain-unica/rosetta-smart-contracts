@@ -1,7 +1,7 @@
 from utils.execution_flow import *
 from utils import etherPrice, network
 
-# USE CASE: ESCROW
+# USE CASE: Simple transfer
 # two accounts for this use case: the onwer(user) and the recipient
 # network can set to .truffle, .sepolia (Ethereum), .mordor(Ethereum classic), or .avalancheFuji
 chainID,w3,owner,recipient = network.truffle()

@@ -64,7 +64,7 @@ def msg_transaction(chain_cost_data, account, destination, value):
     print("cost: ", cost)
 
 
-def deploy(chain_cost_data,contractName, account, *contract_args):
+def deploy(chain_cost_data,contractInfo, account, *contract_args):
     w3 = chain_cost_data[0]
     coinPrice= chain_cost_data[1]
     chainID= chain_cost_data[2]
@@ -83,7 +83,7 @@ def deploy(chain_cost_data,contractName, account, *contract_args):
         totalcost,totalgas - lists where the cost will be saved
         *args - arguments for the contract constructor
     """
-    tx_receipt, contract = deployer.deploy_sc(w3, contractName, account, chainID, current_nonce(account.address,w3), *contract_args)
+    tx_receipt, contract = deployer.deploy_sc(w3, contractInfo, account, chainID, current_nonce(account.address,w3), *contract_args)
     contract_address = tx_receipt["contractAddress"]
     totalgas.append(tx_receipt['gasUsed'])
     cost = gasprice * tx_receipt['gasUsed'] * coinPrice
