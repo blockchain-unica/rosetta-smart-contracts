@@ -35,7 +35,7 @@ msg_execution(chain_cost_data,tokenContract, "mint", owner, 0, owner.address, am
 
 ### 3. Deploy the TokenTransfer contract
 print("--- Deploy the tokenTransfer. Actor: the owner ---")
-contract_address, tokenTransferContract = deploy(chain_cost_data, ["token_transfer","TokenTransfer"],owner, recipient.address, token_contract_address)
+contract_address, tokenTransferContract = deploy(chain_cost_data, ["token_transfer","TokenTransfer"],owner, 0, recipient.address, token_contract_address)
 
 ### 4. Approval
 print("--- Apoval. Actor: the onwer ---")

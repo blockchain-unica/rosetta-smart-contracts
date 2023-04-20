@@ -26,7 +26,7 @@ chain_cost_data = [w3,coinPrice, chainID,gasprice, totalcost,totalgas]
 
 #### Deploy ####
 print("--- Deploy. Actor: the owner ---")
-contract_address, contract = deploy(chain_cost_data, "simple_transfer",owner, recipient.address)
+contract_address, contract = deploy(chain_cost_data, "simple_transfer",owner,0, recipient.address)
 
 ### 2. Deposit money (the user deposits the amout equal to price)
 print("--- Deposit. Actor: the onwer ---")

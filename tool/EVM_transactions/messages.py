@@ -28,8 +28,8 @@ def function_call(w3,contract,function,account,chainID,nonce, value, *params):
          "value": value,
          'gasPrice' : w3.eth.gas_price,
          "nonce": nonce})
-    # 5777 truffle, 43113 Avalanche
-    if int(w3.net.version) not in [5777,43113,7]:
+    # 5777 truffle, 43113 Avalanche, 7 mordor, 11155111 sepolia
+    if int(w3.net.version) not in [5777,43113,7,11155111]:
         next_gas_price = nextGasPrice(w3)
         if next_gas_price:
             transaction.update({ 'maxFeePerGas' : next_gas_price})

@@ -26,7 +26,7 @@ chain_cost_data = [w3,coinPrice, chainID,gasprice, totalcost,totalgas]
 price = int(0.001 * 10**18)
 #### Deploy ####
 print("--- Deploy. Actor: the seller ---")
-contract_address, contract = deploy(chain_cost_data, "Escrow",a_seller, price, a_buyer.address, a_seller.address)
+contract_address, contract = deploy(chain_cost_data, "Escrow",a_seller, 0,  price, a_buyer.address, a_seller.address)
 
 ### 2. Deposit money (the buyer deposits the amout equal to price)
 print("--- Deposit. Actor: the buyer ---")

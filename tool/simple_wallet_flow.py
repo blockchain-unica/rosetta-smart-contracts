@@ -27,7 +27,7 @@ print("recipient balance: ", w3.eth.get_balance(recipient.address))
 # 1. wallet: Set an amount to deposit
 #### 1. initialization  ####
 print("--- Deploy ---")
-contract_address, contract = deploy(chain_cost_data, "simple_wallet", owner, owner.address)
+contract_address, contract = deploy(chain_cost_data, "simple_wallet", owner,0, owner.address)
 
 ### 2. Deposit money
 print("--- Deposit. Actor: the owner ---")
