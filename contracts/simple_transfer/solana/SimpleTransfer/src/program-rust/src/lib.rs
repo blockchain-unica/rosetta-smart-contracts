@@ -17,32 +17,31 @@ pub fn process_instruction(
     accounts: &[AccountInfo],
     instruction_data: &[u8],
 ) -> ProgramResult {
-
     if instruction_data.len() == 0 {
         return Err(ProgramError::InvalidInstructionData);
     }
 
-    if instruction_data[0] == 0 {
-        return deposit(
+    match instruction_data[0] {
+        0 => deposit(
             program_id,
             accounts,
             &instruction_data[1..instruction_data.len()],
-        );
-    } else if instruction_data[0] == 1 {
-        return withdraw(
+        ),
+        1 => withdraw(
             program_id,
             accounts,
             &instruction_data[1..instruction_data.len()],
-        );
+        ),
+        _ => {
+            msg!("Didn't found the entrypoint required");
+            Err(ProgramError::InvalidInstructionData)
+        }
     }
-
-    msg!("Didn't found the entrypoint required");
-    Err(ProgramError::InvalidInstructionData)
 }
 
 #[derive(BorshSerialize, BorshDeserialize, Debug)]
 struct DonationDetails {
-    pub from: Pubkey,
+    pub sender: Pubkey,
     pub receiver: Pubkey,
     pub amount: u64,
 }
@@ -52,7 +51,6 @@ fn deposit(
     accounts: &[AccountInfo],
     instruction_data: &[u8],
 ) -> ProgramResult {
-
     let accounts_iter = &mut accounts.iter();
     let writing_account = next_account_info(accounts_iter)?;
     let donator_program_account = next_account_info(accounts_iter)?;
@@ -60,7 +58,7 @@ fn deposit(
 
     if writing_account.owner != program_id {
         msg!("writing_account isn't owned by program");
-        return Err(ProgramError::IncorrectProgramId);
+        return Err(ProgramError::InvalidAccountData);
     }
     if donator_program_account.owner != program_id {
         msg!("donator_program_account isn't owned by program");
@@ -68,20 +66,20 @@ fn deposit(
     }
     if !donator.is_signer {
         msg!("donator should be signer");
-        return Err(ProgramError::IncorrectProgramId);
+        return Err(ProgramError::MissingRequiredSignature);
     }
 
     let mut donation = DonationDetails::try_from_slice(&instruction_data)
         .expect("Instruction data serialization didn't worked");
 
-    if donation.from != *donator.key {
+    if donation.sender != *donator.key {
         msg!("Invaild instruction data");
         return Err(ProgramError::InvalidInstructionData);
     }
 
     let rent_exemption = Rent::get()?.minimum_balance(writing_account.data_len());
     if **writing_account.lamports.borrow() < rent_exemption {
-        msg!("The balance of writing_account should be more then rent_exemption");
+        msg!("The balance of writing_account should be more than rent_exemption");
         return Err(ProgramError::InsufficientFunds);
     }
 
@@ -113,7 +111,7 @@ fn withdraw(
     }
     if !receiver.is_signer {
         msg!("receiver should be signer");
-        return Err(ProgramError::IncorrectProgramId);
+        return Err(ProgramError::MissingRequiredSignature);
     }
     let mut donation = DonationDetails::try_from_slice(*writing_account.data.borrow())
         .expect("Error deserialaizing data");

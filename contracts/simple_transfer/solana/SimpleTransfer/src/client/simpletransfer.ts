@@ -26,17 +26,17 @@ const PROGRAM_KEYPAIR_PATH = path.join(PROGRAM_PATH, 'simpletransfer-keypair.jso
 const LAMPORTS_ACCOUNT_PATH = 'lamports-account.txt';
 
 class DonationDetails {
-  from: Buffer = Buffer.alloc(32);
+  sender: Buffer = Buffer.alloc(32);
   receiver: Buffer = Buffer.alloc(32);
   amount: number = 0;
 
   constructor(fields: {
-    from: Buffer,
+    sender: Buffer,
     receiver: Buffer,
     amount: number,
   } | undefined = undefined) {
     if (fields) {
-      this.from = fields.from;
+      this.sender = fields.sender;
       this.receiver = fields.receiver;
       this.amount = fields.amount;
     }
@@ -45,7 +45,7 @@ class DonationDetails {
   static schema = new Map([
     [DonationDetails, {
       kind: 'struct', fields: [
-        ['from', [32]],
+        ['sender', [32]],
         ['receiver', [32]],
         ['amount', 'u64'],
       ]
@@ -147,7 +147,7 @@ export async function donate(amount: number, receiver: PublicKey): Promise<void>
 
   let donation = new DonationDetails(
     {
-      from: payer.publicKey.toBuffer(),
+      sender: payer.publicKey.toBuffer(),
       receiver: receiver.toBuffer(),
       amount: amount
     }
@@ -219,7 +219,7 @@ export async function withdraw(amount: number): Promise<void> {
 
   const lamportsAddress = await fs.promises.readFile(LAMPORTS_ACCOUNT_PATH, 'utf8');
 
-  let withdraw_request = new WithdrawRequest({amount: amount});
+  let withdraw_request = new WithdrawRequest({ amount: amount });
   let data = borsh.serialize(WithdrawRequest.schema, withdraw_request);
   let data_to_send = Buffer.from(new Uint8Array([1, ...data]));
 
@@ -231,12 +231,13 @@ export async function withdraw(amount: number): Promise<void> {
     programId,
     data: data_to_send,
   });
-  await sendAndConfirmTransaction(
+
+  const transactionSignature = await sendAndConfirmTransaction(
     connection,
     new Transaction().add(instruction),
     [payer],
   );
 
-  console.log('Now the receiver account ', payer.publicKey.toBase58(), ' has ', (await connection.getBalance(payer.publicKey)) / LAMPORTS_PER_SOL, ' SOL');
+  console.log('Now the receiver account',  'has', (await connection.getBalance(payer.publicKey)) / LAMPORTS_PER_SOL, 'SOL');
 
 }

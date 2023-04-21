@@ -16,7 +16,7 @@ async function main() {
 
   await checkProgram();
 
-  console.log('\n---------------------');
+  console.log('---------------------');
 
   let amount = 0.5 * LAMPORTS_PER_SOL;
   console.log('Ammount in lamports: ', amount);
@@ -29,8 +29,6 @@ async function main() {
   console.log('---------------------');
 
   await donate(amount, receiver);
-
-  console.log('\nSuccess\n');
 
 }
 

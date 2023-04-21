@@ -17,8 +17,6 @@ async function main() {
 
   let amount = 0.1 * LAMPORTS_PER_SOL;
   await withdraw(amount);
-
-  console.log('Success');
   
 }
 
