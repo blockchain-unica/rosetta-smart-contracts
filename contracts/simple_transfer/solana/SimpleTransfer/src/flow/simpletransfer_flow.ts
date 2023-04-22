@@ -4,10 +4,12 @@ import {
     LAMPORTS_PER_SOL,
     PublicKey,
     SystemProgram,
+    BpfLoader,
     Transaction,
     TransactionInstruction,
     clusterApiUrl,
     sendAndConfirmTransaction,
+    BPF_LOADER_PROGRAM_ID,
 } from '@solana/web3.js';
 
 import {
@@ -20,8 +22,8 @@ import * as borsh from 'borsh';
 import path from 'path';
 import { Buffer } from 'buffer';
 
-const PROGRAM_KEYPAIR_PATH = path.resolve(__dirname, '../../dist/program/simpletransfer-keypair.json');
 const RECEIVER_KEYPAIR_PATH = path.resolve(__dirname, 'keypair-recipient.json');
+const PROGRAM_KEYPAIR_PATH = path.resolve(__dirname, '../../dist/program/simpletransfer-keypair.json');
 
 class DonationDetails {
     sender: Buffer = Buffer.alloc(32);
@@ -75,28 +77,42 @@ class WithdrawRequest {
 
 let feesForSender = 0;
 let feesForRecipient = 0;
+let feesFordeDloyer = 0;
 
 async function main() {
 
-    const connection = new Connection(clusterApiUrl("devnet"), "confirmed");
+    const connection = new Connection(clusterApiUrl("testnet"), "confirmed");
+    //const connection = new Connection(clusterApiUrl("devnet"), "confirmed");
+    //const connection = new Connection('http://localhost:8899', "confirmed");
 
     const kpPayer = await getSystemKeyPair();
-    const kpRecipient = await getKeyPairFromFile(RECEIVER_KEYPAIR_PATH);
-    const programKeypair = await getKeyPairFromFile(PROGRAM_KEYPAIR_PATH);
-    const programId: PublicKey = programKeypair.publicKey;
+    const kpRecipient = Keypair.generate();
+
+    const recepientAccount = await connection.getAccountInfo(kpRecipient.publicKey);
+    if (recepientAccount === null) {
+        await connection.requestAirdrop(
+            kpRecipient.publicKey,
+            LAMPORTS_PER_SOL
+          );
+    }
 
     console.log("owner:     ", kpPayer.publicKey.toBase58());
     console.log("recipient: ", kpRecipient.publicKey.toBase58());
-    console.log("programId: ", programId.toBase58());
     console.log("\n");
 
     // 1. Set recipient and deploy
     console.log("--- Deploy. Actor: the owner ---");
+    //const pathToBinary = path.resolve(__dirname, '../../dist/program/simpletransfer.so');
+    //const programId: PublicKey = await deploy(connection, kpPayer, pathToBinary);
+
+    const programKeypair = await getKeyPairFromFile(PROGRAM_KEYPAIR_PATH);
+    const programId: PublicKey = programKeypair.publicKey;
+
+    console.log('programId: ', programId.toBase58());
 
     // 2. Deposit money (the user deposits the amout equal to price)
     console.log("\n--- Deposit. Actor: the onwer ---");
     let amount = 0.1 * LAMPORTS_PER_SOL;
-    console.log('Ampunt:           ', amount / LAMPORTS_PER_SOL, ' SOL');
 
     const lamportsAddress = await deposit(
         connection,
@@ -125,8 +141,11 @@ async function main() {
 
     // total costs
     console.log("\n........");
+    console.log("Total fees for deployment:              ", feesFordeDloyer / LAMPORTS_PER_SOL, " SOL");
     console.log("Total fees for sender (including rent): ", feesForSender / LAMPORTS_PER_SOL, " SOL");
     console.log("Total fees for recipient:               ", feesForRecipient / LAMPORTS_PER_SOL, " SOL");
+    console.log("Total fees:                             ", (feesFordeDloyer + feesForSender + feesForRecipient) / LAMPORTS_PER_SOL, " SOL");
+
 }
 
 main().then(
@@ -136,6 +155,40 @@ main().then(
         process.exit(-1);
     },
 );
+
+export async function deploy(
+    connection: Connection,
+    kpPayer: Keypair,
+    pathToBinary: string,
+): Promise<PublicKey> {
+
+    const prevBalance = await connection.getBalance(kpPayer.publicKey);
+
+    const fs = require("fs");
+    const programBinary = fs.readFileSync(pathToBinary);
+    const programBase64 = Buffer.from(programBinary);
+
+    const kpProgram = Keypair.generate();
+
+    let success = await BpfLoader.load(
+        connection,
+        kpPayer,
+        kpProgram,
+        programBase64,
+        BPF_LOADER_PROGRAM_ID
+    );
+
+    if (success) {
+        console.log("Program deployed with account", kpProgram.publicKey.toBase58());
+    } else {
+        throw new Error("Program deployment failed");
+    }
+
+    const currentBaance = await connection.getBalance(kpPayer.publicKey);
+    feesFordeDloyer = prevBalance - currentBaance;
+
+    return kpProgram.publicKey;
+}
 
 export async function deposit(
     connection: Connection,

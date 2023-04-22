@@ -1,5 +1,5 @@
 [workspace]
 
 members = [
-    "src/program-rust",
+    "src/simpletransfer",
 ]

@@ -6,7 +6,7 @@ cryptocurrency in the contract, and another user (the recipient) to withdraw.
 
 Connecting to the cluster:
 ```sh
-$ solana config set --url https://api.devnet.solana.com
+$ solana config set --url https://api.testnet.solana.com
 ```
 
 Create a simple file system wallet for testing (in case you don't have one). 
@@ -41,18 +41,12 @@ Install packages and their dependencies.
 $ npm install
 ```
 
-## Building and Deloyment
-Now we can compile the on chain program and deploy it to your currently selected cluster by running:
+## Building
+Now we can compile the on chain program.
 
 ```sh
-$ npm run build:program-rust
+$ npm run build:simpletransfer
 ```
-
-```sh
-$ npm run deploy:program-rust
-```
-After successfully deploying and confirming the transaction, the command 
-will display the public address of the program.
 
 ## Usage
 Now we can run the off chain script to see the execution costs.
@@ -65,13 +59,11 @@ The output should be:
 ```
 owner:      7dwC8ZsLoEuo3xVSRwapn1TftCxNC4G6ffEPqVXin2gZ
 recipient:  DW8amadXu6SVecDeh6KYnNMsYuZjUc4ruT2REUHstfM9
-programId:  FLW5Cmy8Y5xjYW3kaWL8kNxG5ArjSdnReSWU6C8F5cM
-
 
 --- Deploy. Actor: the owner ---
+programId:  WhbuBzD6yMkkLw3k8nW3k2aUfHq9CJc8rMPdKEyc8Ci
 
 --- Deposit. Actor: the onwer ---
-Ampunt:            0.1  SOL
 Rent fees:         0.001392  SOL
 Transaction fees:  0.000005  SOL
 Transaction fees:  0.000005  SOL
@@ -84,6 +76,8 @@ Transaction fees:  0.000005  SOL
 Transaction fees:  0.000005  SOL
 
 ........
+Total fees for deployment:               0  SOL
 Total fees for sender (including rent):  0.001407  SOL
 Total fees for recipient:                0.00001  SOL
+Total fees:                              0.001417  SOL
 ```
