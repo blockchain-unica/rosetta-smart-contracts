@@ -25,15 +25,15 @@ Check your balance with:
 $ solana balance
 ```
 
-Create a simple file system wallet for the of the donation receiver.
+Create a simple file system wallet for the of the donation receiver in the folder src/flow.
 ```sh
-$ solana-keygen new -o keypair-receiver.json
+$ solana-keygen new -o keypair-recipient.json
 ```
 
 The addresses of the two participants can be obtained with:
 ```sh
 $ solana address 	
-$ solana address -k keypair-receiver.json
+$ solana address -k keypair-recipient.json
 ```
 
 Install packages and their dependencies.
@@ -55,31 +55,35 @@ After successfully deploying and confirming the transaction, the command
 will display the public address of the program.
 
 ## Usage
-Now we can run the off chain program scripts.
+Now we can run the off chain script to see the execution costs.
 
-To deposit native cryptocurrency in the contract.
 ```sh
-$ npm run deposit
+$ npm run cost-analysis
 ```
 
 The output should be:
 ```
-Using account 7dwC8ZsLoEuo3xVSRwapn1TftCxNC4G6ffEPqVXin2gZ containing 499999997.90750116 SOL
-On chain program address: 5hzcBTd59nktZ1aUzVegDSF1SWThN4nufTM5KCmbxEsr
----------------------
-Ammount in lamports:  500000000
-Receiver address:     DW8amadXu6SVecDeh6KYnNMsYuZjUc4ruT2REUHstfM9
----------------------
-```
+owner:      7dwC8ZsLoEuo3xVSRwapn1TftCxNC4G6ffEPqVXin2gZ
+recipient:  DW8amadXu6SVecDeh6KYnNMsYuZjUc4ruT2REUHstfM9
+programId:  FLW5Cmy8Y5xjYW3kaWL8kNxG5ArjSdnReSWU6C8F5cM
 
-Then another user (the receiver) can withdraw part or all the amount.
-```sh
-$ npm run withdraw
-```
 
-The output shoul be:
-```
-Using account DW8amadXu6SVecDeh6KYnNMsYuZjUc4ruT2REUHstfM9 containing 0.60280856 SOL
-On chain program address: FLW5Cmy8Y5xjYW3kaWL8kNxG5ArjSdnReSWU6C8F5cM
-Now the receiver account has 0.70280356 SOL
+--- Deploy. Actor: the owner ---
+
+--- Deposit. Actor: the onwer ---
+Ampunt:            0.1  SOL
+Rent fees:         0.001392  SOL
+Transaction fees:  0.000005  SOL
+Transaction fees:  0.000005  SOL
+Transaction fees:  0.000005  SOL
+
+--- Partial Whitdraw. Actor: the recipient ---
+Transaction fees:  0.000005  SOL
+
+--- Total Whitdraw. Actor: the recipient ---
+Transaction fees:  0.000005  SOL
+
+........
+Total fees for sender (including rent):  0.001407  SOL
+Total fees for recipient:                0.00001  SOL
 ```

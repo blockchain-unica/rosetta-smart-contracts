@@ -4,8 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "deposit": "ts-node src/client/deposit.ts",
-    "withdraw": "ts-node src/client/withdraw.ts",
+    "cost-analysis": "ts-node src/flow/simpletransfer_flow.ts",
     "test": "echo \"Error: no test specified\" && exit 1",
     "clean:program-rust": "cargo clean --manifest-path=./src/program-rust/Cargo.toml && rm -rf ./dist",
     "test:program-rust": "cargo test-bpf --manifest-path=./src/program-rust/Cargo.toml",

@@ -42,7 +42,7 @@ pub fn process_instruction(
 #[derive(BorshSerialize, BorshDeserialize, Debug)]
 struct DonationDetails {
     pub sender: Pubkey,
-    pub receiver: Pubkey,
+    pub recipient: Pubkey,
     pub amount: u64,
 }
 
@@ -103,21 +103,21 @@ fn withdraw(
 ) -> ProgramResult {
     let accounts_iter = &mut accounts.iter();
     let writing_account = next_account_info(accounts_iter)?;
-    let receiver = next_account_info(accounts_iter)?;
+    let recipient = next_account_info(accounts_iter)?;
 
     if writing_account.owner != program_id {
         msg!("writing_account isn't owned by program");
         return Err(ProgramError::IncorrectProgramId);
     }
-    if !receiver.is_signer {
-        msg!("receiver should be signer");
+    if !recipient.is_signer {
+        msg!("recipient should be signer");
         return Err(ProgramError::MissingRequiredSignature);
     }
     let mut donation = DonationDetails::try_from_slice(*writing_account.data.borrow())
         .expect("Error deserialaizing data");
 
-    if donation.receiver != *receiver.key {
-        msg!("Only the receiver can withdraw");
+    if donation.recipient != *recipient.key {
+        msg!("Only the recipient can withdraw");
         return Err(ProgramError::InvalidAccountData);
     }
 
@@ -131,7 +131,7 @@ fn withdraw(
     }
 
     **writing_account.try_borrow_mut_lamports()? -= withdraw_request.amount;
-    **receiver.try_borrow_mut_lamports()? += withdraw_request.amount;
+    **recipient.try_borrow_mut_lamports()? += withdraw_request.amount;
 
     donation.amount -= withdraw_request.amount;
     donation.serialize(&mut &mut writing_account.data.borrow_mut()[..])?;

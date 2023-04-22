@@ -13,8 +13,6 @@
 /dist
 /target
 /test-ledger
-lamports-account.txt
-keypair-receiver.json
 
 # misc
 .DS_Store
