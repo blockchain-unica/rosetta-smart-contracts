@@ -4,11 +4,17 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "costs:simpletransfer": "ts-node src/flow/simpletransfer_flow.ts",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    
     "clean:simpletransfer": "cargo clean --manifest-path=./src/simpletransfer/Cargo.toml && rm -rf ./dist",
-    "build:simpletransfer": "cargo build-bpf --manifest-path=./src/simpletransfer/Cargo.toml --bpf-out-dir=dist/program",
-    "deploy:simpletransfer": "solana program deploy dist/program/simpletransfer.so"
+    "build:simpletransfer": "cargo build-bpf --manifest-path=./src/simpletransfer/Cargo.toml --bpf-out-dir=dist/simpletransfer",
+    "deploy:simpletransfer": "solana program deploy dist/simpletransfer/simpletransfer.so",
+    "costs:simpletransfer": "ts-node src/flow/simpletransfer_flow.ts",
+    
+    "clean:htlc": "cargo clean --manifest-path=./src/htlc/Cargo.toml && rm -rf ./dist",
+    "build:htlc": "cargo build-bpf --manifest-path=./src/htlc/Cargo.toml --bpf-out-dir=dist/htlc",
+    "deploy:htlc": "solana program deploy dist/htlc/htlc.so",
+    "costs:htlc": "ts-node src/flow/htlc_flow.ts"
+  
   },
   "keywords": [],
   "author": "",
@@ -17,7 +23,7 @@
     "@solana/buffer-layout": "3.0.0",
     "@solana/spl-token": "^0.3.7",
     "@solana/web3.js": "^1.75.0",
-    "buffer": "6.0.3", 
+    "buffer": "6.0.3",
     "borsh": "^0.7.0",
     "mz": "^2.7.0",
     "yaml": "^2.0.0"

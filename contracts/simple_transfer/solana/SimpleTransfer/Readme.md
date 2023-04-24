@@ -25,15 +25,9 @@ Check your balance with:
 $ solana balance
 ```
 
-Create a simple file system wallet for the of the donation receiver in the folder src/flow.
-```sh
-$ solana-keygen new -o keypair-recipient.json
-```
-
-The addresses of the two participants can be obtained with:
+The addresses can be obtained with:
 ```sh
 $ solana address 	
-$ solana address -k keypair-recipient.json
 ```
 
 Install packages and their dependencies.
@@ -42,20 +36,22 @@ $ npm install
 ```
 
 ## Building
-Now we can compile the on chain program.
+Now we can compile and deploy the on chain program. 
+For <SMART_CONTRACT_NAME> you can choose between 'htlc' and 'simpletransfer'.
 
 ```sh
-$ npm run build:simpletransfer
+$ npm run build:<SMART_CONTRACT_NAME>
+$ npm run deploy:<SMART_CONTRACT_NAME>
 ```
 
 ## Usage
 Now we can run the off chain script to see the execution costs.
 
 ```sh
-$ npm run cost-analysis
+$ npm run costs:<SMART_CONTRACT_NAME> 
 ```
 
-The output should be:
+This is an example of the output for simpletransfer:
 ```
 owner:      7dwC8ZsLoEuo3xVSRwapn1TftCxNC4G6ffEPqVXin2gZ
 recipient:  DW8amadXu6SVecDeh6KYnNMsYuZjUc4ruT2REUHstfM9

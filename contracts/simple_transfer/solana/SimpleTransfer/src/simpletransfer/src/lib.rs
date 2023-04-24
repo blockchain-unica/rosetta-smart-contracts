@@ -51,41 +51,35 @@ fn deposit(
     accounts: &[AccountInfo],
     instruction_data: &[u8],
 ) -> ProgramResult {
-    let accounts_iter = &mut accounts.iter();
-    let writing_account = next_account_info(accounts_iter)?;
-    let donator_program_account = next_account_info(accounts_iter)?;
-    let donator = next_account_info(accounts_iter)?;
+    let accounts_iter: &mut std::slice::Iter<AccountInfo> = &mut accounts.iter();
+    let writing_account: &AccountInfo = next_account_info(accounts_iter)?;
+    let sender: &AccountInfo = next_account_info(accounts_iter)?;
 
     if writing_account.owner != program_id {
         msg!("writing_account isn't owned by program");
         return Err(ProgramError::InvalidAccountData);
     }
-    if donator_program_account.owner != program_id {
-        msg!("donator_program_account isn't owned by program");
-        return Err(ProgramError::IncorrectProgramId);
-    }
-    if !donator.is_signer {
-        msg!("donator should be signer");
+
+    if !sender.is_signer {
+        msg!("sender should be signer");
         return Err(ProgramError::MissingRequiredSignature);
     }
 
-    let mut donation = DonationDetails::try_from_slice(&instruction_data)
+    let mut donation: DonationDetails = DonationDetails::try_from_slice(&instruction_data)
         .expect("Instruction data serialization didn't worked");
 
-    if donation.sender != *donator.key {
+    if donation.sender != *sender.key {
         msg!("Invaild instruction data");
         return Err(ProgramError::InvalidInstructionData);
     }
 
-    let rent_exemption = Rent::get()?.minimum_balance(writing_account.data_len());
+    let rent_exemption: u64 = Rent::get()?.minimum_balance(writing_account.data_len());
     if **writing_account.lamports.borrow() < rent_exemption {
         msg!("The balance of writing_account should be more than rent_exemption");
         return Err(ProgramError::InsufficientFunds);
     }
 
-    donation.amount = **donator_program_account.lamports.borrow();
-    **writing_account.try_borrow_mut_lamports()? += **donator_program_account.lamports.borrow();
-    **donator_program_account.try_borrow_mut_lamports()? = 0;
+    donation.amount = **writing_account.lamports.borrow();
     donation.serialize(&mut &mut writing_account.try_borrow_mut_data()?[..])?;
 
     Ok(())
@@ -101,9 +95,9 @@ fn withdraw(
     accounts: &[AccountInfo],
     instruction_data: &[u8],
 ) -> ProgramResult {
-    let accounts_iter = &mut accounts.iter();
-    let writing_account = next_account_info(accounts_iter)?;
-    let recipient = next_account_info(accounts_iter)?;
+    let accounts_iter: &mut std::slice::Iter<AccountInfo> = &mut accounts.iter();
+    let writing_account: &AccountInfo = next_account_info(accounts_iter)?;
+    let recipient: &AccountInfo = next_account_info(accounts_iter)?;
 
     if writing_account.owner != program_id {
         msg!("writing_account isn't owned by program");
@@ -113,20 +107,21 @@ fn withdraw(
         msg!("recipient should be signer");
         return Err(ProgramError::MissingRequiredSignature);
     }
-    let mut donation = DonationDetails::try_from_slice(*writing_account.data.borrow())
-        .expect("Error deserialaizing data");
+    let mut donation: DonationDetails =
+        DonationDetails::try_from_slice(*writing_account.data.borrow())
+            .expect("Error deserialaizing data");
 
     if donation.recipient != *recipient.key {
         msg!("Only the recipient can withdraw");
         return Err(ProgramError::InvalidAccountData);
     }
 
-    let withdraw_request = WithdrawRequest::try_from_slice(&instruction_data)
+    let withdraw_request: WithdrawRequest = WithdrawRequest::try_from_slice(&instruction_data)
         .expect("Instruction data serialization didn't worked");
 
     let rent_exemption = Rent::get()?.minimum_balance(writing_account.data_len());
-    if **writing_account.lamports.borrow() - rent_exemption < donation.amount {
-        msg!("Insufficent balance");
+    if **writing_account.lamports.borrow() - rent_exemption < withdraw_request.amount {
+        msg!("Insufficent balance in writing_account");
         return Err(ProgramError::InsufficientFunds);
     }
 

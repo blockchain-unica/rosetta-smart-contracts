@@ -2,10 +2,16 @@ import os from 'os';
 import fs from 'mz/fs';
 import path from 'path';
 import yaml from 'yaml';
-import { Connection, Keypair, Transaction } from '@solana/web3.js';
+import {
+  Connection,
+  Keypair,
+  PublicKey,
+  Transaction,
+} from '@solana/web3.js';
+
+import * as crypto from 'crypto';
 
 async function getConfig(): Promise<any> {
-  // Path to Solana CLI config file
   const CONFIG_FILE_PATH = path.resolve(
     os.homedir(),
     '.config',
@@ -43,4 +49,30 @@ export async function getTransactionFees(transaction: Transaction, connection: C
   } else {
     throw new Error('Error durig estimation of fees');
   }
+}
+
+export async function buildAnddeployWithCLI(
+  connection: Connection,
+  kpPayer: Keypair,
+  programKeyPairPath: string,
+): Promise<PublicKey> {
+
+  let programId: PublicKey;
+
+  try {
+    // Here the deployment is not implemented
+    const programKeypair = await getKeyPairFromFile(programKeyPairPath);
+    programId = programKeypair.publicKey;
+    console.log("programId:  " + programId.toBase58());
+  } catch (e) {
+    throw new Error('Deploy failed');
+  }
+
+  return programId;
+}
+
+export async function hashSHA256(secret: string) {
+  const hash = crypto.createHash('sha256');
+  hash.update(secret);
+  return hash.digest();
 }

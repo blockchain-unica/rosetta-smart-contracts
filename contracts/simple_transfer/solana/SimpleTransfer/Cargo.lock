@@ -1433,6 +1433,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "htlc"
+version = "0.1.0"
+dependencies = [
+ "borsh",
+ "borsh-derive 0.10.3",
+ "sha2 0.9.9",
+ "solana-program",
+ "solana-program-test",
+ "solana-sdk",
+]
+
+[[package]]
 name = "http"
 version = "0.2.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
