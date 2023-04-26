@@ -3,9 +3,12 @@
 ## Use cases
 
 - [Simple transfer](contracts/simple_transfer)
-- Token transfer
+- [Token transfer] (contracts/token_transfer)
 - [HTLC](contracts/htlc)
 - [Escrow](contracts/escrow)
+- [Vesting](contracts/vesting)
+- [Storage](contracts/storage)
+- [Wallet](contracts/simple_wallet)
 - ...
 
 ## Experiments
