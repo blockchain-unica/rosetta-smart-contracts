@@ -14,25 +14,25 @@ at any time.
 
 
 The owner initializes the contract, 
-specifyingthe address that he intends 
+specifying the address that he intends 
 to authorize. 
 
 After contract creation, the contract 
 allows four actions:
 - **deposit**, the owner can deposit a 
 certain amount of cryptocurrency; 
-- **createTransaction**, The owner can 
+- **createTransaction**,  with which the owner can 
 create a transaction by 
 specifying the recipient, the value, 
-and the date field;
-- **executeTransaction**, the owner can 
+and the data field;
+- **executeTransaction**, with which the owner can 
 execute the transaction, 
 specifying the transaction ID. 
 This transaction will be successful 
 only if the balance of the contract 
 is sufficient and if the transaction 
 ID exists and has not yet been executed; 
-- **withdraw**, the owner can withdraw the 
+- **withdraw**,  with which the owner can withdraw the 
 balance of the contract, emptying it.
 
 
