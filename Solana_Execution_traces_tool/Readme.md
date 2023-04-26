@@ -30,7 +30,7 @@ by running:
 $ solana balance
 ```
 
-The addresses can be obtained with:
+The address can be obtained with:
 ```sh
 $ solana address 	
 ```
@@ -47,6 +47,7 @@ Now you can compile the source code of a contract, deploy it on the blockchain a
 Transactions can be tracked using different software such as:
 - [Explorer | Solana](https://explorer.solana.com/?cluster=testnet)
 - [Solscan](https://solscan.io/?cluster=testnet)
+
 Make sure you select the right cluster. In our examples we use the Testnet.
 
 In the following example `<SMART_CONTRACT_NAME>` stands for a contract chosen by the user and could be one of the following
@@ -60,7 +61,7 @@ $ npm run build:<SMART_CONTRACT_NAME>
 ```sh
 $ npm run deploy:<SMART_CONTRACT_NAME>
 ```
-At the end of the dolpoyment the program id of the contract should be displayed 
+At the end of the dolpoyment the program id of the contract should be displayed.
 
 Now we can run the off chain script to see the execution costs.
 ```sh
