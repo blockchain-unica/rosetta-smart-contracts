@@ -1,5 +1,5 @@
 [package]
-name = "simpletransfer"
+name = "simple_transfer"
 version = "0.1.0"
 edition = "2021"
 
@@ -16,5 +16,5 @@ solana-program-test = "~1.10.35"
 solana-sdk = "~1.10.35"
 
 [lib]
-name = "simpletransfer"
+name = "simple_transfer"
 crate-type = ["cdylib", "lib"]

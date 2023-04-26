@@ -11,9 +11,9 @@ import {
 } from '@solana/web3.js';
 
 import {
+    getKeyPairFromFile,
     getSystemKeyPair,
     getTransactionFees,
-    buildAnddeployWithCLI,
     hashSHA256,
 } from './utils';
 
@@ -21,11 +21,10 @@ import * as borsh from 'borsh';
 import path from 'path';
 import { Buffer } from 'buffer';
 
-const PROGRAM_KEYPAIR_PATH = path.resolve(__dirname, '../../dist/htlc/htlc-keypair.json');
+const PROGRAM_KEYPAIR_PATH = path.resolve(__dirname, '../solana/dist/htlc/htlc-keypair.json');
 
 enum Action { Initialize = 0, Reveal = 1, Timeout = 2 }
 
-let feesFordeDloyer = 0;
 let feesForOwner = 0;
 let feesForVerifier = 0;
 
@@ -101,24 +100,21 @@ async function main() {
         );
     }
 
+    const programKeypair = await getKeyPairFromFile(PROGRAM_KEYPAIR_PATH);
+    const programId: PublicKey = programKeypair.publicKey;
+
+    console.log("programId:  " + programId.toBase58());
     console.log("owner:    ", kpOwner.publicKey.toBase58());
     console.log("verifier: ", kpVerifier.publicKey.toBase58());
-    console.log("\n");
 
-    // Deploy
-    console.log("--- Deploy. Actor: the owner ---");
-    const prevBalance = await connection.getBalance(kpOwner.publicKey);
-    const programId: PublicKey = await buildAnddeployWithCLI(connection, kpOwner, PROGRAM_KEYPAIR_PATH);
-    const currentBaance = await connection.getBalance(kpOwner.publicKey);
-    feesFordeDloyer = prevBalance - currentBaance;
+    /******************* Trace 1 *********************/
+    console.log("\n---       Trace 1       ---");
+    console.log("The committer creates the contract, setting a deadline of 100 rounds");
 
     let secret = "password123";
     let hashed_secret = await hashSHA256(secret);
     let delaySlots = 100;
 
-    /******************* Trace 1 *********************/
-    console.log("\n---       Trace 1       ---");
-    console.log("The committer creates the contract, setting a deadline of 100 rounds");
     let writingAccountPublicKey = await initialize(
         connection,
         programId,
@@ -180,13 +176,15 @@ async function main() {
     feesForVerifier = 0;
 
     console.log("\n........");
-    console.log("Total fees for deployment:              ", feesFordeDloyer / LAMPORTS_PER_SOL, " SOL");
     console.log("\nTrace 1");
-    console.log("Total fees for sender (including rent): ", feesForOwnerTrace1 / LAMPORTS_PER_SOL, " SOL");
-    console.log("Total fees for recipient:               ", feesForVerifierTrace1 / LAMPORTS_PER_SOL, " SOL");
+    console.log("Fees for owner:          ", feesForOwnerTrace1 / LAMPORTS_PER_SOL, " SOL");
+    console.log("Fees for recipient:      ", feesForVerifierTrace1 / LAMPORTS_PER_SOL, " SOL");
+    console.log("Total fees for Trace 1:  ", (feesForOwnerTrace1 + feesForVerifierTrace1) / LAMPORTS_PER_SOL, " SOL");
     console.log("\nTrace 2");
-    console.log("Total fees for sender (including rent): ", feesForOwnerTrace2 / LAMPORTS_PER_SOL, " SOL");
-    console.log("Total fees for recipient:               ", feesForVerifierTrace2 / LAMPORTS_PER_SOL, " SOL");
+    console.log("Fees for owner:          ", feesForOwnerTrace2 / LAMPORTS_PER_SOL, " SOL");
+    console.log("Fees for recipient:      ", feesForVerifierTrace2 / LAMPORTS_PER_SOL, " SOL");
+    console.log("Total fees for Trace 2:  ", (feesForOwnerTrace2 + feesForVerifierTrace2) / LAMPORTS_PER_SOL, " SOL");
+
 }
 
 main().then(
@@ -249,7 +247,7 @@ async function initialize(
     await sendAndConfirmTransaction(connection, initTransaction, [kpSender]);
 
     let tFees = await getTransactionFees(initTransaction, connection);
-    feesForOwner += tFees + rentExemptionAmount;
+    feesForOwner += tFees;
     console.log('   Rent fees:        ', rentExemptionAmount / LAMPORTS_PER_SOL, ' SOL');
     console.log('   Transaction fees: ', tFees / LAMPORTS_PER_SOL, ' SOL');
 

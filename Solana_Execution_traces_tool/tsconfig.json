@@ -10,6 +10,6 @@
     "moduleResolution": "node",
     "module": "es2015",
   },
-  "include": ["src/flow/**/*", "simpletransfer.ts"],
+  "include": ["execution_traces/**/*", "simple_transfer_flow.ts"],
   "exclude": ["node_modules"]
 }

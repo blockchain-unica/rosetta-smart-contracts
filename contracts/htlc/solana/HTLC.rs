@@ -167,8 +167,8 @@ fn timeout(
         .expect("Error deserialaizing data");
 
     if verifier.key != &htlc_info.verifier {
-        msg!("The roposed verifier is not the verifier of the HTLC");
-        return Err(ProgramError::MissingRequiredSignature);
+        msg!("The proposed verifier is not the verifier of the HTLC");
+        return Err(ProgramError::InvalidAccountData);
     }
 
     let current_slot: u64 = Clock::get()?.slot;

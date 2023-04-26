@@ -10,7 +10,7 @@
 
 # production
 /build
-/dist
+/solana/dist
 /target
 /test-ledger
 

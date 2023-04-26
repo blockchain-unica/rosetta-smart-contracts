@@ -11,16 +11,16 @@ import {
 } from '@solana/web3.js';
 
 import {
+    getKeyPairFromFile,
     getSystemKeyPair,
     getTransactionFees,
-    buildAnddeployWithCLI
 } from './utils';
 
 import * as borsh from 'borsh';
 import path from 'path';
 import { Buffer } from 'buffer';
 
-const PROGRAM_KEYPAIR_PATH = path.resolve(__dirname, '../../dist/simpletransfer/simpletransfer-keypair.json');
+const PROGRAM_KEYPAIR_PATH = path.resolve(__dirname, '../solana/dist/simple_transfer/simple_transfer-keypair.json');
 
 enum Action { Deposit = 0, Withdraw = 1 }
 
@@ -74,7 +74,6 @@ class WithdrawRequest {
 
 let feesForSender = 0;
 let feesForRecipient = 0;
-let feesFordeDloyer = 0;
 
 async function main() {
     const connection = new Connection(clusterApiUrl("testnet"), "confirmed");
@@ -92,18 +91,14 @@ async function main() {
         );
     }
 
+    const programKeypair = await getKeyPairFromFile(PROGRAM_KEYPAIR_PATH);
+    const programId: PublicKey = programKeypair.publicKey;
+
+    console.log("programId:  " + programId.toBase58());
     console.log("sender:    ", kpSender.publicKey.toBase58());
     console.log("recipient: ", kpRecipient.publicKey.toBase58());
-    console.log("\n");
 
-    // 1. Deploy
-    console.log("--- Deploy. Actor: the owner ---");
-    const prevBalance = await connection.getBalance(kpSender.publicKey);
-    const programId: PublicKey = await buildAnddeployWithCLI(connection, kpSender, PROGRAM_KEYPAIR_PATH);
-    const currentBaance = await connection.getBalance(kpSender.publicKey);
-    feesFordeDloyer = prevBalance - currentBaance;
-
-    // 2. Deposit money (the user deposits the amout equal to price)
+    // 1. Deposit money (the user deposits the amout equal to price)
     console.log("\n--- Deposit. Actor: the onwer ---");
     let amount = 0.2 * LAMPORTS_PER_SOL;
     const lamportsAddress = await deposit(
@@ -113,7 +108,7 @@ async function main() {
         kpRecipient.publicKey,
         amount);
 
-    // 3. partial Whitdraw
+    // 2. Partial Whitdraw
     console.log("\n--- Partial Whitdraw. Actor: the recipient ---");
     await withdraw(
         connection,
@@ -122,7 +117,7 @@ async function main() {
         0.1 * amount,
         lamportsAddress);
 
-    // 4. total Whitdraw
+    // 3. Total Whitdraw
     console.log("\n--- Total Whitdraw. Actor: the recipient ---");
     await withdraw(
         connection,
@@ -131,12 +126,11 @@ async function main() {
         0.9 * amount,
         lamportsAddress);
 
-    // total costs
+    // Costs
     console.log("\n........");
-    console.log("Total fees for deployment:              ", feesFordeDloyer / LAMPORTS_PER_SOL, " SOL");
-    console.log("Total fees for sender (including rent): ", feesForSender / LAMPORTS_PER_SOL, " SOL");
-    console.log("Total fees for recipient:               ", feesForRecipient / LAMPORTS_PER_SOL, " SOL");
-    console.log("Total fees:                             ", (feesFordeDloyer + feesForSender + feesForRecipient) / LAMPORTS_PER_SOL, " SOL");
+    console.log("Fees for sender:    ", feesForSender / LAMPORTS_PER_SOL, " SOL");
+    console.log("Fees for recipient: ", feesForRecipient / LAMPORTS_PER_SOL, " SOL");
+    console.log("Total fees:         ", (feesForSender + feesForRecipient) / LAMPORTS_PER_SOL, " SOL");
 }
 
 main().then(
@@ -195,7 +189,7 @@ async function deposit(
     await sendAndConfirmTransaction(connection, transacrionDeposit, [kpSender]);
 
     let tFees = await getTransactionFees(transacrionDeposit, connection);
-    feesForSender += tFees + rentExemptionAmount;
+    feesForSender += tFees;
     console.log('    Transaction fees: ', tFees / LAMPORTS_PER_SOL, ' SOL');
     console.log('    Rent fees:        ', rentExemptionAmount / LAMPORTS_PER_SOL, ' SOL');
 

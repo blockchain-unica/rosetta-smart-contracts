@@ -1,0 +1,6 @@
+[workspace]
+
+members = [
+    "solana/simple_transfer",
+    "solana/htlc",
+]

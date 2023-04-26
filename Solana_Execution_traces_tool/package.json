@@ -1,0 +1,48 @@
+{
+  "name": "Solana_Execution_traces_tool",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    
+    "clean:simple_transfer": "cargo clean --manifest-path=./solana/simple_transfer/Cargo.toml && rm -rf ./solana/dist/simple_transfer",
+    "build:simple_transfer": "cargo build-bpf --manifest-path=./solana/simple_transfer/Cargo.toml --bpf-out-dir=solana/dist/simple_transfer",
+    "deploy:simple_transfer": "solana program deploy solana/dist/simple_transfer/simple_transfer.so",
+    "costs:simple_transfer": "ts-node execution_traces/simple_transfer_flow.ts",
+    
+    "clean:htlc": "cargo clean --manifest-path=./solana/htlc/Cargo.toml && rm -rf ./solana/dist/htlc",
+    "build:htlc": "cargo build-bpf --manifest-path=./solana/htlc/Cargo.toml --bpf-out-dir=solana/dist/htlc",
+    "deploy:htlc": "solana program deploy solana/dist/htlc/htlc.so",
+    "costs:htlc": "ts-node execution_traces/htlc_flow.ts"
+
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@solana/buffer-layout": "^4.0.0",
+    "@solana/spl-token": "^0.2.0",
+    "@solana/web3.js": "^1.41.10",
+    "borsh": "^0.7.0",
+    "buffer": "6.0.3",
+    "mz": "^2.7.0",
+    "yaml": "^2.0.0"
+  },
+  "devDependencies": {
+    "@tsconfig/recommended": "^1.0.1",
+    "@types/eslint": "^8.2.2",
+    "@types/eslint-plugin-prettier": "^3.1.0",
+    "@types/mz": "^2.7.2",
+    "@types/prettier": "^2.1.5",
+    "@types/yaml": "^1.9.7",
+    "@typescript-eslint/eslint-plugin": "^4.6.0",
+    "@typescript-eslint/parser": "^4.6.0",
+    "eslint": "^7.12.1",
+    "eslint-config-prettier": "^6.15.0",
+    "eslint-plugin-prettier": "^4.0.0",
+    "prettier": "^2.1.2",
+    "start-server-and-test": "^1.11.6",
+    "ts-node": "^10.0.0",
+    "typescript": "^4.0.5"
+  }
+}

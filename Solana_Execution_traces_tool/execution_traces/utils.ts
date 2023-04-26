@@ -51,26 +51,6 @@ export async function getTransactionFees(transaction: Transaction, connection: C
   }
 }
 
-export async function buildAnddeployWithCLI(
-  connection: Connection,
-  kpPayer: Keypair,
-  programKeyPairPath: string,
-): Promise<PublicKey> {
-
-  let programId: PublicKey;
-
-  try {
-    // Here the deployment is not implemented
-    const programKeypair = await getKeyPairFromFile(programKeyPairPath);
-    programId = programKeypair.publicKey;
-    console.log("programId:  " + programId.toBase58());
-  } catch (e) {
-    throw new Error('Deploy failed');
-  }
-
-  return programId;
-}
-
 export async function hashSHA256(secret: string) {
   const hash = crypto.createHash('sha256');
   hash.update(secret);
