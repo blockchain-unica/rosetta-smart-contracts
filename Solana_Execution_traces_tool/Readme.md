@@ -53,6 +53,7 @@ Make sure you select the right cluster. In our examples we use the Testnet.
 In the following example `<SMART_CONTRACT_NAME>` stands for a contract chosen by the user and could be one of the following
 - simple_transfer
 - htlc
+- token_transfer
 
 Now we can compile and deploy the on chain program. 
 ```sh

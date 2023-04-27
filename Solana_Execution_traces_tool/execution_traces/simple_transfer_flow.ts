@@ -11,7 +11,7 @@ import {
 } from '@solana/web3.js';
 
 import {
-    getKeyPairFromFile,
+    getPublicKeyFromFile,
     getSystemKeyPair,
     getTransactionFees,
 } from './utils';
@@ -77,9 +77,8 @@ let feesForRecipient = 0;
 
 async function main() {
     const connection = new Connection(clusterApiUrl("testnet"), "confirmed");
-    //const connection = new Connection(clusterApiUrl("devnet"), "confirmed");
-    //const connection = new Connection('http://localhost:8899', "confirmed");
 
+    const programId = await getPublicKeyFromFile(PROGRAM_KEYPAIR_PATH);
     const kpSender = await getSystemKeyPair();
     const kpRecipient = Keypair.generate();
 
@@ -90,10 +89,7 @@ async function main() {
             LAMPORTS_PER_SOL
         );
     }
-
-    const programKeypair = await getKeyPairFromFile(PROGRAM_KEYPAIR_PATH);
-    const programId: PublicKey = programKeypair.publicKey;
-
+    
     console.log("programId:  " + programId.toBase58());
     console.log("sender:    ", kpSender.publicKey.toBase58());
     console.log("recipient: ", kpRecipient.publicKey.toBase58());

@@ -13,7 +13,12 @@
     "clean:htlc": "cargo clean --manifest-path=./solana/htlc/Cargo.toml && rm -rf ./solana/dist/htlc",
     "build:htlc": "cargo build-bpf --manifest-path=./solana/htlc/Cargo.toml --bpf-out-dir=solana/dist/htlc",
     "deploy:htlc": "solana program deploy solana/dist/htlc/htlc.so",
-    "costs:htlc": "ts-node execution_traces/htlc_flow.ts"
+    "costs:htlc": "ts-node execution_traces/htlc_flow.ts",
+
+    "clean:token_transfer": "cargo clean --manifest-path=./solana/token_transfer/Cargo.toml && rm -rf ./solana/dist/token_transfer",
+    "build:token_transfer": "cargo build-bpf --manifest-path=./solana/token_transfer/Cargo.toml --bpf-out-dir=solana/dist/token_transfer",
+    "deploy:token_transfer": "solana program deploy solana/dist/token_transfer/token_transfer.so",
+    "costs:token_transfer": "ts-node execution_traces/token_transfer_flow.ts"
 
   },
   "keywords": [],

@@ -11,7 +11,7 @@ import {
 } from '@solana/web3.js';
 
 import {
-    getKeyPairFromFile,
+    getPublicKeyFromFile,
     getSystemKeyPair,
     getTransactionFees,
     hashSHA256,
@@ -85,10 +85,10 @@ class Secret {
 }
 
 async function main() {
-    const connection = new Connection(clusterApiUrl("testnet"), "confirmed");
-    //const connection = new Connection(clusterApiUrl("devnet"), "confirmed");
-    //const connection = new Connection('http://localhost:8899', "confirmed");
 
+    const connection = new Connection(clusterApiUrl("testnet"), "confirmed");
+
+    const programId = await getPublicKeyFromFile(PROGRAM_KEYPAIR_PATH);
     const kpOwner = await getSystemKeyPair();
     const kpVerifier = Keypair.generate();
 
@@ -99,9 +99,6 @@ async function main() {
             LAMPORTS_PER_SOL
         );
     }
-
-    const programKeypair = await getKeyPairFromFile(PROGRAM_KEYPAIR_PATH);
-    const programId: PublicKey = programKeypair.publicKey;
 
     console.log("programId:  " + programId.toBase58());
     console.log("owner:    ", kpOwner.publicKey.toBase58());

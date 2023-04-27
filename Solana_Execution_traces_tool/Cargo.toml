@@ -3,4 +3,5 @@
 members = [
     "solana/simple_transfer",
     "solana/htlc",
+    "solana/token_transfer",
 ]

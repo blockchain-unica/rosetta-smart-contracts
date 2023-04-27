@@ -42,6 +42,10 @@ export async function getKeyPairFromFile(keyPairPath: string): Promise<Keypair> 
   return Keypair.fromSecretKey(secretKey);
 }
 
+export async function getPublicKeyFromFile(keyPairPath: string): Promise<PublicKey> {
+  return (await getKeyPairFromFile(keyPairPath)).publicKey;
+}
+
 export async function getTransactionFees(transaction: Transaction, connection: Connection): Promise<number> {
   const fees: number | null = await transaction.getEstimatedFee(connection);
   if (fees) {

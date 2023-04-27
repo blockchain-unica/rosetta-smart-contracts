@@ -1,0 +1,23 @@
+[package]
+name = "token_transfer"
+version = "0.1.0"
+edition = "2021"
+
+[features]
+no-entrypoint = []
+
+[dependencies]
+borsh = "0.9.3"
+borsh-derive = "0.10.0"
+solana-program = "~1.10.35"
+thiserror = "1.0.24"
+spl-token = {version = "3.2.0", features = ["no-entrypoint"]}
+arrayref = "0.3.6"
+
+[dev-dependencies]
+solana-program-test = "~1.10.35"
+solana-sdk = "~1.10.35"
+
+[lib]
+name = "token_transfer"
+crate-type = ["cdylib", "lib"]
