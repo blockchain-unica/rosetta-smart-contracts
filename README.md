@@ -6,6 +6,7 @@
 - [Token transfer](contracts/token_transfer)
 - [HTLC](contracts/htlc)
 - [Escrow](contracts/escrow)
+- [Crowdfund](contracts/crowdfund)
 - [Vesting](contracts/vesting)
 - [Storage](contracts/storage)
 - [Wallet](contracts/simple_wallet)
