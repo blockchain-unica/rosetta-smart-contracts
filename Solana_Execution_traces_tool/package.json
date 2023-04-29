@@ -4,6 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+
+    "clean:all": "npm run clean:simple_transfer && npm run clean:htlc && npm run clean:token_transfer",
+    "build:all": "npm run build:simple_transfer && npm run build:htlc && npm run build:token_transfer",
     
     "clean:simple_transfer": "cargo clean --manifest-path=./solana/simple_transfer/Cargo.toml && rm -rf ./solana/dist/simple_transfer",
     "build:simple_transfer": "cargo build-bpf --manifest-path=./solana/simple_transfer/Cargo.toml --bpf-out-dir=solana/dist/simple_transfer",

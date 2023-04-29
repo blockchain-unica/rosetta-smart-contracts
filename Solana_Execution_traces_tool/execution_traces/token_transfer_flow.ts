@@ -17,9 +17,9 @@ import {
     getMinimumBalanceForRentExemptAccount,
     getOrCreateAssociatedTokenAccount,
     ACCOUNT_SIZE,
-    mintTo,
     createTransferInstruction,
     getMint,
+    mintToChecked,
 } from "@solana/spl-token";
 
 import {
@@ -31,14 +31,44 @@ import {
 import path from 'path';
 import * as borsh from 'borsh';
 
-const PROGRAM_KEYPAIR_PATH = path.resolve(__dirname, '../solana/dist/token_transfer/token_transfer-keypair.json');
+class DepositInfo {
+    sender: Buffer = Buffer.alloc(32);
+    temp_token_account: Buffer = Buffer.alloc(32);
+    reciever_token_account: Buffer = Buffer.alloc(32);
+    amount: number = 0;
 
-enum Action { Deposit = 0, Withdraw = 1 }
+    constructor(fields: {
+        sender: Buffer,
+        temp_token_account: Buffer,
+        reciever_token_account: Buffer,
+        amount: number,
+    } | undefined = undefined) {
+        if (fields) {
+            this.sender = fields.sender;
+            this.temp_token_account = fields.temp_token_account;
+            this.reciever_token_account = fields.reciever_token_account;
+            this.amount = fields.amount;
+        }
+    }
 
-let feesForSender = 0;
-let feesForRecipient = 0;
+    static schema = new Map([
+        [DepositInfo, {
+            kind: 'struct', fields: [
+                ['sender', [32]],
+                ['temp_token_account', [32]],
+                ['reciever_token_account', [32]],
+                ['amount', 'u64'],
+            ]
+        }],
+    ]);
 
-class WithdrawRequest {
+    static size = borsh.serialize(
+        DepositInfo.schema,
+        new DepositInfo(),
+    ).length
+}
+
+class PassedAmount {
     amount: number = 0;
 
     constructor(fields: {
@@ -50,13 +80,20 @@ class WithdrawRequest {
     }
 
     static schema = new Map([
-        [WithdrawRequest, {
+        [PassedAmount, {
             kind: 'struct', fields: [
                 ['amount', 'u64'],
             ]
         }],
     ]);
 }
+
+const PROGRAM_KEYPAIR_PATH = path.resolve(__dirname, '../solana/dist/token_transfer/token_transfer-keypair.json');
+
+enum Action { Deposit = 0, Withdraw = 1 }
+
+let feesForSender = 0;
+let feesForRecipient = 0;
 
 async function main() {
     const connection = new Connection(clusterApiUrl("testnet"), "confirmed");
@@ -78,27 +115,27 @@ async function main() {
         initialBalance
     );
 
-    // 1. Deposit money (the user deposits the amout equal to price)
+    // 1. Deposit tokens
     console.log("\n--- Deposit. Actor: the onwer ---");
     const amountToSend = initialBalance / 2;
-    const tempSenderTokenAccountPubKey = await deposit(
+    const stateAccountPubkey = await deposit(
         connection,
         programId,
         mintPubkey,
         senderKeypair,
         senderTokenAccountPubkey,
+        recipientTokenAccountPubkey,
         amountToSend
     );
 
     // 2. Partial Whitdraw
-    let amountToWithdraw = amountToSend/10;
+    let amountToWithdraw = amountToSend / 10;
     console.log("\n--- Partial Whitdraw. Actor: the recipient ---");
     await withdraw(
         connection,
         programId,
         recipientKeypair,
-        tempSenderTokenAccountPubKey,
-        recipientTokenAccountPubkey,
+        stateAccountPubkey,
         amountToWithdraw
     );
 
@@ -109,8 +146,7 @@ async function main() {
         connection,
         programId,
         recipientKeypair,
-        tempSenderTokenAccountPubKey,
-        recipientTokenAccountPubkey,
+        stateAccountPubkey,
         amountToWithdraw
     );
 
@@ -141,7 +177,7 @@ async function setup(
     await connection.confirmTransaction(airdropSignature);
 
     // Create Mint with the sender as the mint authority
-    const decimals = 8;
+    const decimals = 9;
     let mintPubkey = await createMint(
         connection, // conneciton
         feePayer, // fee payer
@@ -160,13 +196,14 @@ async function setup(
     );
 
     // Mint tokens to the associated token account
-    await mintTo(
+    await mintToChecked(
         connection,
         feePayer,
         mintPubkey,
-        senderTokenAccount.address,
-        senderKeypair,
-        initialBalance * Math.pow(10, decimals), // amount. if your decimals is 8, you mint 10^8 for 1 token.
+        senderTokenAccount.address, // destination
+        senderKeypair, // mint authority
+        initialBalance * Math.pow(10, decimals), // amount. if your decimals is 8, you mint 10^8 for 1 token
+        decimals
     );
 
     // Airdrop some SOL to the recipient
@@ -190,6 +227,7 @@ async function deposit(
     mintPubkey: PublicKey,
     senderKeypair: Keypair,
     senderTokenAccount: PublicKey,
+    recipientTokenAccountPubkey: PublicKey,
     amountToSend: number
 ): Promise<PublicKey> {
 
@@ -198,7 +236,7 @@ async function deposit(
     // Instruction to create temp token account
     const tempSenderTokenAccountKeypair = Keypair.generate();
     const createTempTokenAccountInstruction = SystemProgram.createAccount({
-        fromPubkey: senderKeypair.publicKey,
+        fromPubkey: senderKeypair.publicKey, // fee payer
         newAccountPubkey: tempSenderTokenAccountKeypair.publicKey,
         space: ACCOUNT_SIZE,
         lamports: await getMinimumBalanceForRentExemptAccount(connection),
@@ -214,27 +252,46 @@ async function deposit(
 
     // Instruction to transfer tokens to the second associated token account
     const transferTokensToTempAccInstruction = createTransferInstruction(
-        senderTokenAccount,
-        tempSenderTokenAccountKeypair.publicKey,
-        senderKeypair.publicKey,
+        senderTokenAccount, // from
+        tempSenderTokenAccountKeypair.publicKey, // to
+        senderKeypair.publicKey, //owner
         amountToSend * Math.pow(10, mint.decimals) // amount. if your decimals is 8, you mint 10^8 for 1 token.
     );
 
-    // Instruction to our program
+    // Instruction to create the State Account account
+    const SEED = "abcdef" + Math.random().toString();
+    const stateAccountPubkey = await PublicKey.createWithSeed(senderKeypair.publicKey, SEED, programId);
+    const createDepositInfoAccountInstruction = SystemProgram.createAccountWithSeed({
+        fromPubkey: senderKeypair.publicKey,
+        basePubkey: senderKeypair.publicKey,
+        seed: SEED,
+        newAccountPubkey: stateAccountPubkey,
+        lamports: await connection.getMinimumBalanceForRentExemption(DepositInfo.size),
+        space: DepositInfo.size,
+        programId: programId,
+    });
+
+    // Instruction to the program
+    let passed_amount = new PassedAmount({ amount: amountToSend });
+    let data = borsh.serialize(PassedAmount.schema, passed_amount);
+    let data_to_send = Buffer.from(new Uint8Array([Action.Deposit, ...data]));
     const depositInstruction = new TransactionInstruction({
         programId: programId,
         keys: [
             { pubkey: senderKeypair.publicKey, isSigner: true, isWritable: false },
             { pubkey: tempSenderTokenAccountKeypair.publicKey, isSigner: false, isWritable: true },
+            { pubkey: stateAccountPubkey, isSigner: false, isWritable: true },
+            { pubkey: recipientTokenAccountPubkey, isSigner: false, isWritable: false },
             { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
         ],
-        data: Buffer.from(new Uint8Array([Action.Deposit])),
+        data:data_to_send,
     });
 
     const depositTransaction = new Transaction().add(
         createTempTokenAccountInstruction,
         initTempAccountInstruction,
         transferTokensToTempAccInstruction,
+        createDepositInfoAccountInstruction,
         depositInstruction
     );
 
@@ -248,23 +305,28 @@ async function deposit(
     feesForSender += tFees;
     console.log('    Transaction fees: ', tFees / LAMPORTS_PER_SOL, ' SOL');
 
-    return tempSenderTokenAccountKeypair.publicKey;
+    return stateAccountPubkey;
 }
 
 async function withdraw(
     connection: Connection,
     programId: PublicKey,
     recipientKeypair: Keypair,
-    tempSenderTokenAccountPubKey: PublicKey,
-    recipientTokenAccountPubkey: PublicKey,
+    stateAccountPubkey: PublicKey,
     amountToWithdraw: number
 ): Promise<void> {
 
-    const PDA = await PublicKey.findProgramAddress([Buffer.from("SimpleTransfer")], programId);
+    const PDA = await PublicKey.findProgramAddress([Buffer.from("TokenTransfer")], programId);
     const PDApubKey = PDA[0];
 
-    let withdraw_request = new WithdrawRequest({ amount: amountToWithdraw });
-    let data = borsh.serialize(WithdrawRequest.schema, withdraw_request);
+    const stateAccountInfo = await connection.getAccountInfo(stateAccountPubkey);
+    if (stateAccountInfo === null) {
+      throw 'Error: cannot find the state account';
+    }
+    const stateInfo = borsh.deserialize(DepositInfo.schema, DepositInfo, stateAccountInfo.data,);
+
+    let passed_amount = new PassedAmount({ amount: amountToWithdraw });
+    let data = borsh.serialize(PassedAmount.schema, passed_amount);
     let data_to_send = Buffer.from(new Uint8Array([Action.Withdraw, ...data]));
 
     const withdrawInstruction = new TransactionInstruction({
@@ -272,8 +334,10 @@ async function withdraw(
         data: data_to_send,
         keys: [
             { pubkey: recipientKeypair.publicKey, isSigner: true, isWritable: false },
-            { pubkey: recipientTokenAccountPubkey, isSigner: false, isWritable: true },
-            { pubkey: tempSenderTokenAccountPubKey, isSigner: false, isWritable: true },
+            { pubkey: new PublicKey(stateInfo.sender), isSigner: false, isWritable: true },
+            { pubkey: new PublicKey(stateInfo.reciever_token_account), isSigner: false, isWritable: true },
+            { pubkey: new PublicKey(stateInfo.temp_token_account), isSigner: false, isWritable: true },
+            { pubkey: stateAccountPubkey, isSigner: false, isWritable: true },
             { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
             { pubkey: PDApubKey, isSigner: false, isWritable: false },
         ],
