@@ -284,7 +284,7 @@ async function deposit(
             { pubkey: recipientTokenAccountPubkey, isSigner: false, isWritable: false },
             { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
         ],
-        data:data_to_send,
+        data: data_to_send,
     });
 
     const depositTransaction = new Transaction().add(
@@ -321,7 +321,7 @@ async function withdraw(
 
     const stateAccountInfo = await connection.getAccountInfo(stateAccountPubkey);
     if (stateAccountInfo === null) {
-      throw 'Error: cannot find the state account';
+        throw 'Error: cannot find the state account';
     }
     const stateInfo = borsh.deserialize(DepositInfo.schema, DepositInfo, stateAccountInfo.data,);
 

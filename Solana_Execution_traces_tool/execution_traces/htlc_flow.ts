@@ -120,7 +120,7 @@ async function main() {
         hashed_secret,
         delaySlots);
 
-    console.log("After 50 rounds, A performs the reveal action.");
+    console.log("After 50 rounds, the owner performs the reveal action.");
 
     let nSlotsToWait = 50;
     console.log("   Waiting", nSlotsToWait, "slots...");
@@ -218,8 +218,8 @@ async function initialize(
         programId,
     );
 
+     // Instruction to create the Writing Account account
     const rentExemptionAmount = await connection.getMinimumBalanceForRentExemption(data.length);
-
     let minimumAmount = 0.1 * LAMPORTS_PER_SOL;
     const createWritingAccountInstruction = SystemProgram.createAccountWithSeed({
         fromPubkey: kpSender.publicKey,
@@ -240,12 +240,12 @@ async function initialize(
         data: data_to_send,
     })
 
+    // Instruction to the program
     const initTransaction = new Transaction().add(createWritingAccountInstruction).add(initInstruction);
     await sendAndConfirmTransaction(connection, initTransaction, [kpSender]);
 
     let tFees = await getTransactionFees(initTransaction, connection);
     feesForOwner += tFees;
-    console.log('   Rent fees:        ', rentExemptionAmount / LAMPORTS_PER_SOL, ' SOL');
     console.log('   Transaction fees: ', tFees / LAMPORTS_PER_SOL, ' SOL');
 
     return writingAccountPublicKey;

@@ -89,7 +89,7 @@ async function main() {
             LAMPORTS_PER_SOL
         );
     }
-    
+
     console.log("programId:  " + programId.toBase58());
     console.log("sender:    ", kpSender.publicKey.toBase58());
     console.log("recipient: ", kpRecipient.publicKey.toBase58());
@@ -162,6 +162,7 @@ async function deposit(
 
     const rentExemptionAmount = await connection.getMinimumBalanceForRentExemption(data.length);
 
+     // Instruction to create the Writing Account account
     const createWritingAccountInstruction = SystemProgram.createAccountWithSeed({
         fromPubkey: kpSender.publicKey,
         basePubkey: kpSender.publicKey,
@@ -172,6 +173,7 @@ async function deposit(
         programId: programId,
     });
 
+    // Instruction to the program
     let depositInstruction = new TransactionInstruction({
         keys: [
             { pubkey: writingAccountPublicKey, isSigner: false, isWritable: true },
@@ -181,13 +183,12 @@ async function deposit(
         data: data_to_send,
     })
 
-    const transacrionDeposit = new Transaction().add(createWritingAccountInstruction).add(depositInstruction);
-    await sendAndConfirmTransaction(connection, transacrionDeposit, [kpSender]);
+    const transactionDeposit = new Transaction().add(createWritingAccountInstruction).add(depositInstruction);
+    await sendAndConfirmTransaction(connection, transactionDeposit, [kpSender]);
 
-    let tFees = await getTransactionFees(transacrionDeposit, connection);
+    let tFees = await getTransactionFees(transactionDeposit, connection);
     feesForSender += tFees;
     console.log('    Transaction fees: ', tFees / LAMPORTS_PER_SOL, ' SOL');
-    console.log('    Rent fees:        ', rentExemptionAmount / LAMPORTS_PER_SOL, ' SOL');
 
     return writingAccountPublicKey;
 }
