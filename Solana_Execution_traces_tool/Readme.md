@@ -54,6 +54,7 @@ In the following example `<SMART_CONTRACT_NAME>` stands for a contract chosen by
 - simple_transfer
 - htlc
 - token_transfer
+- vault
 
 Now we can compile and deploy the on chain program. 
 ```sh

@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
 
-    "clean:all": "npm run clean:simple_transfer && npm run clean:htlc && npm run clean:token_transfer",
-    "build:all": "npm run build:simple_transfer && npm run build:htlc && npm run build:token_transfer",
+    "clean:all": "npm run clean:simple_transfer && npm run clean:htlc && npm run clean:token_transfer && npm run clean:simple_wallet",
+    "build:all": "npm run build:simple_transfer && npm run build:htlc && npm run build:token_transfer && npm run build:simple_wallet",
     
     "clean:simple_transfer": "cargo clean --manifest-path=./solana/simple_transfer/Cargo.toml && rm -rf ./solana/dist/simple_transfer",
     "build:simple_transfer": "cargo build-bpf --manifest-path=./solana/simple_transfer/Cargo.toml --bpf-out-dir=solana/dist/simple_transfer",
@@ -21,7 +21,17 @@
     "clean:token_transfer": "cargo clean --manifest-path=./solana/token_transfer/Cargo.toml && rm -rf ./solana/dist/token_transfer",
     "build:token_transfer": "cargo build-bpf --manifest-path=./solana/token_transfer/Cargo.toml --bpf-out-dir=solana/dist/token_transfer",
     "deploy:token_transfer": "solana program deploy solana/dist/token_transfer/token_transfer.so",
-    "costs:token_transfer": "ts-node execution_traces/token_transfer_flow.ts"
+    "costs:token_transfer": "ts-node execution_traces/token_transfer_flow.ts",
+
+    "clean:simple_wallet": "cargo clean --manifest-path=./solana/simple_wallet/Cargo.toml && rm -rf ./solana/dist/simple_wallet",
+    "build:simple_wallet": "cargo build-bpf --manifest-path=./solana/simple_wallet/Cargo.toml --bpf-out-dir=solana/dist/simple_wallet",
+    "deploy:simple_wallet": "solana program deploy solana/dist/simple_wallet/simple_wallet.so",
+    "costs:simple_wallet": "ts-node execution_traces/simple_wallet_flow.ts",
+
+    "clean:vault": "cargo clean --manifest-path=./solana/vault/Cargo.toml && rm -rf ./solana/dist/vault",
+    "build:vault": "cargo build-bpf --manifest-path=./solana/vault/Cargo.toml --bpf-out-dir=solana/dist/vault",
+    "deploy:vault": "solana program deploy solana/dist/vault/vault.so",
+    "costs:vault": "ts-node execution_traces/vault_flow.ts"
 
   },
   "keywords": [],
