@@ -2,6 +2,7 @@
 
 ## Specification
 
+
 The contract Storage allows a user to 
 store insiede the blockchain two 
 typologies of dynamic size data: 
