@@ -11,6 +11,7 @@ import {
 } from '@solana/web3.js';
 
 import {
+    generateKeyPair,
     getPublicKeyFromFile,
     getSystemKeyPair,
     getTransactionFees,
@@ -23,10 +24,11 @@ import { Buffer } from 'buffer';
 
 const PROGRAM_KEYPAIR_PATH = path.resolve(__dirname, '../solana/dist/htlc/htlc-keypair.json');
 
-enum Action { Initialize = 0, Reveal = 1, Timeout = 2 }
-
-let feesForOwner = 0;
-let feesForVerifier = 0;
+enum Action { 
+    Initialize = 0, 
+    Reveal = 1, 
+    Timeout = 2 
+}
 
 class HTLCInfo {
     owner: Buffer = Buffer.alloc(32);
@@ -84,21 +86,19 @@ class Secret {
     ]);
 }
 
+let feesForOwner = 0;
+let feesForVerifier = 0;
+
+// The amount of lamports that reppresent the minimum cost of the service of the contract
+const minimumAmount = 0.1 * LAMPORTS_PER_SOL;
+
 async function main() {
 
     const connection = new Connection(clusterApiUrl("testnet"), "confirmed");
 
     const programId = await getPublicKeyFromFile(PROGRAM_KEYPAIR_PATH);
     const kpOwner = await getSystemKeyPair();
-    const kpVerifier = Keypair.generate();
-
-    const recepientAccount = await connection.getAccountInfo(kpVerifier.publicKey);
-    if (recepientAccount === null) {
-        await connection.requestAirdrop(
-            kpVerifier.publicKey,
-            LAMPORTS_PER_SOL
-        );
-    }
+    const kpVerifier = await generateKeyPair(connection, 1)
 
     console.log("programId:  " + programId.toBase58());
     console.log("owner:    ", kpOwner.publicKey.toBase58());
@@ -138,6 +138,8 @@ async function main() {
 
     let feesForOwnerTrace1 = feesForOwner;
     let feesForVerifierTrace1 = feesForVerifier;
+
+    // Reset fees
     feesForOwner = 0;
     feesForVerifier = 0;
 
@@ -169,6 +171,8 @@ async function main() {
 
     let feesForOwnerTrace2 = feesForOwner;
     let feesForVerifierTrace2 = feesForVerifier;
+
+    // Reset fees
     feesForOwner = 0;
     feesForVerifier = 0;
 
@@ -220,7 +224,6 @@ async function initialize(
 
      // Instruction to create the Writing Account account
     const rentExemptionAmount = await connection.getMinimumBalanceForRentExemption(data.length);
-    let minimumAmount = 0.1 * LAMPORTS_PER_SOL;
     const createWritingAccountInstruction = SystemProgram.createAccountWithSeed({
         fromPubkey: kpSender.publicKey,
         basePubkey: kpSender.publicKey,

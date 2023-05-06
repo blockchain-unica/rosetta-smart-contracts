@@ -23,6 +23,7 @@ import {
 } from "@solana/spl-token";
 
 import {
+    generateKeyPair,
     getPublicKeyFromFile,
     getSystemKeyPair,
     getTransactionFees,
@@ -90,7 +91,10 @@ class PassedAmount {
 
 const PROGRAM_KEYPAIR_PATH = path.resolve(__dirname, '../solana/dist/token_transfer/token_transfer-keypair.json');
 
-enum Action { Deposit = 0, Withdraw = 1 }
+enum Action { 
+    Deposit = 0, 
+    Withdraw = 1 
+}
 
 let feesForSender = 0;
 let feesForRecipient = 0;
@@ -100,7 +104,7 @@ async function main() {
 
     const programId = await getPublicKeyFromFile(PROGRAM_KEYPAIR_PATH);
     const senderKeypair = await getSystemKeyPair();
-    const recipientKeypair = Keypair.generate();
+    const recipientKeypair = await generateKeyPair(connection, 1);
 
     console.log("programId:      " + programId.toBase58());
     console.log("Sender:        ", senderKeypair.publicKey.toBase58());
@@ -205,10 +209,6 @@ async function setup(
         initialBalance * Math.pow(10, decimals), // amount. if your decimals is 8, you mint 10^8 for 1 token
         decimals
     );
-
-    // Airdrop some SOL to the recipient
-    airdropSignature = await connection.requestAirdrop(recipientKeypair.publicKey, LAMPORTS_PER_SOL);
-    await connection.confirmTransaction(airdropSignature);
 
     // Create the token associated account for the recipient
     const recipientTokenAccount = await getOrCreateAssociatedTokenAccount(

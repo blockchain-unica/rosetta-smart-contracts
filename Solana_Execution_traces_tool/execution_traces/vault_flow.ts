@@ -11,6 +11,7 @@ import {
 } from '@solana/web3.js';
 
 import {
+    generateKeyPair,
     getPublicKeyFromFile,
     getSystemKeyPair,
     getTransactionFees,
@@ -111,26 +112,8 @@ async function main() {
 
     const programId = await getPublicKeyFromFile(PROGRAM_KEYPAIR_PATH);
     const kpOwner = await getSystemKeyPair();
-    const kpRecovery = Keypair.generate();
-    const kpReceiver = Keypair.generate();
-
-    const recoveryAccount = await connection.getAccountInfo(kpRecovery.publicKey);
-    if (recoveryAccount === null) {
-        const signature = await connection.requestAirdrop(
-            kpRecovery.publicKey,
-            LAMPORTS_PER_SOL
-        );
-        await connection.confirmTransaction(signature);
-    }
-
-    const recepientAccount = await connection.getAccountInfo(kpReceiver.publicKey);
-    if (recepientAccount === null) {
-        const signature = await connection.requestAirdrop(
-            kpReceiver.publicKey,
-            LAMPORTS_PER_SOL
-        );
-        await connection.confirmTransaction(signature);
-    }
+    const kpRecovery = await generateKeyPair(connection, 1);
+    const kpReceiver = await generateKeyPair(connection, 1);
 
     let ownerBalance = await connection.getBalance(kpOwner.publicKey);
     let receiverBalance = await connection.getBalance(kpReceiver.publicKey);
@@ -167,10 +150,10 @@ async function main() {
         withdrawAmount,
     );
 
-    // chose 0 to finalize, 1 to cancel
-    const choice: number = 0;
-    if (choice === 1) {
-        // 3. Finalize  REQ -> IDLE
+    // Chose if to finalize or to cancel
+    const choice: Action = Action.Cancel;
+    switch(choice.valueOf()){
+        case Action.Finalize:// 3. Finalize  REQ -> IDLE
         console.log("\n--- Finalize. Actor: the onwer ---");
         await new Promise(resolve => setTimeout(resolve, 3000 * waitTime));
         await finalize(
@@ -179,8 +162,8 @@ async function main() {
             kpOwner,
             stateAccountPublicKey
         );
-    } else {
-        // 3. Cancel REQ -> IDLE
+        break;
+        case Action.Cancel:// 3. Cancel REQ -> IDLE
         console.log("\n--- Cancel. Actor: the Reovery ---");
         await cancel(
             connection,
@@ -188,6 +171,8 @@ async function main() {
             kpRecovery,
             stateAccountPublicKey
         );
+        break;
+
     }
 
     // Costs

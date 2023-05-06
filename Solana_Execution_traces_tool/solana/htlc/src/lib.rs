@@ -24,7 +24,6 @@ pub fn process_instruction(
     if instruction_data.len() == 0 {
         return Err(ProgramError::InvalidInstructionData);
     }
-
     match instruction_data[0] {
         0 => initialize(
             program_id,
@@ -63,35 +62,27 @@ fn initialize(
     instruction_data: &[u8],
 ) -> ProgramResult {
     let accounts_iter: &mut std::slice::Iter<AccountInfo> = &mut accounts.iter();
-
     let sender: &AccountInfo = next_account_info(accounts_iter)?;
     let writing_account: &AccountInfo = next_account_info(accounts_iter)?;
 
     if !sender.is_signer {
-        msg!("owner should be signer");
+        msg!("The owner account should be the signer");
         return Err(ProgramError::MissingRequiredSignature);
     }
 
     if writing_account.owner != program_id {
-        msg!("writing_account isn't owned by program");
+        msg!("The writing account isn't owned by program");
         return Err(ProgramError::InvalidAccountData);
     }
 
-    let mut htlc_info: HTLCInfo = HTLCInfo::try_from_slice(&instruction_data)
-        .expect("Instruction data serialization didn't worked");
-
-    if htlc_info.owner != *sender.key {
-        msg!("Invaild instruction data: the owner should be the sender of the transaction");
-        return Err(ProgramError::InvalidInstructionData);
-    }
-
-    let current_slot: u64 = Clock::get()?.slot;
-    htlc_info.reveal_timeout = current_slot + htlc_info.delay;
+    let mut htlc_info: HTLCInfo = HTLCInfo::try_from_slice(&instruction_data)?;
+    htlc_info.owner = *sender.key;
+    htlc_info.reveal_timeout = Clock::get()?.slot + htlc_info.delay;
 
     let rent_exemption: u64 = Rent::get()?.minimum_balance(writing_account.data_len());
     let cost: u64 = LAMPORTS_PER_SOL / 10; // 0.1 SOL
     if **writing_account.lamports.borrow() < rent_exemption + cost {
-        msg!("The balance of writing_account is under rent_exemption + the cost of the service{}", cost/LAMPORTS_PER_SOL);
+        msg!("The balance of writing account is under rent exemption + the cost of the service {}", cost/LAMPORTS_PER_SOL);
         return Err(ProgramError::InsufficientFunds);
     }
 
@@ -111,26 +102,24 @@ fn reveal(program_id: &Pubkey, accounts: &[AccountInfo], instruction_data: &[u8]
     let writing_account: &AccountInfo = next_account_info(accounts_iter)?;
 
     if !sender.is_signer {
-        msg!("sender should be signer");
+        msg!("The sender account should be signer");
         return Err(ProgramError::MissingRequiredSignature);
     }
 
     if writing_account.owner != program_id {
-        msg!("writing_account isn't owned by program");
+        msg!("The writing account isn't owned by the program");
         return Err(ProgramError::InvalidAccountData);
     }
 
-    let secret: Secret = Secret::try_from_slice(&instruction_data)
-        .expect("Instruction data serialization didn't worked");
-
-    let htlc_info: HTLCInfo = HTLCInfo::try_from_slice(*writing_account.data.borrow())
-        .expect("Error deserialaizing data");
+    let htlc_info: HTLCInfo = HTLCInfo::try_from_slice(*writing_account.data.borrow())?;
 
     if sender.key != &htlc_info.owner {
         msg!("Transaction sender is not the owner of the HTLC");
         return Err(ProgramError::InvalidInstructionData);
     }
 
+    // Verify the secret
+    let secret: Secret = Secret::try_from_slice(&instruction_data)?;
     let h: [u8; 32] = hash_data(&secret.secret_string.into_bytes());
     if h != htlc_info.hashed_secret {
         msg!("Invaild secret");
@@ -154,17 +143,16 @@ fn timeout(
     let verifier: &AccountInfo = next_account_info(accounts_iter)?;
 
     if !sender.is_signer {
-        msg!("sender should be signer");
+        msg!("The sender should be signer");
         return Err(ProgramError::MissingRequiredSignature);
     }
 
     if writing_account.owner != program_id {
-        msg!("writing_account isn't owned by program");
+        msg!("The writing account isn't owned by program");
         return Err(ProgramError::InvalidAccountData);
     }
 
-    let htlc_info: HTLCInfo = HTLCInfo::try_from_slice(*writing_account.data.borrow())
-        .expect("Error deserialaizing data");
+    let htlc_info: HTLCInfo = HTLCInfo::try_from_slice(*writing_account.data.borrow())?;
 
     if verifier.key != &htlc_info.verifier {
         msg!("The proposed verifier is not the verifier of the HTLC");

@@ -5,6 +5,7 @@ import yaml from 'yaml';
 import {
   Connection,
   Keypair,
+  LAMPORTS_PER_SOL,
   PublicKey,
   Transaction,
 } from '@solana/web3.js';
@@ -40,6 +41,21 @@ export async function getKeyPairFromFile(keyPairPath: string): Promise<Keypair> 
   const secretKeyJson = await fs.promises.readFile(keyPairPath, 'utf8');
   const secretKey = Uint8Array.from(JSON.parse(secretKeyJson));
   return Keypair.fromSecretKey(secretKey);
+}
+
+export async function generateKeyPair(connection: Connection, balanceInSOL: number): Promise<Keypair> {
+  const kp = Keypair.generate();
+  const accountInfo = await connection.getAccountInfo(kp.publicKey);
+
+  if (accountInfo === null) {
+    const signature = await connection.requestAirdrop(
+      kp.publicKey,
+      LAMPORTS_PER_SOL * balanceInSOL
+    );
+    await connection.confirmTransaction(signature);
+  }
+
+  return kp;
 }
 
 export async function getPublicKeyFromFile(keyPairPath: string): Promise<PublicKey> {

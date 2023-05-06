@@ -34,7 +34,6 @@ pub fn process_instruction(
     if instruction_data.len() == 0 {
         return Err(ProgramError::InvalidInstructionData);
     }
-
     match instruction_data[0] {
         0 => deposit(
             program_id,
@@ -72,20 +71,19 @@ fn deposit(
     // The state account that will store the deposit info
     let state_account: &AccountInfo = next_account_info(accounts_iter)?;
     if state_account.owner != program_id {
-        msg!("info_data_account isn't owned by program");
+        msg!("The state account isn't owned by program");
         return Err(ProgramError::InvalidAccountData);
     }
 
     // The state account should have enough balance to be rent exempted
     let rent_exemption: u64 = Rent::get()?.minimum_balance(state_account.data_len());
     if **state_account.lamports.borrow() < rent_exemption {
-        msg!("The balance of state account should be more than rent_exemption");
+        msg!("The state account should be rent exempted");
         return Err(ProgramError::InsufficientFunds);
     }
 
     // Deserialize the amount that the sender wants to deposit from instruction data
-    let passed_amount: PassedAmount = PassedAmount::try_from_slice(&instruction_data)
-        .expect("Instruction data serialization didn't worked");
+    let passed_amount: PassedAmount = PassedAmount::try_from_slice(&instruction_data)?;
 
     // The reciever's token account to deposit to
     let reciever_token_account: &AccountInfo = next_account_info(accounts_iter)?;
@@ -153,8 +151,7 @@ fn withdraw(
 
     // The state account that stores the deposit info
     let state_account = next_account_info(accounts_iter)?;
-    let mut deposit_info: DepositInfo = DepositInfo::try_from_slice(*state_account.data.borrow())
-        .expect("Error deserialaizing data");
+    let mut deposit_info: DepositInfo = DepositInfo::try_from_slice(*state_account.data.borrow())?;
 
     let token_program = next_account_info(accounts_iter)?;
 
@@ -163,8 +160,7 @@ fn withdraw(
     let (pda, nonce) = Pubkey::find_program_address(&[b"TokenTransfer"], program_id);
 
     // Deserialize the amount that the recipient wants to withdraw
-    let passed_amount: PassedAmount = PassedAmount::try_from_slice(&instruction_data)
-        .expect("Instruction data serialization didn't worked");
+    let passed_amount: PassedAmount = PassedAmount::try_from_slice(&instruction_data)?;
 
     // Calling the token program to transfer tokens to the recipient
     invoke_signed(

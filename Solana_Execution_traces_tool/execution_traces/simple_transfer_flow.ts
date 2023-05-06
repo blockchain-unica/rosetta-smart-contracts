@@ -11,6 +11,7 @@ import {
 } from '@solana/web3.js';
 
 import {
+    generateKeyPair,
     getPublicKeyFromFile,
     getSystemKeyPair,
     getTransactionFees,
@@ -22,7 +23,10 @@ import { Buffer } from 'buffer';
 
 const PROGRAM_KEYPAIR_PATH = path.resolve(__dirname, '../solana/dist/simple_transfer/simple_transfer-keypair.json');
 
-enum Action { Deposit = 0, Withdraw = 1 }
+enum Action {
+    Deposit = 0,
+    Withdraw = 1
+}
 
 class DonationDetails {
     sender: Buffer = Buffer.alloc(32);
@@ -80,15 +84,7 @@ async function main() {
 
     const programId = await getPublicKeyFromFile(PROGRAM_KEYPAIR_PATH);
     const kpSender = await getSystemKeyPair();
-    const kpRecipient = Keypair.generate();
-
-    const recepientAccount = await connection.getAccountInfo(kpRecipient.publicKey);
-    if (recepientAccount === null) {
-        await connection.requestAirdrop(
-            kpRecipient.publicKey,
-            LAMPORTS_PER_SOL
-        );
-    }
+    const kpRecipient = await generateKeyPair(connection, 1);
 
     console.log("programId:  " + programId.toBase58());
     console.log("sender:    ", kpSender.publicKey.toBase58());
@@ -160,9 +156,8 @@ async function deposit(
         programId,
     );
 
+    // Instruction to create the Writing Account account
     const rentExemptionAmount = await connection.getMinimumBalanceForRentExemption(data.length);
-
-     // Instruction to create the Writing Account account
     const createWritingAccountInstruction = SystemProgram.createAccountWithSeed({
         fromPubkey: kpSender.publicKey,
         basePubkey: kpSender.publicKey,
@@ -183,7 +178,11 @@ async function deposit(
         data: data_to_send,
     })
 
-    const transactionDeposit = new Transaction().add(createWritingAccountInstruction).add(depositInstruction);
+    const transactionDeposit = new Transaction().add(
+        createWritingAccountInstruction,
+        depositInstruction
+    );
+
     await sendAndConfirmTransaction(connection, transactionDeposit, [kpSender]);
 
     let tFees = await getTransactionFees(transactionDeposit, connection);
@@ -204,11 +203,19 @@ async function withdraw(
     let data = borsh.serialize(WithdrawRequest.schema, withdraw_request);
     let data_to_send = Buffer.from(new Uint8Array([Action.Withdraw, ...data]));
 
+    // Retrieve the state of the writing account to get the sender (in case the program will return the rent fees to the sender)
+    const writingAccountInfo = await connection.getAccountInfo(writingAccountPublicKey);
+    if (writingAccountInfo === null) {
+        throw 'Error: cannot find the writing account';
+    }
+    const stateInfo = borsh.deserialize(DonationDetails.schema, DonationDetails, writingAccountInfo.data,);
+
     const transaction = new Transaction().add(
         new TransactionInstruction({
             keys: [
-                { pubkey: writingAccountPublicKey, isSigner: false, isWritable: true },
+                { pubkey: new PublicKey(stateInfo.sender), isSigner: false, isWritable: true },
                 { pubkey: kpRecipient.publicKey, isSigner: true, isWritable: false },
+                { pubkey: writingAccountPublicKey, isSigner: false, isWritable: true },
             ],
             programId,
             data: data_to_send,

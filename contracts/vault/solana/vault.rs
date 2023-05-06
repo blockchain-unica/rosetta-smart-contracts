@@ -68,7 +68,6 @@ fn initialize(
     accounts: &[AccountInfo],
     instruction_data: &[u8],
 ) -> ProgramResult {
-    msg!("initialize");
     let accounts_iter: &mut std::slice::Iter<AccountInfo> = &mut accounts.iter();
 
     let owner_account: &AccountInfo = next_account_info(accounts_iter)?;
@@ -76,7 +75,7 @@ fn initialize(
     let recovery_account: &AccountInfo = next_account_info(accounts_iter)?;
 
     if !owner_account.is_signer {
-        msg!("sender should be signer");
+        msg!("The owner should be signer");
         return Err(ProgramError::MissingRequiredSignature);
     }
 
@@ -116,28 +115,24 @@ fn withdraw(
     accounts: &[AccountInfo],
     instruction_data: &[u8],
 ) -> ProgramResult {
-    msg!("withdraw");
     let accounts_iter: &mut std::slice::Iter<AccountInfo> = &mut accounts.iter();
 
     let owner_account: &AccountInfo = next_account_info(accounts_iter)?;
     let state_account: &AccountInfo = next_account_info(accounts_iter)?;
     let receiver_account: &AccountInfo = next_account_info(accounts_iter)?;
 
-    let passed_amount: PassedAmount = PassedAmount::try_from_slice(&instruction_data)
-        .expect("Instruction data serialization didn't worked");
-    msg!("Amount to withdraw: {}", passed_amount.amount);
+    let passed_amount: PassedAmount = PassedAmount::try_from_slice(&instruction_data)?;
 
-    let mut vault_info: VaultInfo =
-        VaultInfo::try_from_slice(*state_account.data.borrow()).expect("Error deserialaizing data");
+    let mut vault_info: VaultInfo = VaultInfo::try_from_slice(*state_account.data.borrow())?;
 
     if !owner_account.is_signer {
-        msg!("sender should be signer");
+        msg!("The sender should be signer");
         return Err(ProgramError::MissingRequiredSignature);
     }
 
     let rent_exemption = Rent::get()?.minimum_balance(state_account.data_len());
     if **state_account.lamports.borrow() - rent_exemption < passed_amount.amount {
-        msg!("Insufficent balance in the State Account to witdraw the defined amount");
+        msg!("Insufficent balance in the state account to witdraw the defined amount");
         return Err(ProgramError::InsufficientFunds);
     }
 
@@ -167,7 +162,6 @@ fn withdraw(
 }
 
 fn finalize(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
-    msg!("Finalize");
     let accounts_iter: &mut std::slice::Iter<AccountInfo> = &mut accounts.iter();
 
     let owner_account: &AccountInfo = next_account_info(accounts_iter)?;
@@ -179,11 +173,10 @@ fn finalize(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
         return Err(ProgramError::InvalidAccountData);
     }
 
-    let mut vault_info: VaultInfo =
-        VaultInfo::try_from_slice(*state_account.data.borrow()).expect("Error deserialaizing data");
+    let mut vault_info: VaultInfo = VaultInfo::try_from_slice(*state_account.data.borrow())?;
 
     if !owner_account.is_signer {
-        msg!("sender should be signer");
+        msg!("The owner account should be signer");
         return Err(ProgramError::MissingRequiredSignature);
     }
 
@@ -194,7 +187,7 @@ fn finalize(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
 
     let rent_exemption = Rent::get()?.minimum_balance(state_account.data_len());
     if **state_account.lamports.borrow() - rent_exemption < vault_info.amount {
-        msg!("Insufficent balance in the State Account to witdraw the defined amount");
+        msg!("Insufficent balance in the state account to witdraw the defined amount");
         return Err(ProgramError::InsufficientFunds);
     }
 
@@ -225,7 +218,7 @@ fn cancel(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
     let state_account: &AccountInfo = next_account_info(accounts_iter)?;
 
     if !recovery_account.is_signer {
-        msg!("sender should be signer");
+        msg!("The recovery account should be signer");
         return Err(ProgramError::MissingRequiredSignature);
     }
 
@@ -234,8 +227,7 @@ fn cancel(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
         return Err(ProgramError::InvalidAccountData);
     }
 
-    let mut vault_info: VaultInfo =
-        VaultInfo::try_from_slice(*state_account.data.borrow()).expect("Error deserialaizing data");
+    let mut vault_info: VaultInfo = VaultInfo::try_from_slice(*state_account.data.borrow())?;
 
     if vault_info.state != State::Req {
         msg!("The vault isn't in Req state");

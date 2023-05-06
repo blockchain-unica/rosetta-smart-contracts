@@ -1,11 +1,21 @@
 
-This tool allows to run traces for various smart contracts in the Solana Blockchain in order to perform a cost analysis.
+# Solana Execution Traces Tool
+
+This tool allows to run traces for various smart contracts in the [Solana Blockchain](https://solana.com) in order to perform a cost analysis.
 
 ## Requirements
 
 You will need [Solana Tools](https://docs.solana.com/cli/install-solana-cli-tools) to compile the source files, deploy and generate your own File System Wallet Keypair. In the following sections we will explain in detail how to use Solana Tools to do these operations.
 
 For cost analysis, however, it will be necessary to run the off chain code via npm, so you will need to install [Node.js and npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm).
+
+So before proceeding you should be able to run the following commands
+
+```sh
+$ solana --version
+$ cargo --version
+$ node -v
+```
 
 ## Initial Configurations
 
@@ -19,18 +29,17 @@ Connect to the Testnet cluster:
 $ solana config set --url https://api.testnet.solana.com
 ```
 
-For subsequent operatios as deployment and other transactions you will need to have a certain amount of SOL. You can request a free SOL airdrop to your new wallet.
+For subsequent operatios as deployment and other transactions you will need to have a certain amount of SOL. You can request a free SOL airdrop to your new wallet by running:
 ```sh
 $ solana airdrop 5
 ```
 
-Then you can see if the airdrop operation was successful by checking your balance 
-by running:
+Then you can see if the airdrop operation was successful by checking your balance:
 ```sh
 $ solana balance
 ```
 
-The address can be obtained with:
+Your address can be obtained with:
 ```sh
 $ solana address 	
 ```
@@ -56,7 +65,7 @@ In the following example `<SMART_CONTRACT_NAME>` stands for a contract chosen by
 - token_transfer
 - vault
 
-Now we can compile and deploy the on chain program. 
+Now we can compile and deploy the on chain program:
 ```sh
 $ npm run build:<SMART_CONTRACT_NAME>
 ```
@@ -68,4 +77,8 @@ At the end of the dolpoyment the program id of the contract should be displayed.
 Now we can run the off chain script to see the execution costs.
 ```sh
 $ npm run costs:<SMART_CONTRACT_NAME> 
+```
+For cleaning from the build of a specific contract:
+```sh
+$ npm run clean:<SMART_CONTRACT_NAME> 
 ```
