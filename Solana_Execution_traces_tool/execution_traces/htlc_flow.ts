@@ -13,7 +13,6 @@ import {
 import {
     generateKeyPair,
     getPublicKeyFromFile,
-    getSystemKeyPair,
     getTransactionFees,
     hashSHA256,
 } from './utils';
@@ -24,10 +23,10 @@ import { Buffer } from 'buffer';
 
 const PROGRAM_KEYPAIR_PATH = path.resolve(__dirname, '../solana/dist/htlc/htlc-keypair.json');
 
-enum Action { 
-    Initialize = 0, 
-    Reveal = 1, 
-    Timeout = 2 
+enum Action {
+    Initialize = 0,
+    Reveal = 1,
+    Timeout = 2
 }
 
 class HTLCInfo {
@@ -66,26 +65,6 @@ class HTLCInfo {
     ]);
 }
 
-class Secret {
-    secret_string: string = '';
-
-    constructor(fields: {
-        secret_string: string,
-    } | undefined = undefined) {
-        if (fields) {
-            this.secret_string = fields.secret_string;
-        }
-    }
-
-    static schema = new Map([
-        [Secret, {
-            kind: 'struct', fields: [
-                ['secret_string', 'string'],
-            ]
-        }],
-    ]);
-}
-
 let feesForOwner = 0;
 let feesForVerifier = 0;
 
@@ -97,12 +76,12 @@ async function main() {
     const connection = new Connection(clusterApiUrl("testnet"), "confirmed");
 
     const programId = await getPublicKeyFromFile(PROGRAM_KEYPAIR_PATH);
-    const kpOwner = await getSystemKeyPair();
-    const kpVerifier = await generateKeyPair(connection, 1)
+    const kpOwner = await generateKeyPair(connection, 1);
+    const kpVerifier = await generateKeyPair(connection, 1);
 
-    console.log("programId:  " + programId.toBase58());
-    console.log("owner:    ", kpOwner.publicKey.toBase58());
-    console.log("verifier: ", kpVerifier.publicKey.toBase58());
+    console.log("programId: ", programId.toBase58());
+    console.log("owner:     ", kpOwner.publicKey.toBase58());
+    console.log("verifier:  ", kpVerifier.publicKey.toBase58());
 
     /******************* Trace 1 *********************/
     console.log("\n---       Trace 1       ---");
@@ -222,7 +201,7 @@ async function initialize(
         programId,
     );
 
-     // Instruction to create the Writing Account account
+    // Instruction to create the Writing Account account
     const rentExemptionAmount = await connection.getMinimumBalanceForRentExemption(data.length);
     const createWritingAccountInstruction = SystemProgram.createAccountWithSeed({
         fromPubkey: kpSender.publicKey,
@@ -261,10 +240,6 @@ async function reveal(
     writingAccountPublicKey: PublicKey,
     secret: string) {
 
-    let secretStruct = new Secret({ secret_string: secret });
-    let data = borsh.serialize(Secret.schema, secretStruct);
-    let data_to_send = Buffer.from(new Uint8Array([Action.Reveal, ...data]));
-
     const revealTransaction = new Transaction().add(
         new TransactionInstruction({
             keys: [
@@ -272,7 +247,7 @@ async function reveal(
                 { pubkey: writingAccountPublicKey, isSigner: false, isWritable: true },
             ],
             programId,
-            data: data_to_send,
+            data: Buffer.from(new Uint8Array([Action.Reveal, ...Buffer.from(secret)]))
         }));
     await sendAndConfirmTransaction(connection, revealTransaction, [kpSender]);
 

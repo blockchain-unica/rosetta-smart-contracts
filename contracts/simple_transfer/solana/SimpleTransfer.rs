@@ -83,11 +83,6 @@ fn deposit(
     Ok(())
 }
 
-#[derive(BorshSerialize, BorshDeserialize, Debug)]
-struct WithdrawRequest {
-    pub amount: u64,
-}
-
 fn withdraw(
     program_id: &Pubkey,
     accounts: &[AccountInfo],
@@ -114,16 +109,19 @@ fn withdraw(
         return Err(ProgramError::InvalidAccountData);
     }
 
-    let withdraw_request: WithdrawRequest = WithdrawRequest::try_from_slice(&instruction_data)?;
+    let withdraw_amount: u64 = instruction_data
+        .iter()
+        .rev()
+        .fold(0, |acc, &x| (acc << 8) + x as u64);
 
     let rent_exemption = Rent::get()?.minimum_balance(writing_account.data_len());
-    if **writing_account.lamports.borrow() - rent_exemption < withdraw_request.amount {
+    if **writing_account.lamports.borrow() - rent_exemption < withdraw_amount {
         msg!("Insufficent balance in the writing account for withdraw");
         return Err(ProgramError::InsufficientFunds);
     }
 
-    **writing_account.try_borrow_mut_lamports()? -= withdraw_request.amount;
-    **recipient.try_borrow_mut_lamports()? += withdraw_request.amount;
+    **writing_account.try_borrow_mut_lamports()? -= withdraw_amount;
+    **recipient.try_borrow_mut_lamports()? += withdraw_amount;
 
     if **writing_account.lamports.borrow() <= rent_exemption {
         // Return rent founds to the sender of the deposit
@@ -131,7 +129,7 @@ fn withdraw(
         **sender.try_borrow_mut_lamports()? += amount_to_return;
         **writing_account.try_borrow_mut_lamports()? -= amount_to_return;
     } else {
-        donation.amount -= withdraw_request.amount;
+        donation.amount -= withdraw_amount;
         donation.serialize(&mut &mut writing_account.data.borrow_mut()[..])?;
     }
 

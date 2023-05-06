@@ -11,9 +11,9 @@ import {
 } from '@solana/web3.js';
 
 import {
+    buildBufferFromActionAndNumber,
     generateKeyPair,
     getPublicKeyFromFile,
-    getSystemKeyPair,
     getTransactionFees,
 } from './utils';
 
@@ -56,37 +56,18 @@ class DonationDetails {
     ]);
 }
 
-class WithdrawRequest {
-    amount: number = 0;
-
-    constructor(fields: {
-        amount: number,
-    } | undefined = undefined) {
-        if (fields) {
-            this.amount = fields.amount;
-        }
-    }
-
-    static schema = new Map([
-        [WithdrawRequest, {
-            kind: 'struct', fields: [
-                ['amount', 'u64'],
-            ]
-        }],
-    ]);
-}
-
 let feesForSender = 0;
 let feesForRecipient = 0;
 
 async function main() {
+    
     const connection = new Connection(clusterApiUrl("testnet"), "confirmed");
 
     const programId = await getPublicKeyFromFile(PROGRAM_KEYPAIR_PATH);
-    const kpSender = await getSystemKeyPair();
+    const kpSender = await generateKeyPair(connection, 1);
     const kpRecipient = await generateKeyPair(connection, 1);
 
-    console.log("programId:  " + programId.toBase58());
+    console.log("programId: ", programId.toBase58());
     console.log("sender:    ", kpSender.publicKey.toBase58());
     console.log("recipient: ", kpRecipient.publicKey.toBase58());
 
@@ -199,9 +180,6 @@ async function withdraw(
     amount: number,
     writingAccountPublicKey: PublicKey
 ): Promise<void> {
-    let withdraw_request = new WithdrawRequest({ amount: amount });
-    let data = borsh.serialize(WithdrawRequest.schema, withdraw_request);
-    let data_to_send = Buffer.from(new Uint8Array([Action.Withdraw, ...data]));
 
     // Retrieve the state of the writing account to get the sender (in case the program will return the rent fees to the sender)
     const writingAccountInfo = await connection.getAccountInfo(writingAccountPublicKey);
@@ -218,7 +196,7 @@ async function withdraw(
                 { pubkey: writingAccountPublicKey, isSigner: false, isWritable: true },
             ],
             programId,
-            data: data_to_send,
+            data: buildBufferFromActionAndNumber(Action.Withdraw, amount)
         }));
 
     await sendAndConfirmTransaction(connection, transaction, [kpRecipient]);

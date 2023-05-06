@@ -21,11 +21,6 @@ struct DepositInfo {
     pub amount: u64,
 }
 
-#[derive(BorshSerialize, BorshDeserialize, Debug)]
-struct PassedAmount {
-    pub amount: u64,
-}
-
 pub fn process_instruction(
     program_id: &Pubkey,
     accounts: &[AccountInfo],
@@ -82,8 +77,11 @@ fn deposit(
         return Err(ProgramError::InsufficientFunds);
     }
 
-    // Deserialize the amount that the sender wants to deposit from instruction data
-    let passed_amount: PassedAmount = PassedAmount::try_from_slice(&instruction_data)?;
+    // Deserialize from instruction data the amount that the sender wants to deposit
+    let amount_to_deposit: u64 = instruction_data
+        .iter()
+        .rev()
+        .fold(0, |acc, &x| (acc << 8) + x as u64);
 
     // The reciever's token account to deposit to
     let reciever_token_account: &AccountInfo = next_account_info(accounts_iter)?;
@@ -93,7 +91,7 @@ fn deposit(
         sender: *sender.key,
         temp_token_account: *temp_token_account.key,
         reciever_token_account: *reciever_token_account.key,
-        amount: passed_amount.amount,
+        amount: amount_to_deposit,
     };
 
     // Serialize the DepositInfo struct instance and save it to the state account
@@ -160,7 +158,10 @@ fn withdraw(
     let (pda, nonce) = Pubkey::find_program_address(&[b"TokenTransfer"], program_id);
 
     // Deserialize the amount that the recipient wants to withdraw
-    let passed_amount: PassedAmount = PassedAmount::try_from_slice(&instruction_data)?;
+    let amount_to_withdraw: u64 = instruction_data
+        .iter()
+        .rev()
+        .fold(0, |acc, &x| (acc << 8) + x as u64);
 
     // Calling the token program to transfer tokens to the recipient
     invoke_signed(
@@ -170,7 +171,7 @@ fn withdraw(
             &deposit_info.reciever_token_account,
             &pda, //owner
             &[&pda],
-            passed_amount.amount * 1000000000,
+            amount_to_withdraw * 1000000000,
         )?,
         &[
             temp_token_account.clone(),
@@ -182,7 +183,7 @@ fn withdraw(
     )?;
 
     // Updating the deposit info
-    deposit_info.amount = deposit_info.amount - passed_amount.amount;
+    deposit_info.amount = deposit_info.amount - amount_to_withdraw;
     deposit_info.serialize(&mut &mut state_account.data.borrow_mut()[..])?;
 
     if deposit_info.amount <= 0 {

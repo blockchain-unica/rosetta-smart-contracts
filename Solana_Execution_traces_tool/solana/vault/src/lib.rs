@@ -121,7 +121,10 @@ fn withdraw(
     let state_account: &AccountInfo = next_account_info(accounts_iter)?;
     let receiver_account: &AccountInfo = next_account_info(accounts_iter)?;
 
-    let passed_amount: PassedAmount = PassedAmount::try_from_slice(&instruction_data)?;
+    let withdraw_amount: u64 = instruction_data
+        .iter()
+        .rev()
+        .fold(0, |acc, &x| (acc << 8) + x as u64);
 
     let mut vault_info: VaultInfo = VaultInfo::try_from_slice(*state_account.data.borrow())?;
 
@@ -131,7 +134,7 @@ fn withdraw(
     }
 
     let rent_exemption = Rent::get()?.minimum_balance(state_account.data_len());
-    if **state_account.lamports.borrow() - rent_exemption < passed_amount.amount {
+    if **state_account.lamports.borrow() - rent_exemption < withdraw_amount {
         msg!("Insufficent balance in the state account to witdraw the defined amount");
         return Err(ProgramError::InsufficientFunds);
     }
@@ -153,7 +156,7 @@ fn withdraw(
 
     vault_info.receiver = *receiver_account.key;
     vault_info.request_time = Clock::get()?.slot;
-    vault_info.amount = passed_amount.amount;
+    vault_info.amount = withdraw_amount;
     vault_info.state = State::Req;
 
     vault_info.serialize(&mut &mut state_account.try_borrow_mut_data()?[..])?;

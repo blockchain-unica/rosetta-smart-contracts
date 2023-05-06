@@ -35,11 +35,7 @@ pub fn process_instruction(
             accounts,
             &instruction_data[1..instruction_data.len()],
         ),
-        2 => timeout(
-            program_id,
-            accounts,
-            &instruction_data[1..instruction_data.len()],
-        ),
+        2 => timeout(program_id, accounts),
         _ => {
             msg!("Didn't found the entrypoint required");
             Err(ProgramError::InvalidInstructionData)
@@ -82,7 +78,10 @@ fn initialize(
     let rent_exemption: u64 = Rent::get()?.minimum_balance(writing_account.data_len());
     let cost: u64 = LAMPORTS_PER_SOL / 10; // 0.1 SOL
     if **writing_account.lamports.borrow() < rent_exemption + cost {
-        msg!("The balance of writing account is under rent exemption + the cost of the service {}", cost/LAMPORTS_PER_SOL);
+        msg!(
+            "The balance of writing account is under rent exemption + the cost of the service {}",
+            cost / LAMPORTS_PER_SOL
+        );
         return Err(ProgramError::InsufficientFunds);
     }
 
@@ -119,8 +118,9 @@ fn reveal(program_id: &Pubkey, accounts: &[AccountInfo], instruction_data: &[u8]
     }
 
     // Verify the secret
-    let secret: Secret = Secret::try_from_slice(&instruction_data)?;
-    let h: [u8; 32] = hash_data(&secret.secret_string.into_bytes());
+    let secret_string =
+        String::from_utf8(instruction_data[..instruction_data.len()].to_vec()).unwrap();
+    let h: [u8; 32] = hash_data(&secret_string.into_bytes());
     if h != htlc_info.hashed_secret {
         msg!("Invaild secret");
         return Err(ProgramError::InvalidInstructionData);
@@ -132,11 +132,7 @@ fn reveal(program_id: &Pubkey, accounts: &[AccountInfo], instruction_data: &[u8]
     Ok(())
 }
 
-fn timeout(
-    program_id: &Pubkey,
-    accounts: &[AccountInfo],
-    _instruction_data: &[u8],
-) -> ProgramResult {
+fn timeout(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
     let accounts_iter: &mut std::slice::Iter<AccountInfo> = &mut accounts.iter();
     let writing_account: &AccountInfo = next_account_info(accounts_iter)?;
     let sender: &AccountInfo = next_account_info(accounts_iter)?;

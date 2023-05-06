@@ -11,9 +11,9 @@ import {
 } from '@solana/web3.js';
 
 import {
+    buildBufferFromActionAndNumber,
     generateKeyPair,
     getPublicKeyFromFile,
-    getSystemKeyPair,
     getTransactionFees,
 } from './utils';
 
@@ -84,34 +84,15 @@ class VaultInfo {
     ).length
 };
 
-class PassedAmount {
-    amount: number = 0;
-
-    constructor(fields: {
-        amount: number,
-    } | undefined = undefined) {
-        if (fields) {
-            this.amount = fields.amount;
-        }
-    }
-
-    static schema = new Map([
-        [PassedAmount, {
-            kind: 'struct', fields: [
-                ['amount', 'u64'],
-            ]
-        }],
-    ]);
-}
-
 let feesForOwner = 0;
 let feesForRecovery = 0;
 
 async function main() {
+
     const connection = new Connection(clusterApiUrl("testnet"), "confirmed");
 
     const programId = await getPublicKeyFromFile(PROGRAM_KEYPAIR_PATH);
-    const kpOwner = await getSystemKeyPair();
+    const kpOwner = await generateKeyPair(connection, 1);
     const kpRecovery = await generateKeyPair(connection, 1);
     const kpReceiver = await generateKeyPair(connection, 1);
 
@@ -152,27 +133,27 @@ async function main() {
 
     // Chose if to finalize or to cancel
     const choice: Action = Action.Cancel;
-    switch(choice.valueOf()){
+    switch (choice.valueOf()) {
         case Action.Finalize:// 3. Finalize  REQ -> IDLE
-        console.log("\n--- Finalize. Actor: the onwer ---");
-        await new Promise(resolve => setTimeout(resolve, 3000 * waitTime));
-        await finalize(
-            connection,
-            programId,
-            kpOwner,
-            stateAccountPublicKey
-        );
-        break;
-        case Action.Cancel:// 3. Cancel REQ -> IDLE
-        console.log("\n--- Cancel. Actor: the Reovery ---");
-        await cancel(
-            connection,
-            programId,
-            kpRecovery,
-            stateAccountPublicKey
-        );
-        break;
+            console.log("\n--- Finalize. Actor: the onwer ---");
+            await new Promise(resolve => setTimeout(resolve, 3000 * waitTime));
+            await finalize(
+                connection,
+                programId,
+                kpOwner,
+                stateAccountPublicKey
+            );
+            break;
 
+        case Action.Cancel:// 3. Cancel REQ -> IDLE
+            console.log("\n--- Cancel. Actor: the Reovery ---");
+            await cancel(
+                connection,
+                programId,
+                kpRecovery,
+                stateAccountPublicKey
+            );
+            break;
     }
 
     // Costs
@@ -226,7 +207,7 @@ async function initialize(
             { pubkey: recoveryPubKey, isSigner: false, isWritable: false },
         ],
         programId,
-        data: Buffer.from(new Uint8Array([Action.Initialize, waitTime])),
+        data: buildBufferFromActionAndNumber(Action.Initialize, waitTime),
     })
 
     const transaction = new Transaction().add(
@@ -252,9 +233,6 @@ async function withdraw(
 ): Promise<void> {
 
     // Instruction to the program
-    let passed_amount = new PassedAmount({ amount: withdrawAmount });
-    let data = borsh.serialize(PassedAmount.schema, passed_amount);
-    let data_to_send = Buffer.from(new Uint8Array([Action.Withdraw, ...data]));
     const initializeVaultInstruction = new TransactionInstruction({
         keys: [
             { pubkey: kpOwner.publicKey, isSigner: true, isWritable: false },
@@ -262,7 +240,7 @@ async function withdraw(
             { pubkey: receiverPubKey, isSigner: false, isWritable: false },
         ],
         programId,
-        data: data_to_send,
+        data: buildBufferFromActionAndNumber(Action.Withdraw, withdrawAmount)
     });
 
     const transaction = new Transaction().add(initializeVaultInstruction);

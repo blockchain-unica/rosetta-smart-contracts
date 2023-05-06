@@ -32,7 +32,12 @@
     "build:storage": "cargo build-bpf --manifest-path=./solana/storage/Cargo.toml --bpf-out-dir=solana/dist/storage",
     "deploy:storage": "solana program deploy solana/dist/storage/storage.so",
     "costs:storage": "ts-node execution_traces/storage_flow.ts",
-    "clean:storage": "cargo clean --manifest-path=./solana/storage/Cargo.toml && rm -rf ./solana/dist/storage"
+    "clean:storage": "cargo clean --manifest-path=./solana/storage/Cargo.toml && rm -rf ./solana/dist/storage",
+
+    "build:escow": "cargo build-bpf --manifest-path=./solana/escow/Cargo.toml --bpf-out-dir=solana/dist/escow",
+    "deploy:escow": "solana program deploy solana/dist/escow/escow.so",
+    "costs:escow": "ts-node execution_traces/escow_flow.ts",
+    "clean:escow": "cargo clean --manifest-path=./solana/escow/Cargo.toml && rm -rf ./solana/dist/escow"
   },
   "keywords": [],
   "author": "",

@@ -23,9 +23,9 @@ import {
 } from "@solana/spl-token";
 
 import {
+    buildBufferFromActionAndNumber,
     generateKeyPair,
     getPublicKeyFromFile,
-    getSystemKeyPair,
     getTransactionFees,
 } from './utils';
 
@@ -69,44 +69,25 @@ class DepositInfo {
     ).length
 }
 
-class PassedAmount {
-    amount: number = 0;
-
-    constructor(fields: {
-        amount: number,
-    } | undefined = undefined) {
-        if (fields) {
-            this.amount = fields.amount;
-        }
-    }
-
-    static schema = new Map([
-        [PassedAmount, {
-            kind: 'struct', fields: [
-                ['amount', 'u64'],
-            ]
-        }],
-    ]);
-}
-
 const PROGRAM_KEYPAIR_PATH = path.resolve(__dirname, '../solana/dist/token_transfer/token_transfer-keypair.json');
 
-enum Action { 
-    Deposit = 0, 
-    Withdraw = 1 
+enum Action {
+    Deposit = 0,
+    Withdraw = 1
 }
 
 let feesForSender = 0;
 let feesForRecipient = 0;
 
 async function main() {
+
     const connection = new Connection(clusterApiUrl("testnet"), "confirmed");
 
     const programId = await getPublicKeyFromFile(PROGRAM_KEYPAIR_PATH);
-    const senderKeypair = await getSystemKeyPair();
+    const senderKeypair = await generateKeyPair(connection, 1);
     const recipientKeypair = await generateKeyPair(connection, 1);
 
-    console.log("programId:      " + programId.toBase58());
+    console.log("programId:     ", programId.toBase58());
     console.log("Sender:        ", senderKeypair.publicKey.toBase58());
     console.log("Recipient:     ", recipientKeypair.publicKey.toBase58());
 
@@ -272,9 +253,6 @@ async function deposit(
     });
 
     // Instruction to the program
-    let passed_amount = new PassedAmount({ amount: amountToSend });
-    let data = borsh.serialize(PassedAmount.schema, passed_amount);
-    let data_to_send = Buffer.from(new Uint8Array([Action.Deposit, ...data]));
     const depositInstruction = new TransactionInstruction({
         programId: programId,
         keys: [
@@ -284,7 +262,7 @@ async function deposit(
             { pubkey: recipientTokenAccountPubkey, isSigner: false, isWritable: false },
             { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },
         ],
-        data: data_to_send,
+        data: buildBufferFromActionAndNumber(Action.Deposit, amountToSend)
     });
 
     const depositTransaction = new Transaction().add(
@@ -325,13 +303,9 @@ async function withdraw(
     }
     const stateInfo = borsh.deserialize(DepositInfo.schema, DepositInfo, stateAccountInfo.data,);
 
-    let passed_amount = new PassedAmount({ amount: amountToWithdraw });
-    let data = borsh.serialize(PassedAmount.schema, passed_amount);
-    let data_to_send = Buffer.from(new Uint8Array([Action.Withdraw, ...data]));
-
     const withdrawInstruction = new TransactionInstruction({
         programId: programId,
-        data: data_to_send,
+        data: buildBufferFromActionAndNumber(Action.Withdraw, amountToWithdraw),
         keys: [
             { pubkey: recipientKeypair.publicKey, isSigner: true, isWritable: false },
             { pubkey: new PublicKey(stateInfo.sender), isSigner: false, isWritable: true },

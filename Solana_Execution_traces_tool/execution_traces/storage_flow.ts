@@ -13,7 +13,6 @@ import {
 import {
     generateKeyPair,
     getPublicKeyFromFile,
-    getSystemKeyPair,
     getTransactionFees,
 } from './utils';
 
@@ -58,12 +57,13 @@ let feestoStoreBytes = 0;
 let feestoStoreString = 0;
 
 async function main() {
+
     const connection = new Connection(clusterApiUrl("testnet"), "confirmed");
 
     const programId = await getPublicKeyFromFile(PROGRAM_KEYPAIR_PATH);
-    const kpSender = await getSystemKeyPair();
+    const kpSender = await generateKeyPair(connection, 1);
 
-    console.log("programId:  " + programId.toBase58());
+    console.log("programId: ", programId.toBase58());
     console.log("sender:    ", kpSender.publicKey.toBase58());
 
     // 0. Initialize
@@ -76,7 +76,6 @@ async function main() {
         initialBytes,
         initialString);
 
-    console.log("   State Account:  " + stateAccountPubkey.toBase58());
     console.log("   Initial bytes:   ", initialBytes);
     console.log("   Initial string:  ", initialString);
 
