@@ -9,7 +9,7 @@ You will need [Solana Tools](https://docs.solana.com/cli/install-solana-cli-tool
 
 For cost analysis, however, it will be necessary to run the off chain code via npm, so you will need to install [Node.js and npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm).
 
-So before proceeding you should be able to run the following commands
+So before proceeding you should be able to run the following commands:
 
 ```sh
 $ solana --version

@@ -9,6 +9,7 @@
     "declaration": true,
     "moduleResolution": "node",
     "module": "es2015",
+    "strictPropertyInitialization": false,
   },
   "include": ["execution_traces/**/*", "simple_transfer_flow.ts"],
   "exclude": ["node_modules"]

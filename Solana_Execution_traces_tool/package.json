@@ -27,7 +27,12 @@
     "build:vault": "cargo build-bpf --manifest-path=./solana/vault/Cargo.toml --bpf-out-dir=solana/dist/vault",
     "deploy:vault": "solana program deploy solana/dist/vault/vault.so",
     "costs:vault": "ts-node execution_traces/vault_flow.ts",
-    "clean:vault": "cargo clean --manifest-path=./solana/vault/Cargo.toml && rm -rf ./solana/dist/vault"
+    "clean:vault": "cargo clean --manifest-path=./solana/vault/Cargo.toml && rm -rf ./solana/dist/vault",
+
+    "build:storage": "cargo build-bpf --manifest-path=./solana/storage/Cargo.toml --bpf-out-dir=solana/dist/storage",
+    "deploy:storage": "solana program deploy solana/dist/storage/storage.so",
+    "costs:storage": "ts-node execution_traces/storage_flow.ts",
+    "clean:storage": "cargo clean --manifest-path=./solana/storage/Cargo.toml && rm -rf ./solana/dist/storage"
   },
   "keywords": [],
   "author": "",
