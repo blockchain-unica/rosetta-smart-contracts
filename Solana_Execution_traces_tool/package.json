@@ -37,7 +37,12 @@
     "build:escow": "cargo build-bpf --manifest-path=./solana/escow/Cargo.toml --bpf-out-dir=solana/dist/escow",
     "deploy:escow": "solana program deploy solana/dist/escow/escow.so",
     "costs:escow": "ts-node execution_traces/escow_flow.ts",
-    "clean:escow": "cargo clean --manifest-path=./solana/escow/Cargo.toml && rm -rf ./solana/dist/escow"
+    "clean:escow": "cargo clean --manifest-path=./solana/escow/Cargo.toml && rm -rf ./solana/dist/escow",
+
+    "build:crowdfund": "cargo build-bpf --manifest-path=./solana/crowdfund/Cargo.toml --bpf-out-dir=solana/dist/crowdfund",
+    "deploy:crowdfund": "solana program deploy solana/dist/crowdfund/crowdfund.so",
+    "costs:crowdfund": "ts-node execution_traces/crowdfund_flow.ts",
+    "clean:crowdfund": "cargo clean --manifest-path=./solana/crowdfund/Cargo.toml && rm -rf ./solana/dist/crowdfund"
   },
   "keywords": [],
   "author": "",

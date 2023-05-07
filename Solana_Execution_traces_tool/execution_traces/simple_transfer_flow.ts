@@ -73,7 +73,7 @@ async function main() {
 
     // 1. Deposit money (the user deposits the amout equal to price)
     console.log("\n--- Deposit. Actor: the onwer ---");
-    let amount = 0.2 * LAMPORTS_PER_SOL;
+    const amount = 0.2 * LAMPORTS_PER_SOL;
     const lamportsAddress = await deposit(
         connection,
         programId,
@@ -121,14 +121,14 @@ async function deposit(
     kpRecipient: PublicKey,
     amount: number,
 ): Promise<PublicKey> {
-    let donation = new DonationDetails({
+    const donation = new DonationDetails({
         sender: kpSender.publicKey.toBuffer(),
         recipient: kpRecipient.toBuffer(),
         amount: amount
     });
 
-    let data = borsh.serialize(DonationDetails.schema, donation);
-    let data_to_send = Buffer.from(new Uint8Array([Action.Deposit, ...data]));
+    const data = borsh.serialize(DonationDetails.schema, donation);
+    const data_to_send = Buffer.from(new Uint8Array([Action.Deposit, ...data]));
 
     const SEED = "abcdef" + Math.random().toString();
     const writingAccountPublicKey = await PublicKey.createWithSeed(
@@ -137,7 +137,7 @@ async function deposit(
         programId,
     );
 
-    // Instruction to create the Writing Account account
+    // Instruction to create the Writing Account
     const rentExemptionAmount = await connection.getMinimumBalanceForRentExemption(data.length);
     const createWritingAccountInstruction = SystemProgram.createAccountWithSeed({
         fromPubkey: kpSender.publicKey,
@@ -150,7 +150,7 @@ async function deposit(
     });
 
     // Instruction to the program
-    let depositInstruction = new TransactionInstruction({
+    const depositInstruction = new TransactionInstruction({
         keys: [
             { pubkey: writingAccountPublicKey, isSigner: false, isWritable: true },
             { pubkey: kpSender.publicKey, isSigner: true, isWritable: false },
@@ -166,7 +166,7 @@ async function deposit(
 
     await sendAndConfirmTransaction(connection, transactionDeposit, [kpSender]);
 
-    let tFees = await getTransactionFees(transactionDeposit, connection);
+    const tFees = await getTransactionFees(transactionDeposit, connection);
     feesForSender += tFees;
     console.log('    Transaction fees: ', tFees / LAMPORTS_PER_SOL, ' SOL');
 

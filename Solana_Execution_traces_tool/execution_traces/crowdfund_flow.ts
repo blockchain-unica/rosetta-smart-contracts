@@ -1,0 +1,325 @@
+import {
+    Connection,
+    Keypair,
+    LAMPORTS_PER_SOL,
+    PublicKey,
+    SystemProgram,
+    Transaction,
+    TransactionInstruction,
+    clusterApiUrl,
+    sendAndConfirmTransaction,
+} from '@solana/web3.js';
+
+import {
+    generateKeyPair,
+    getPublicKeyFromFile,
+    getSystemKeyPair,
+    getTransactionFees,
+} from './utils';
+
+import * as borsh from 'borsh';
+import path from 'path';
+import { Buffer } from 'buffer';
+
+const PROGRAM_KEYPAIR_PATH = path.resolve(__dirname, '../solana/dist/crowdfund/crowdfund-keypair.json');
+
+enum Action {
+    CreateCampaign = 0,
+    Donate = 1,
+    Withdraw = 2,
+    Reclaim = 3,
+}
+
+class Campaign {
+    receiver: Buffer = Buffer.alloc(32);
+    end_donate_slot: number = 0;
+    goal: number = 0;
+
+    constructor(fields: {
+        receiver: Buffer,
+        end_donate_slot: number,
+        goal: number,
+    } | undefined = undefined) {
+        if (fields) {
+            this.receiver = fields.receiver;
+            this.end_donate_slot = fields.end_donate_slot;
+            this.goal = fields.goal;
+        }
+    }
+
+    static schema = new Map([
+        [Campaign, {
+            kind: 'struct', fields: [
+                ['receiver', [32]],
+                ['end_donate_slot', 'u64'],
+                ['goal', 'u64'],
+            ]
+        }],
+    ]);
+}
+
+class DonationInfo {
+    donor: Buffer = Buffer.alloc(32);
+    amount_donated: number = 0;
+
+    constructor(fields: {
+        donor: Buffer,
+        amount_donated: number,
+    } | undefined = undefined) {
+        if (fields) {
+            this.donor = fields.donor;
+            this.amount_donated = fields.amount_donated;
+        }
+    }
+
+    static schema = new Map([
+        [DonationInfo, {
+            kind: 'struct', fields: [
+                ['donor', [32]],
+                ['amount_donated', 'u64'],
+            ]
+        }],
+    ]);
+}
+
+let feesForCreator = 0;
+let feesForDonor = 0;
+
+const SEED_FOR_DONATION_ACCOUNTS = "Donation";
+
+async function main() {
+
+    const connection = new Connection(clusterApiUrl("testnet"), "confirmed");
+    //const connection = new Connection("http://localhost:8899", "confirmed");
+
+    const programId = await getPublicKeyFromFile(PROGRAM_KEYPAIR_PATH);
+    const kpCreator = await getSystemKeyPair();
+    const kpDonor = await generateKeyPair(connection, 1);
+
+    console.log("programId:                      ", programId.toBase58());
+    console.log("creator (owner of the campain): ", kpCreator.publicKey.toBase58());
+    console.log("donor:                          ", kpDonor.publicKey.toBase58());
+
+    // 1. Create campain
+    console.log("\n--- Create campain. Actor: the creator ---");
+    const nSlotsToWait = 10;
+    const campain = new Campaign({
+        receiver: kpCreator.publicKey.toBuffer(),
+        end_donate_slot: await connection.getSlot() + nSlotsToWait,
+        goal: 0.1 * LAMPORTS_PER_SOL, // 0.1 SOL
+    });
+    const campainAccountPubKey = await createCampaign(
+        connection,
+        programId,
+        kpCreator,
+        campain
+    );
+
+    // 2. Donate
+    console.log("\n--- Donate to campain. Actor: the donor ---");
+    const donatedAmount = campain.goal;
+    await donate(
+        connection,
+        programId,
+        kpDonor,
+        campainAccountPubKey,
+        donatedAmount
+    );
+
+    // Wait for the campain to end
+    console.log("\nWaiting", nSlotsToWait, "slots for the campain to end...");
+    while (await connection.getSlot() < campain.end_donate_slot) {
+        await new Promise(f => setTimeout(f, 1000));//sleep 1 second
+    }
+
+    // Chose if to withdraw or to reclaim
+    const choice: Action = Action.Reclaim;
+
+    switch (choice.valueOf()) {
+        case Action.Withdraw:     // 3. Whitdraw
+            console.log("\n--- Whitdraw. Actor: the creator ---");
+            await withdraw(
+                connection,
+                programId,
+                kpCreator,
+                campainAccountPubKey,
+            );
+            break;
+
+        case Action.Reclaim:    // 3. Reclaim
+            console.log("\n--- Reclaim. Actor: the donor ---");
+            await reclaim(
+                connection,
+                programId,
+                kpDonor,
+                campainAccountPubKey,
+            );
+            break;
+    }
+
+    // Costs
+    console.log("\n........");
+    console.log("Fees for creator:  ", feesForCreator / LAMPORTS_PER_SOL, " SOL");
+    console.log("Fees for donor:    ", feesForDonor / LAMPORTS_PER_SOL, " SOL");
+    console.log("Total fees:        ", (feesForCreator + feesForDonor) / LAMPORTS_PER_SOL, " SOL");
+}
+
+main().then(
+    () => process.exit(),
+    err => {
+        console.error(err);
+        process.exit(-1);
+    }
+);
+
+async function createCampaign(
+    connection: Connection,
+    programId: PublicKey,
+    kpCreator: Keypair,
+    campain: Campaign,
+): Promise<PublicKey> {
+
+    const data = borsh.serialize(Campaign.schema, campain);
+
+    const SEED = "abcdef" + Math.random().toString();
+    const campainAccountPubKey = await PublicKey.createWithSeed(kpCreator.publicKey, SEED, programId);
+
+    // Instruction to create the Campain Account
+    const createCampainAccountInstruction = SystemProgram.createAccountWithSeed({
+        fromPubkey: kpCreator.publicKey,
+        basePubkey: kpCreator.publicKey,
+        seed: SEED,
+        newAccountPubkey: campainAccountPubKey,
+        lamports: await connection.getMinimumBalanceForRentExemption(data.length),
+        space: data.length,
+        programId: programId,
+    });
+
+    // Instruction to the program
+    const createCampainInstuction = new TransactionInstruction({
+        keys: [
+            { pubkey: kpCreator.publicKey, isSigner: true, isWritable: false },
+            { pubkey: campainAccountPubKey, isSigner: false, isWritable: true },
+        ],
+        programId,
+        data: Buffer.from(new Uint8Array([Action.CreateCampaign, ...data])),
+    })
+
+    const transaction = new Transaction().add(
+        createCampainAccountInstruction,
+        createCampainInstuction
+    );
+
+    await sendAndConfirmTransaction(connection, transaction, [kpCreator]);
+
+    const tFees = await getTransactionFees(transaction, connection);
+    feesForCreator += tFees;
+    console.log('    Transaction fees: ', tFees / LAMPORTS_PER_SOL, ' SOL');
+
+    return campainAccountPubKey;
+}
+
+async function donate(
+    connection: Connection,
+    programId: PublicKey,
+    kpDonor: Keypair,
+    campainAccountPubKey: PublicKey,
+    donatedAmount: number,
+): Promise<void> {
+
+    const donationInfo = new DonationInfo({
+        donor: kpDonor.publicKey.toBuffer(),
+        amount_donated: donatedAmount,
+    });
+
+    const data = borsh.serialize(DonationInfo.schema, donationInfo);
+
+    // Instruction to create the Donation Account
+    const donationAccountPubKey = await PublicKey.createWithSeed(kpDonor.publicKey, SEED_FOR_DONATION_ACCOUNTS, programId);
+
+    const rentExemptionAmount = await connection.getMinimumBalanceForRentExemption(data.length);
+    const createDonationAccountInstruction = SystemProgram.createAccountWithSeed({
+        fromPubkey: kpDonor.publicKey,
+        basePubkey: kpDonor.publicKey,
+        seed: SEED_FOR_DONATION_ACCOUNTS,
+        newAccountPubkey: donationAccountPubKey,
+        lamports: rentExemptionAmount + donatedAmount,
+        space: data.length,
+        programId: programId,
+    });
+
+    // Instruction to the program
+    const donationInstruction = new TransactionInstruction({
+        keys: [
+            { pubkey: kpDonor.publicKey, isSigner: true, isWritable: false },
+            { pubkey: campainAccountPubKey, isSigner: false, isWritable: true },
+            { pubkey: donationAccountPubKey, isSigner: false, isWritable: true },
+        ],
+        programId,
+        data:  Buffer.from(new Uint8Array([Action.Donate, ...data]))
+    })
+
+    const transaction = new Transaction().add(
+        createDonationAccountInstruction,
+        donationInstruction
+    );
+
+    await sendAndConfirmTransaction(connection, transaction, [kpDonor]);
+
+    const tFees = await getTransactionFees(transaction, connection);
+    feesForDonor += tFees;
+    console.log('    Transaction fees: ', tFees / LAMPORTS_PER_SOL, ' SOL');
+}
+
+async function withdraw(
+    connection: Connection,
+    programId: PublicKey,
+    kpCreator: Keypair,
+    campainAccountPubKey: PublicKey,
+): Promise<void> {
+
+    const transaction = new Transaction().add(
+        new TransactionInstruction({
+            keys: [
+                { pubkey: kpCreator.publicKey, isSigner: true, isWritable: false },
+                { pubkey: campainAccountPubKey, isSigner: false, isWritable: true },
+            ],
+            programId,
+            data: Buffer.from(new Uint8Array([Action.Withdraw])),
+        })
+    );
+
+    await sendAndConfirmTransaction(connection, transaction, [kpCreator]);
+
+    const tFees = await getTransactionFees(transaction, connection);
+    feesForCreator += tFees;
+    console.log('    Transaction fees: ', tFees / LAMPORTS_PER_SOL, ' SOL');
+}
+
+async function reclaim(
+    connection: Connection,
+    programId: PublicKey,
+    kpDonor: Keypair,
+    campainAccountPubKey: PublicKey,
+): Promise<void> {
+
+    const donationAccountPubKey = await PublicKey.createWithSeed(kpDonor.publicKey, SEED_FOR_DONATION_ACCOUNTS, programId);
+
+    const transaction = new Transaction().add(
+        new TransactionInstruction({
+            keys: [
+                { pubkey: kpDonor.publicKey, isSigner: true, isWritable: false },
+                { pubkey: campainAccountPubKey, isSigner: false, isWritable: true },
+                { pubkey: donationAccountPubKey, isSigner: false, isWritable: true },
+            ],
+            programId,
+            data: Buffer.from(new Uint8Array([Action.Reclaim])),
+        })
+    );
+
+    await sendAndConfirmTransaction(connection, transaction, [kpDonor]);
+
+    const tFees = await getTransactionFees(transaction, connection);
+    feesForDonor += tFees;
+    console.log('    Transaction fees: ', tFees / LAMPORTS_PER_SOL, ' SOL');
+}

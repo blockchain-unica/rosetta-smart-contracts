@@ -726,6 +726,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "crowdfund"
+version = "0.1.0"
+dependencies = [
+ "borsh",
+ "borsh-derive 0.10.3",
+ "solana-program",
+ "solana-program-test",
+ "solana-sdk",
+]
+
+[[package]]
 name = "crunchy"
 version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"

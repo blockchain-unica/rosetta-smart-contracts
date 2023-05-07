@@ -209,7 +209,7 @@ fn refund(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
     **state_account.try_borrow_mut_lamports()? -= escow_info.amount;
 
     // Return the rent founds to the seller
-    **seller_account.try_borrow_mut_lamports()? += **state_account.try_borrow_lamports()?;;
+    **seller_account.try_borrow_mut_lamports()? += **state_account.try_borrow_lamports()?;
     **state_account.try_borrow_mut_lamports()? = 0;
 
     escow_info.state = State::Closed;
