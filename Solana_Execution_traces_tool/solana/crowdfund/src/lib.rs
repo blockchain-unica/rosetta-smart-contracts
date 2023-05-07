@@ -23,6 +23,7 @@ struct Campaign {
 #[derive(BorshSerialize, BorshDeserialize, Debug)]
 struct DonationInfo {
     pub donor: Pubkey,
+    pub reciever_campain: Pubkey,
     pub amount_donated: u64,
 }
 
@@ -132,7 +133,12 @@ fn donate(program_id: &Pubkey, accounts: &[AccountInfo], instruction_data: &[u8]
     let donation_info = DonationInfo::try_from_slice(&instruction_data)?;
 
     if donation_info.donor != *donor_account.key {
-        return Err(ProgramError::IncorrectProgramId);
+        return Err(ProgramError::InvalidInstructionData);
+    }
+
+    if donation_info.reciever_campain != *campain_account.key {
+        msg!("The donation should be for the campain that was provided");
+        return Err(ProgramError::InvalidInstructionData);
     }
 
     let rent_exemption = Rent::get()?.minimum_balance(donation_account.data_len());
@@ -224,19 +230,23 @@ fn reclaim(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
         return Err(ProgramError::InvalidInstructionData);
     }
 
-    // Since the campain at this pooint is over we can
-    // return the rent founds to the donor (even if the goal was reached)
-    **donor_account.try_borrow_mut_lamports()? += **donation_account.try_borrow_lamports()?;
-    **donation_account.try_borrow_mut_lamports()? = 0;
-
-    if **campain_account.try_borrow_lamports()? < campain.goal {
-        msg!("The goal was not reached");
+    if donation_info.reciever_campain != *campain_account.key {
+        msg!("The donation is not for the provided campain");
         return Err(ProgramError::InvalidInstructionData);
     }
 
-    // Return the donation to the donor
-    **campain_account.try_borrow_mut_lamports()? -= donation_info.amount_donated;
-    **donor_account.try_borrow_mut_lamports()? += donation_info.amount_donated;
+    // Since the campain at this pooint is over we can
+    // return the rent founds to the donor (even if the goal was reached).
+    // So we are not revering the transaction, even if the goal was reached, 
+    // to send back the rent founds of the donation account to the donor.
+    **donor_account.try_borrow_mut_lamports()? += **donation_account.try_borrow_lamports()?;
+    **donation_account.try_borrow_mut_lamports()? = 0;
+
+    if **campain_account.try_borrow_lamports()? < campain.goal { 
+        // If the goal was not reached, return the donation to the donor
+        **campain_account.try_borrow_mut_lamports()? -= donation_info.amount_donated;
+        **donor_account.try_borrow_mut_lamports()? += donation_info.amount_donated;
+    }
 
     Ok(())
 }

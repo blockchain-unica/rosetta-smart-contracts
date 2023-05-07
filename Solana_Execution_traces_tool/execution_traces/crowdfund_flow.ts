@@ -60,14 +60,17 @@ class Campaign {
 
 class DonationInfo {
     donor: Buffer = Buffer.alloc(32);
+    reciever_campain: Buffer = Buffer.alloc(32);
     amount_donated: number = 0;
 
     constructor(fields: {
         donor: Buffer,
+        reciever_campain: Buffer,
         amount_donated: number,
     } | undefined = undefined) {
         if (fields) {
             this.donor = fields.donor;
+            this.reciever_campain = fields.reciever_campain;
             this.amount_donated = fields.amount_donated;
         }
     }
@@ -76,6 +79,7 @@ class DonationInfo {
         [DonationInfo, {
             kind: 'struct', fields: [
                 ['donor', [32]],
+                ['reciever_campain', [32]],
                 ['amount_donated', 'u64'],
             ]
         }],
@@ -133,7 +137,7 @@ async function main() {
     }
 
     // Chose if to withdraw or to reclaim
-    const choice: Action = Action.Reclaim;
+    const choice: Action = Action.Withdraw;
 
     switch (choice.valueOf()) {
         case Action.Withdraw:     // 3. Whitdraw
@@ -229,6 +233,7 @@ async function donate(
 
     const donationInfo = new DonationInfo({
         donor: kpDonor.publicKey.toBuffer(),
+        reciever_campain: campainAccountPubKey.toBuffer(),
         amount_donated: donatedAmount,
     });
 
