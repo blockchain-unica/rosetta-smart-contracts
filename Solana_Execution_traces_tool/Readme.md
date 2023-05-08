@@ -26,7 +26,7 @@ $ solana-keygen new
 
 Connect to the Testnet cluster:
 ```sh
-$ solana config set --url https://api.testnet.solana.com
+$ solana config set --url testnet
 ```
 
 For subsequent operatios as deployment and other transactions you will need to have a certain amount of SOL. You can request a free SOL airdrop to your new wallet by running:
@@ -39,7 +39,7 @@ Then you can see if the airdrop operation was successful by checking your balanc
 $ solana balance
 ```
 
-Your address can be obtained with:
+To get your wallet address:
 ```sh
 $ solana address 	
 ```

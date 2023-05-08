@@ -94,7 +94,6 @@ const SEED_FOR_DONATION_ACCOUNTS = "Donation";
 async function main() {
 
     const connection = new Connection(clusterApiUrl("testnet"), "confirmed");
-    //const connection = new Connection("http://localhost:8899", "confirmed");
 
     const programId = await getPublicKeyFromFile(PROGRAM_KEYPAIR_PATH);
     const kpCreator = await getSystemKeyPair();
@@ -137,7 +136,7 @@ async function main() {
     }
 
     // Chose if to withdraw or to reclaim
-    const choice: Action = Action.Withdraw;
+    const choice: Action = Action.Reclaim;
 
     switch (choice.valueOf()) {
         case Action.Withdraw:     // 3. Whitdraw

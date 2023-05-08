@@ -141,8 +141,8 @@ fn donate(program_id: &Pubkey, accounts: &[AccountInfo], instruction_data: &[u8]
         return Err(ProgramError::InvalidInstructionData);
     }
 
-    let rent_exemption = Rent::get()?.minimum_balance(donation_account.data_len());
-    if **donation_account.lamports.borrow() < rent_exemption + donation_info.amount_donated {
+    let rent_exemption_donation_account = Rent::get()?.minimum_balance(donation_account.data_len());
+    if **donation_account.lamports.borrow() < rent_exemption_donation_account + donation_info.amount_donated {
         msg!("The donation account should be rent exempt");
         return Err(ProgramError::InsufficientFunds);
     }
@@ -182,7 +182,8 @@ fn withdraw(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
         return Err(ProgramError::InvalidInstructionData);
     }
 
-    if **campain_account.try_borrow_lamports()? < campain.goal {
+    let rent_exemption_campain_account = Rent::get()?.minimum_balance(campain_account.data_len());
+    if **campain_account.try_borrow_lamports()? < campain.goal + rent_exemption_campain_account {
         msg!("The goal was not reached");
         return Err(ProgramError::InvalidInstructionData);
     }
@@ -242,7 +243,8 @@ fn reclaim(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
     **donor_account.try_borrow_mut_lamports()? += **donation_account.try_borrow_lamports()?;
     **donation_account.try_borrow_mut_lamports()? = 0;
 
-    if **campain_account.try_borrow_lamports()? < campain.goal { 
+    let rent_exemption_campain_account = Rent::get()?.minimum_balance(campain_account.data_len());
+    if **campain_account.try_borrow_lamports()? < (campain.goal + rent_exemption_campain_account) { 
         // If the goal was not reached, return the donation to the donor
         **campain_account.try_borrow_mut_lamports()? -= donation_info.amount_donated;
         **donor_account.try_borrow_mut_lamports()? += donation_info.amount_donated;

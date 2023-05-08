@@ -42,7 +42,12 @@
     "build:crowdfund": "cargo build-bpf --manifest-path=./solana/crowdfund/Cargo.toml --bpf-out-dir=solana/dist/crowdfund",
     "deploy:crowdfund": "solana program deploy solana/dist/crowdfund/crowdfund.so",
     "costs:crowdfund": "ts-node execution_traces/crowdfund_flow.ts",
-    "clean:crowdfund": "cargo clean --manifest-path=./solana/crowdfund/Cargo.toml && rm -rf ./solana/dist/crowdfund"
+    "clean:crowdfund": "cargo clean --manifest-path=./solana/crowdfund/Cargo.toml && rm -rf ./solana/dist/crowdfund",
+
+    "build:vesting": "cargo build-bpf --manifest-path=./solana/vesting/Cargo.toml --bpf-out-dir=solana/dist/vesting",
+    "deploy:vesting": "solana program deploy solana/dist/vesting/vesting.so",
+    "costs:vesting": "ts-node execution_traces/vesting_flow.ts",
+    "clean:vesting": "cargo clean --manifest-path=./solana/vesting/Cargo.toml && rm -rf ./solana/dist/vesting"
   },
   "keywords": [],
   "author": "",
