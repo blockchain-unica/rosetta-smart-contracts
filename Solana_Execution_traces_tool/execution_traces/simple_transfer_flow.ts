@@ -72,7 +72,7 @@ async function main() {
     console.log("recipient: ", kpRecipient.publicKey.toBase58());
 
     // 1. Deposit money (the user deposits the amout equal to price)
-    console.log("\n--- Deposit. Actor: the onwer ---");
+    console.log("\n--- Deposit. Actor: the owner ---");
     const amount = 0.2 * LAMPORTS_PER_SOL;
     const lamportsAddress = await deposit(
         connection,
@@ -81,8 +81,8 @@ async function main() {
         kpRecipient.publicKey,
         amount);
 
-    // 2. Partial Whitdraw
-    console.log("\n--- Partial Whitdraw. Actor: the recipient ---");
+    // 2. Partial Withdraw
+    console.log("\n--- Partial Withdraw. Actor: the recipient ---");
     await withdraw(
         connection,
         programId,
@@ -90,8 +90,8 @@ async function main() {
         0.1 * amount,
         lamportsAddress);
 
-    // 3. Total Whitdraw
-    console.log("\n--- Total Whitdraw. Actor: the recipient ---");
+    // 3. Total Withdraw
+    console.log("\n--- Total Withdraw. Actor: the recipient ---");
     await withdraw(
         connection,
         programId,

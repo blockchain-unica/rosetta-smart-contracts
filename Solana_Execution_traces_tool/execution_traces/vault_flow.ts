@@ -107,7 +107,7 @@ async function main() {
     console.log("recovery:           ", kpRecovery.publicKey.toBase58());
 
     // 0. Initialize the valult for the owner (IDLE) 
-    console.log("\n--- Initialize. Actor: the onwer ---");
+    console.log("\n--- Initialize. Actor: the owner ---");
     const initialAmount = 0.2 * LAMPORTS_PER_SOL;
     const waitTime = 2;
     const stateAccountPublicKey = await initialize(
@@ -120,7 +120,7 @@ async function main() {
     );
 
     // 1. Withdraw  IDLE -> REQ
-    console.log("\n--- Withdraw. Actor: the onwer ---");
+    console.log("\n--- Withdraw. Actor: the owner ---");
     const withdrawAmount = initialAmount / 2;
     await withdraw(
         connection,
@@ -135,7 +135,7 @@ async function main() {
     const choice: Action = Action.Cancel;
     switch (choice.valueOf()) {
         case Action.Finalize:// 3. Finalize  REQ -> IDLE
-            console.log("\n--- Finalize. Actor: the onwer ---");
+            console.log("\n--- Finalize. Actor: the owner ---");
             await new Promise(resolve => setTimeout(resolve, 3000 * waitTime));
             await finalize(
                 connection,

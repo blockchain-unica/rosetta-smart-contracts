@@ -101,7 +101,7 @@ async function main() {
     );
 
     // 1. Deposit tokens
-    console.log("\n--- Deposit. Actor: the onwer ---");
+    console.log("\n--- Deposit. Actor: the owner ---");
     const amountToSend = initialBalance / 2;
     const stateAccountPubkey = await deposit(
         connection,
@@ -113,9 +113,9 @@ async function main() {
         amountToSend
     );
 
-    // 2. Partial Whitdraw
+    // 2. Partial Withdraw
     let amountToWithdraw = amountToSend / 10;
-    console.log("\n--- Partial Whitdraw. Actor: the recipient ---");
+    console.log("\n--- Partial Withdraw. Actor: the recipient ---");
     await withdraw(
         connection,
         programId,
@@ -124,9 +124,9 @@ async function main() {
         amountToWithdraw
     );
 
-    // 3. Total Whitdraw
+    // 3. Total Withdraw
     amountToWithdraw = amountToSend - amountToWithdraw;
-    console.log("\n--- Partial Whitdraw. Actor: the recipient ---");
+    console.log("\n--- Partial Withdraw. Actor: the recipient ---");
     await withdraw(
         connection,
         programId,
@@ -137,7 +137,7 @@ async function main() {
 
     // Costs
     console.log("\n........");
-    console.log("Fees for sender:    ", feesForSender / LAMPORTS_PER_SOL, " SOL");
+    console.log("Fees for owner:    ", feesForSender / LAMPORTS_PER_SOL, " SOL");
     console.log("Fees for recipient: ", feesForRecipient / LAMPORTS_PER_SOL, " SOL");
     console.log("Total fees:         ", (feesForSender + feesForRecipient) / LAMPORTS_PER_SOL, " SOL");
 }

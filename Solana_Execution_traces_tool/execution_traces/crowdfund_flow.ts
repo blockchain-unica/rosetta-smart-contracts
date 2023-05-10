@@ -139,8 +139,8 @@ async function main() {
     const choice: Action = Action.Reclaim;
 
     switch (choice.valueOf()) {
-        case Action.Withdraw:     // 3. Whitdraw
-            console.log("\n--- Whitdraw. Actor: the creator ---");
+        case Action.Withdraw:     // 3. Withdraw
+            console.log("\n--- Withdraw. Actor: the creator ---");
             await withdraw(
                 connection,
                 programId,
