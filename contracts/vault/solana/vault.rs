@@ -81,13 +81,13 @@ fn initialize(
 
     if state_account.owner != program_id {
         msg!("The state account isn't owned by program");
-        return Err(ProgramError::InvalidAccountData);
+        return Err(ProgramError::IllegalOwner);
     }
 
     let rent_exemption: u64 = Rent::get()?.minimum_balance(state_account.data_len());
     if **state_account.lamports.borrow() < rent_exemption {
         msg!("State account should be rent-exempt");
-        return Err(ProgramError::InsufficientFunds);
+        return Err(ProgramError::AccountNotRentExempt);
     }
 
     let wait_time: u64 = instruction_data
@@ -136,22 +136,22 @@ fn withdraw(
     let rent_exemption = Rent::get()?.minimum_balance(state_account.data_len());
     if **state_account.lamports.borrow() - rent_exemption < withdraw_amount {
         msg!("Insufficent balance in the state account to witdraw the defined amount");
-        return Err(ProgramError::InsufficientFunds);
+        return Err(ProgramError::AccountNotRentExempt);
     }
 
-    if state_account.owner != program_id {
+    if state_account.owner.ne(&program_id){
         msg!("The state account isn't owned by program");
-        return Err(ProgramError::InvalidAccountData);
+        return Err(ProgramError::IllegalOwner);
     }
 
     if vault_info.state != State::Idle {
         msg!("The vault isn't in Idle state");
-        return Err(ProgramError::InvalidAccountData);
+        return Err(ProgramError::InvalidInstructionData);
     }
 
     if *owner_account.key != vault_info.owner {
         msg!("Only the owner can withdraw the funds");
-        return Err(ProgramError::MissingRequiredSignature);
+        return Err(ProgramError::IllegalOwner);
     }
 
     vault_info.receiver = *receiver_account.key;
@@ -185,7 +185,7 @@ fn finalize(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
 
     if vault_info.state != State::Req {
         msg!("The vault isn't in Req state");
-        return Err(ProgramError::InvalidAccountData);
+        return Err(ProgramError::InvalidInstructionData);
     }
 
     let rent_exemption = Rent::get()?.minimum_balance(state_account.data_len());
@@ -234,12 +234,12 @@ fn cancel(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
 
     if vault_info.state != State::Req {
         msg!("The vault isn't in Req state");
-        return Err(ProgramError::InvalidAccountData);
+        return Err(ProgramError::InvalidInstructionData);
     }
 
     if *recovery_account.key != vault_info.recovery {
         msg!("Only the recovery account can cancel");
-        return Err(ProgramError::MissingRequiredSignature);
+        return Err(ProgramError::InvalidAccountData);
     }
 
     vault_info.state = State::Idle;

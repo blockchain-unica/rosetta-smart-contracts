@@ -56,12 +56,12 @@ fn initialize(
 
     if !funder_account.is_signer {
         msg!("The funder account account should be signer");
-        return Err(ProgramError::IncorrectProgramId);
+        return Err(ProgramError::MissingRequiredSignature);
     }
 
-    if vesting_account.owner != program_id {
+    if vesting_account.owner.ne(&program_id){
         msg!("The vesting account should be owned by the program");
-        return Err(ProgramError::IncorrectProgramId);
+        return Err(ProgramError::IllegalOwner);
     }
 
     let rent_exemption = Rent::get()?.minimum_balance(vesting_account.data_len());
@@ -105,19 +105,19 @@ fn release(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
 
     if !beneficiary_account.is_signer {
         msg!("The funder account account should be signer");
-        return Err(ProgramError::IncorrectProgramId);
+        return Err(ProgramError::MissingRequiredSignature);
     }
 
-    if vesting_account.owner != program_id {
+    if vesting_account.owner.ne(&program_id) {
         msg!("The vesting account should be owned by the program");
-        return Err(ProgramError::IncorrectProgramId);
+        return Err(ProgramError::IllegalOwner);
     }
 
     let mut vesting_info = VestingInfo::try_from_slice(*vesting_account.data.borrow())?;
 
     if *beneficiary_account.key != vesting_info.beneficiary {
         msg!("The signer is not the beneficiary");
-        return Err(ProgramError::IncorrectProgramId);
+        return Err(ProgramError::InvalidAccountData);
     }
 
     let rent_exemption = Rent::get()?.minimum_balance(vesting_account.data_len());

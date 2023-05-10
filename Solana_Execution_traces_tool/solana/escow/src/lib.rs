@@ -66,15 +66,15 @@ fn initialize(
         return Err(ProgramError::MissingRequiredSignature);
     }
 
-    if state_account.owner != program_id {
+    if state_account.owner.ne(&program_id){
         msg!("The state account isn't owned by program");
-        return Err(ProgramError::InvalidAccountData);
+        return Err(ProgramError::IllegalOwner);
     }
 
     let rent_exemption: u64 = Rent::get()?.minimum_balance(state_account.data_len());
     if **state_account.try_borrow_lamports()? < rent_exemption {
         msg!("The state account should be rent exempted");
-        return Err(ProgramError::InsufficientFunds);
+        return Err(ProgramError::AccountNotRentExempt);
     }
 
     let amount: u64 = instruction_data
@@ -84,7 +84,7 @@ fn initialize(
 
     if amount <= 0 {
         msg!("The amount should be positive");
-        return Err(ProgramError::InvalidAccountData);
+        return Err(ProgramError::InvalidInstructionData);
     }
 
     let escow_info = EscowInfo {
@@ -109,9 +109,9 @@ fn deposit(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
         return Err(ProgramError::MissingRequiredSignature);
     }
 
-    if state_account.owner != program_id {
+    if state_account.owner.ne(&program_id){
         msg!("The state account isn't owned by program");
-        return Err(ProgramError::InvalidAccountData);
+        return Err(ProgramError::IllegalOwner);
     }
 
     let mut escow_info = EscowInfo::try_from_slice(*state_account.data.borrow())?;
@@ -129,7 +129,7 @@ fn deposit(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
 
     if escow_info.state != State::WaitDeposit {
         msg!("The escow isn't in the state of waiting a deposit");
-        return Err(ProgramError::InvalidAccountData);
+        return Err(ProgramError::InvalidInstructionData);
     }
 
     escow_info.state = State::WaitRecipient;
@@ -149,9 +149,9 @@ fn pay(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
         return Err(ProgramError::MissingRequiredSignature);
     }
 
-    if state_account.owner != program_id {
+    if state_account.owner.ne(&program_id){
         msg!("The state account isn't owned by program");
-        return Err(ProgramError::InvalidAccountData);
+        return Err(ProgramError::IllegalOwner);
     }
 
     let mut escow_info = EscowInfo::try_from_slice(*state_account.data.borrow())?;
@@ -163,7 +163,7 @@ fn pay(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
 
     if escow_info.state != State::WaitRecipient {
         msg!("The escow isn't in the state of waiting the recipient");
-        return Err(ProgramError::InvalidAccountData);
+        return Err(ProgramError::InvalidInstructionData);
     }
 
     **seller_account.try_borrow_mut_lamports()? += **state_account.try_borrow_lamports()?;
@@ -186,9 +186,9 @@ fn refund(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
         return Err(ProgramError::MissingRequiredSignature);
     }
 
-    if state_account.owner != program_id {
+    if state_account.owner.ne(&program_id){
         msg!("The state account isn't owned by program");
-        return Err(ProgramError::InvalidAccountData);
+        return Err(ProgramError::IllegalOwner);
     }
 
     let mut escow_info = EscowInfo::try_from_slice(*state_account.data.borrow())?;
@@ -200,7 +200,7 @@ fn refund(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
 
     if escow_info.state != State::WaitRecipient {
         msg!("The escow isn't in the state of waiting the recipient");
-        return Err(ProgramError::InvalidAccountData);
+        return Err(ProgramError::InvalidInstructionData);
     }
 
     msg!("state_account: {}", **state_account.try_borrow_lamports()?);

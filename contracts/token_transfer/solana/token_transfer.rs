@@ -65,16 +65,16 @@ fn deposit(
 
     // The state account that will store the deposit info
     let state_account: &AccountInfo = next_account_info(accounts_iter)?;
-    if state_account.owner != program_id {
+    if state_account.owner.ne(&program_id){
         msg!("The state account isn't owned by program");
-        return Err(ProgramError::InvalidAccountData);
+        return Err(ProgramError::IllegalOwner);
     }
 
     // The state account should have enough balance to be rent exempted
     let rent_exemption: u64 = Rent::get()?.minimum_balance(state_account.data_len());
     if **state_account.lamports.borrow() < rent_exemption {
         msg!("The state account should be rent exempted");
-        return Err(ProgramError::InsufficientFunds);
+        return Err(ProgramError::AccountNotRentExempt);
     }
 
     // Deserialize from instruction data the amount that the sender wants to deposit

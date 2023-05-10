@@ -54,9 +54,9 @@ fn deposit(
     let writing_account: &AccountInfo = next_account_info(accounts_iter)?;
     let sender: &AccountInfo = next_account_info(accounts_iter)?;
 
-    if writing_account.owner != program_id {
+    if writing_account.owner.ne(&program_id){
         msg!("The writing account isn't owned by the program");
-        return Err(ProgramError::InvalidAccountData);
+        return Err(ProgramError::IllegalOwner);
     }
 
     if !sender.is_signer {
@@ -67,14 +67,13 @@ fn deposit(
     let mut donation: DonationDetails = DonationDetails::try_from_slice(&instruction_data)?;
 
     if donation.sender != *sender.key {
-        msg!("Invaild instruction data");
         return Err(ProgramError::InvalidInstructionData);
     }
 
     let rent_exemption: u64 = Rent::get()?.minimum_balance(writing_account.data_len());
     if **writing_account.lamports.borrow() < rent_exemption {
         msg!("The writing account should be rent exempted");
-        return Err(ProgramError::InsufficientFunds);
+        return Err(ProgramError::AccountNotRentExempt);
     }
 
     donation.amount = **writing_account.lamports.borrow();
@@ -93,9 +92,9 @@ fn withdraw(
     let recipient: &AccountInfo = next_account_info(accounts_iter)?;
     let writing_account: &AccountInfo = next_account_info(accounts_iter)?;
 
-    if writing_account.owner != program_id {
+    if writing_account.owner.ne(&program_id){
         msg!("The writing account isn't owned by the program");
-        return Err(ProgramError::IncorrectProgramId);
+        return Err(ProgramError::IllegalOwner);
     }
     if !recipient.is_signer {
         msg!("The recipient account should be the signer");

@@ -66,9 +66,9 @@ fn initialize(
         return Err(ProgramError::MissingRequiredSignature);
     }
 
-    if writing_account.owner != program_id {
+    if writing_account.owner.ne(&program_id){
         msg!("The writing account isn't owned by program");
-        return Err(ProgramError::InvalidAccountData);
+        return Err(ProgramError::IllegalOwner);
     }
 
     let mut htlc_info: HTLCInfo = HTLCInfo::try_from_slice(&instruction_data)?;
@@ -90,11 +90,6 @@ fn initialize(
     Ok(())
 }
 
-#[derive(BorshSerialize, BorshDeserialize, Debug)]
-struct Secret {
-    pub secret_string: String,
-}
-
 fn reveal(program_id: &Pubkey, accounts: &[AccountInfo], instruction_data: &[u8]) -> ProgramResult {
     let accounts_iter: &mut std::slice::Iter<AccountInfo> = &mut accounts.iter();
     let sender: &AccountInfo = next_account_info(accounts_iter)?;
@@ -105,16 +100,16 @@ fn reveal(program_id: &Pubkey, accounts: &[AccountInfo], instruction_data: &[u8]
         return Err(ProgramError::MissingRequiredSignature);
     }
 
-    if writing_account.owner != program_id {
+    if writing_account.owner.ne(&program_id){
         msg!("The writing account isn't owned by the program");
-        return Err(ProgramError::InvalidAccountData);
+        return Err(ProgramError::IllegalOwner);
     }
 
     let htlc_info: HTLCInfo = HTLCInfo::try_from_slice(*writing_account.data.borrow())?;
 
     if sender.key != &htlc_info.owner {
         msg!("Transaction sender is not the owner of the HTLC");
-        return Err(ProgramError::InvalidInstructionData);
+        return Err(ProgramError::IllegalOwner);
     }
 
     // Verify the secret
@@ -143,9 +138,9 @@ fn timeout(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
         return Err(ProgramError::MissingRequiredSignature);
     }
 
-    if writing_account.owner != program_id {
+    if writing_account.owner.ne(&program_id){
         msg!("The writing account isn't owned by program");
-        return Err(ProgramError::InvalidAccountData);
+        return Err(ProgramError::IllegalOwner);
     }
 
     let htlc_info: HTLCInfo = HTLCInfo::try_from_slice(*writing_account.data.borrow())?;

@@ -67,6 +67,7 @@ In the following example `<SMART_CONTRACT_NAME>` stands for a contract chosen by
 - storage
 - escow
 - crowdfund
+- vesting
 
 Now we can compile and deploy the on chain program:
 ```sh

@@ -66,19 +66,19 @@ fn create_campaign(
 
     if !creator_account.is_signer {
         msg!("The creator account should be signer");
-        return Err(ProgramError::IncorrectProgramId);
+        return Err(ProgramError::MissingRequiredSignature);
     }
 
-    if campain_account.owner != program_id {
+    if campain_account.owner.ne(&program_id){
         msg!("The campain account isn't owned by program");
-        return Err(ProgramError::IncorrectProgramId);
+        return Err(ProgramError::IllegalOwner);
     }
 
     let campain = Campaign::try_from_slice(&instruction_data)?;
 
     if campain.receiver != *creator_account.key {
         msg!("The creator of campain should be the receiver");
-        return Err(ProgramError::InvalidInstructionData);
+        return Err(ProgramError::InvalidAccountData);
     }
 
     if campain.end_donate_slot <= Clock::get()?.slot {
@@ -94,7 +94,7 @@ fn create_campaign(
     let rent_exemption = Rent::get()?.minimum_balance(campain_account.data_len());
     if **campain_account.lamports.borrow() < rent_exemption {
         msg!("The state account should be rent exempt");
-        return Err(ProgramError::InsufficientFunds);
+        return Err(ProgramError::AccountNotRentExempt);
     }
 
     campain.serialize(&mut &mut campain_account.try_borrow_mut_data()?[..])?;
@@ -110,17 +110,17 @@ fn donate(program_id: &Pubkey, accounts: &[AccountInfo], instruction_data: &[u8]
 
     if !donor_account.is_signer {
         msg!("The donor account should be signer");
-        return Err(ProgramError::IncorrectProgramId);
+        return Err(ProgramError::MissingRequiredSignature);
     }
 
-    if campain_account.owner != program_id {
+    if campain_account.owner.ne(&program_id){
         msg!("The campain account isn't owned by program");
-        return Err(ProgramError::IncorrectProgramId);
+        return Err(ProgramError::IllegalOwner);
     }
 
-    if donation_account.owner != program_id {
+    if donation_account.owner.ne(&program_id){
         msg!("The donation account isn't owned by program");
-        return Err(ProgramError::IncorrectProgramId);
+        return Err(ProgramError::IllegalOwner);
     }
 
     let campain = Campaign::try_from_slice(*campain_account.data.borrow())?;
@@ -133,7 +133,7 @@ fn donate(program_id: &Pubkey, accounts: &[AccountInfo], instruction_data: &[u8]
     let donation_info = DonationInfo::try_from_slice(&instruction_data)?;
 
     if donation_info.donor != *donor_account.key {
-        return Err(ProgramError::InvalidInstructionData);
+        return Err(ProgramError::InvalidAccountData);
     }
 
     if donation_info.reciever_campain != *campain_account.key {
@@ -162,19 +162,19 @@ fn withdraw(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
 
     if !creator_account.is_signer {
         msg!("The creator account should be signer");
-        return Err(ProgramError::IncorrectProgramId);
+        return Err(ProgramError::MissingRequiredSignature);
     }
 
-    if campain_account.owner != program_id {
+    if campain_account.owner.ne(&program_id){
         msg!("The campain account isn't owned by program");
-        return Err(ProgramError::IncorrectProgramId);
+        return Err(ProgramError::IllegalOwner);
     }
 
     let campain = Campaign::try_from_slice(*campain_account.data.borrow())?;
 
     if campain.receiver != *creator_account.key {
         msg!("Only the creator can withdraw");
-        return Err(ProgramError::InvalidInstructionData);
+        return Err(ProgramError::InvalidAccountData);
     }
 
     if Clock::get()?.slot < campain.end_donate_slot {
@@ -204,17 +204,17 @@ fn reclaim(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
 
     if !donor_account.is_signer {
         msg!("The donor account should be signer");
-        return Err(ProgramError::IncorrectProgramId);
+        return Err(ProgramError::MissingRequiredSignature);
     }
 
-    if campain_account.owner != program_id {
+    if campain_account.owner.ne(&program_id){
         msg!("The campain account isn't owned by program");
-        return Err(ProgramError::IncorrectProgramId);
+        return Err(ProgramError::IllegalOwner);
     }
 
-    if donation_account.owner != program_id {
+    if donation_account.owner.ne(&program_id){
         msg!("The donation account isn't owned by program");
-        return Err(ProgramError::IncorrectProgramId);
+        return Err(ProgramError::IllegalOwner);
     }
 
     let campain = Campaign::try_from_slice(*campain_account.data.borrow())?;
@@ -223,7 +223,7 @@ fn reclaim(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
 
     if donation_info.donor != *donor_account.key {
         msg!("Only the donor can reclaim");
-        return Err(ProgramError::InvalidInstructionData);
+        return Err(ProgramError::InvalidAccountData);
     }
 
     if Clock::get()?.slot < campain.end_donate_slot {
@@ -233,7 +233,7 @@ fn reclaim(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
 
     if donation_info.reciever_campain != *campain_account.key {
         msg!("The donation is not for the provided campain");
-        return Err(ProgramError::InvalidInstructionData);
+        return Err(ProgramError::InvalidAccountData);
     }
 
     // Since the campain at this pooint is over we can
