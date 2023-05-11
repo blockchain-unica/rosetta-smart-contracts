@@ -85,3 +85,11 @@ export async function hashSHA256(secret: string) {
   hash.update(secret);
   return hash.digest();
 }
+
+export class NumberHolder {
+  number: number;
+  constructor(fields: { number: number }) {
+      this.number = fields.number;
+  }
+  static schema = new Map([[NumberHolder, { kind: 'struct', fields: [['number', 'u64']] }]]);
+}

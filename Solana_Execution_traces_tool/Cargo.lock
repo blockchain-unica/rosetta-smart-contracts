@@ -3089,6 +3089,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "simple_wallet"
+version = "0.1.0"
+dependencies = [
+ "borsh",
+ "borsh-derive 0.10.3",
+ "solana-program",
+ "solana-program-test",
+ "solana-sdk",
+]
+
+[[package]]
 name = "sized-chunks"
 version = "0.6.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"

@@ -214,7 +214,6 @@ fn finalize(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
 }
 
 fn cancel(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
-    msg!("cancel");
     let accounts_iter: &mut std::slice::Iter<AccountInfo> = &mut accounts.iter();
 
     let recovery_account: &AccountInfo = next_account_info(accounts_iter)?;

@@ -203,8 +203,6 @@ fn refund(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
         return Err(ProgramError::InvalidInstructionData);
     }
 
-    msg!("state_account: {}", **state_account.try_borrow_lamports()?);
-
     **buyer_account.try_borrow_mut_lamports()? += escow_info.amount;
     **state_account.try_borrow_mut_lamports()? -= escow_info.amount;
 

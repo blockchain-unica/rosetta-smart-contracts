@@ -129,7 +129,6 @@ fn release(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
         vesting_info.start,
         vesting_info.duration,
     )?;
-    msg!("amount: {}", amount);
 
     let rent_exemption = Rent::get()?.minimum_balance(vesting_account.data_len());
     if **vesting_account.lamports.borrow() < rent_exemption + amount {
