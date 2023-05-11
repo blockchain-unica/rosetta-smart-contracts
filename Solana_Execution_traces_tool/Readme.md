@@ -60,15 +60,17 @@ Transactions can be tracked using different software such as:
 Make sure you select the right cluster. In our examples we use the Testnet.
 
 In the following example `<SMART_CONTRACT_NAME>` stands for a contract chosen by the user and could be one of the following
-- simple_transfer
-- htlc
-- token_transfer
-- vault
-- storage
-- escow
-- crowdfund
-- vesting
-- simple_wallet
+
+1. [simple_transfer](../contracts/simple_transfer)
+1. [token_transfer](../contracts/token_transfer)
+1. [htlc](../contracts/htlc)
+1. [escow](../contracts/escrow)
+1. [auction](../contracts/auction)
+1. [crowdfund](../contracts/crowdfund)
+1. [vault](../contracts/vault)
+1. [vesting](../contracts/vesting)
+1. [storage](../contracts/storage)
+1. [simple_wallet](../contracts/simple_wallet)
 
 Now we can compile and deploy the on chain program:
 ```sh

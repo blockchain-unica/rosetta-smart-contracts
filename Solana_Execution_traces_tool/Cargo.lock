@@ -228,6 +228,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "auction"
+version = "0.1.0"
+dependencies = [
+ "borsh",
+ "borsh-derive 0.10.3",
+ "solana-program",
+ "solana-program-test",
+ "solana-sdk",
+]
+
+[[package]]
 name = "autocfg"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
