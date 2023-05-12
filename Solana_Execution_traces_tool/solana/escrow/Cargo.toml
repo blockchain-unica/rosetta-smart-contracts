@@ -1,5 +1,5 @@
 [package]
-name = "escow"
+name = "escrow"
 version = "0.1.0"
 edition = "2021"
 
@@ -16,6 +16,6 @@ solana-program-test = "~1.10.35"
 solana-sdk = "~1.10.35"
 
 [lib]
-name = "escow"
+name = "escrow"
 crate-type = ["cdylib", "lib"]
 

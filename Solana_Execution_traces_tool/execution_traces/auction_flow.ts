@@ -6,15 +6,16 @@ import {
     SystemProgram,
     Transaction,
     TransactionInstruction,
-    clusterApiUrl,
     sendAndConfirmTransaction,
 } from '@solana/web3.js';
 
 import {
     buildBufferFromActionAndNumber,
     generateKeyPair,
+    getConnection,
     getPublicKeyFromFile,
     getTransactionFees,
+    printParticipants,
 } from './utils';
 
 import * as borsh from 'borsh';
@@ -71,23 +72,25 @@ let feesForBidder = 0;
 const SEED_FOR_AUCTION = "auction";
 
 async function main() {
-
-    const connection = new Connection(clusterApiUrl("testnet"), "confirmed");
+   
+    const connection = getConnection();
 
     const programId = await getPublicKeyFromFile(PROGRAM_KEYPAIR_PATH);
     const kpSeller = await generateKeyPair(connection, 1);
     const kpBidder1 = await generateKeyPair(connection, 1);
     const kpBidder2 = await generateKeyPair(connection, 1);
 
-    console.log("programId:          ", programId.toBase58());
-    console.log("seller:             ", kpSeller.publicKey.toBase58());
-    console.log("bidder 1:           ", kpBidder1.publicKey.toBase58());
-    console.log("bidder 2:           ", kpBidder2.publicKey.toBase58());
+    await printParticipants(connection, programId, [
+        ["seller", kpSeller.publicKey], 
+        ["bidder 1", kpBidder1.publicKey],
+        ["bidder 2", kpBidder2.publicKey],
+    ]);
 
     // 1. Start auction
     console.log("\n--- Start auction. Actor: the seller ---");
     const auctionName = "auction1";
     const nSlotsToWait = 20;
+    console.log('    Dutation:', nSlotsToWait, 'slots');
     const end_time = await connection.getSlot() + nSlotsToWait;
     const starting_bid = 0.1 * LAMPORTS_PER_SOL;
     await start(
@@ -97,7 +100,6 @@ async function main() {
         auctionName,
         end_time,
         starting_bid);
-
 
     // 2. Bid
     console.log("\n--- Bid. Actor: the bidder 1 ---");
@@ -140,9 +142,9 @@ async function main() {
 
     // Costs
     console.log("\n........");
-    console.log("Fees for seller:        ", feesForSeller / LAMPORTS_PER_SOL, " SOL");
-    console.log("Fees for bidder 1:      ", feesForBidder1 / LAMPORTS_PER_SOL, " SOL");
-    console.log("Fees for bidder 2:      ", feesForBidder2 / LAMPORTS_PER_SOL, " SOL");
+    console.log("Fees for seller:        ", feesForSeller / LAMPORTS_PER_SOL, "SOL");
+    console.log("Fees for bidder 1:      ", feesForBidder1 / LAMPORTS_PER_SOL, "SOL");
+    console.log("Fees for bidder 2:      ", feesForBidder2 / LAMPORTS_PER_SOL, "SOL");
 }
 
 main().then(
@@ -162,7 +164,7 @@ async function start(
     starting_bid: number
 ): Promise<void> {
 
-    console.log('    Starting amount: ', starting_bid / LAMPORTS_PER_SOL, ' SOL');
+    console.log('    Starting amount: ', starting_bid / LAMPORTS_PER_SOL, 'SOL');
 
     const auctionPDA = await getAuctionPDA(programId, kpSeller.publicKey, auctionName);
 
@@ -192,7 +194,7 @@ async function start(
 
     const tFees = await getTransactionFees(transaction, connection);
     feesForSeller += tFees;
-    console.log('    Transaction fees: ', tFees / LAMPORTS_PER_SOL, ' SOL');
+    console.log('    Transaction fees: ', tFees / LAMPORTS_PER_SOL, 'SOL');
 
 }
 
@@ -205,7 +207,7 @@ async function bid(
     amountToDeposit: number
 ): Promise<void> {
 
-    console.log('    Amount: ', amountToDeposit / LAMPORTS_PER_SOL, ' SOL');
+    console.log('    Amount: ', amountToDeposit / LAMPORTS_PER_SOL, 'SOL');
 
     const auctionPDA = await getAuctionPDA(programId, sellerPubKey, auctionName);
 
@@ -236,7 +238,7 @@ async function bid(
 
     const tFees = await getTransactionFees(transaction, connection);
     feesForBidder += tFees;
-    console.log('    Transaction fees: ', tFees / LAMPORTS_PER_SOL, ' SOL');
+    console.log('    Transaction fees: ', tFees / LAMPORTS_PER_SOL, 'SOL');
 }
 
 async function end(
@@ -262,7 +264,7 @@ async function end(
 
     const tFees = await getTransactionFees(transaction, connection);
     feesForSeller += tFees;
-    console.log('    Transaction fees: ', tFees / LAMPORTS_PER_SOL, ' SOL');
+    console.log('    Transaction fees: ', tFees / LAMPORTS_PER_SOL, 'SOL');
 }
 
 async function getAuctionPDA(programId: PublicKey, ownerPubKey: PublicKey, auctionName: string): Promise<PublicKey> {

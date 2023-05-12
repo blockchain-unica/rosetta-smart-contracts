@@ -6,15 +6,16 @@ import {
     SystemProgram,
     Transaction,
     TransactionInstruction,
-    clusterApiUrl,
     sendAndConfirmTransaction,
 } from '@solana/web3.js';
 
 import {
     buildBufferFromActionAndNumber,
     generateKeyPair,
+    getConnection,
     getPublicKeyFromFile,
     getTransactionFees,
+    printParticipants,
 } from './utils';
 
 import * as borsh from 'borsh';
@@ -61,19 +62,21 @@ let feesForRecipient = 0;
 
 async function main() {
     
-    const connection = new Connection(clusterApiUrl("testnet"), "confirmed");
+    const connection = getConnection();
 
     const programId = await getPublicKeyFromFile(PROGRAM_KEYPAIR_PATH);
     const kpSender = await generateKeyPair(connection, 1);
     const kpRecipient = await generateKeyPair(connection, 1);
 
-    console.log("programId: ", programId.toBase58());
-    console.log("sender:    ", kpSender.publicKey.toBase58());
-    console.log("recipient: ", kpRecipient.publicKey.toBase58());
+    await printParticipants(connection, programId, [
+        ["sender", kpSender.publicKey], 
+        ["recipient", kpRecipient.publicKey],
+    ]);
 
     // 1. Deposit money (the user deposits the amout equal to price)
     console.log("\n--- Deposit. Actor: the owner ---");
     const amount = 0.2 * LAMPORTS_PER_SOL;
+    console.log("    Amount", amount / LAMPORTS_PER_SOL, "SOL");
     const lamportsAddress = await deposit(
         connection,
         programId,
@@ -83,27 +86,31 @@ async function main() {
 
     // 2. Partial Withdraw
     console.log("\n--- Partial Withdraw. Actor: the recipient ---");
+    let amountToWithdraw = 0.1 * amount;
+    console.log("    Amount", amountToWithdraw / LAMPORTS_PER_SOL, "SOL");
     await withdraw(
         connection,
         programId,
         kpRecipient,
-        0.1 * amount,
+        amountToWithdraw,
         lamportsAddress);
 
     // 3. Total Withdraw
     console.log("\n--- Total Withdraw. Actor: the recipient ---");
+    amountToWithdraw = 0.9 * amount;
+    console.log("    Amount", amountToWithdraw / LAMPORTS_PER_SOL, "SOL");
     await withdraw(
         connection,
         programId,
         kpRecipient,
-        0.9 * amount,
+        amountToWithdraw,
         lamportsAddress);
 
     // Costs
     console.log("\n........");
-    console.log("Fees for sender:    ", feesForSender / LAMPORTS_PER_SOL, " SOL");
-    console.log("Fees for recipient: ", feesForRecipient / LAMPORTS_PER_SOL, " SOL");
-    console.log("Total fees:         ", (feesForSender + feesForRecipient) / LAMPORTS_PER_SOL, " SOL");
+    console.log("Fees for sender:    ", feesForSender / LAMPORTS_PER_SOL, "SOL");
+    console.log("Fees for recipient: ", feesForRecipient / LAMPORTS_PER_SOL, "SOL");
+    console.log("Total fees:         ", (feesForSender + feesForRecipient) / LAMPORTS_PER_SOL, "SOL");
 }
 
 main().then(
@@ -168,7 +175,7 @@ async function deposit(
 
     const tFees = await getTransactionFees(transactionDeposit, connection);
     feesForSender += tFees;
-    console.log('    Transaction fees: ', tFees / LAMPORTS_PER_SOL, ' SOL');
+    console.log('    Transaction fees: ', tFees / LAMPORTS_PER_SOL, 'SOL');
 
     return writingAccountPublicKey;
 }
@@ -203,5 +210,5 @@ async function withdraw(
 
     const tFees = await getTransactionFees(transaction, connection);
     feesForRecipient += tFees;
-    console.log('    Transaction fees: ', tFees / LAMPORTS_PER_SOL, ' SOL');
+    console.log('    Transaction fees: ', tFees / LAMPORTS_PER_SOL, 'SOL');
 }

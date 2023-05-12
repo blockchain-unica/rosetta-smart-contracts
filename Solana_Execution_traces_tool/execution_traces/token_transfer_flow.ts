@@ -1,7 +1,6 @@
 import {
     Connection,
     Keypair,
-    clusterApiUrl,
     Transaction,
     TransactionInstruction,
     SystemProgram,
@@ -25,8 +24,10 @@ import {
 import {
     buildBufferFromActionAndNumber,
     generateKeyPair,
+    getConnection,
     getPublicKeyFromFile,
     getTransactionFees,
+    printParticipants,
 } from './utils';
 
 import path from 'path';
@@ -81,17 +82,19 @@ let feesForRecipient = 0;
 
 async function main() {
 
-    const connection = new Connection(clusterApiUrl("testnet"), "confirmed");
+    const connection = getConnection();
 
     const programId = await getPublicKeyFromFile(PROGRAM_KEYPAIR_PATH);
     const senderKeypair = await generateKeyPair(connection, 1);
     const recipientKeypair = await generateKeyPair(connection, 1);
 
-    console.log("programId:     ", programId.toBase58());
-    console.log("Sender:        ", senderKeypair.publicKey.toBase58());
-    console.log("Recipient:     ", recipientKeypair.publicKey.toBase58());
+    await printParticipants(connection, programId, [
+        ["Sender", senderKeypair.publicKey], 
+        ["Recipient", recipientKeypair.publicKey], 
+    ]);
 
     // Setup
+    console.log("\n--- Setup. Generating mint and token accounts for the participants ---");
     const initialBalance = 100;
     const [mintPubkey, senderTokenAccountPubkey, recipientTokenAccountPubkey] = await setup(
         connection,
@@ -114,8 +117,8 @@ async function main() {
     );
 
     // 2. Partial Withdraw
-    let amountToWithdraw = amountToSend / 10;
     console.log("\n--- Partial Withdraw. Actor: the recipient ---");
+    let amountToWithdraw = amountToSend / 10;
     await withdraw(
         connection,
         programId,
@@ -125,8 +128,8 @@ async function main() {
     );
 
     // 3. Total Withdraw
-    amountToWithdraw = amountToSend - amountToWithdraw;
     console.log("\n--- Partial Withdraw. Actor: the recipient ---");
+    amountToWithdraw = amountToSend - amountToWithdraw;
     await withdraw(
         connection,
         programId,
@@ -137,9 +140,9 @@ async function main() {
 
     // Costs
     console.log("\n........");
-    console.log("Fees for owner:    ", feesForSender / LAMPORTS_PER_SOL, " SOL");
-    console.log("Fees for recipient: ", feesForRecipient / LAMPORTS_PER_SOL, " SOL");
-    console.log("Total fees:         ", (feesForSender + feesForRecipient) / LAMPORTS_PER_SOL, " SOL");
+    console.log("Fees for owner:     ", feesForSender / LAMPORTS_PER_SOL, "SOL");
+    console.log("Fees for recipient: ", feesForRecipient / LAMPORTS_PER_SOL, "SOL");
+    console.log("Total fees:         ", (feesForSender + feesForRecipient) / LAMPORTS_PER_SOL, "SOL");
 }
 
 main().then(
@@ -170,7 +173,7 @@ async function setup(
         senderKeypair.publicKey, // freeze authority (you can use `null` to disable it. when you disable it, you can't turn it on again)
         decimals
     );
-    console.log("Mint:           " + mintPubkey.toBase58());
+    console.log("    Mint:\t" + mintPubkey.toBase58());
 
     // Create the token associated account for the sender
     const senderTokenAccount = await getOrCreateAssociatedTokenAccount(
@@ -211,6 +214,8 @@ async function deposit(
     recipientTokenAccountPubkey: PublicKey,
     amountToSend: number
 ): Promise<PublicKey> {
+
+    console.log("    Amount to deposit: ", amountToSend);
 
     const mint = await getMint(connection, mintPubkey);
 
@@ -281,7 +286,7 @@ async function deposit(
 
     const tFees = await getTransactionFees(depositTransaction, connection);
     feesForSender += tFees;
-    console.log('    Transaction fees: ', tFees / LAMPORTS_PER_SOL, ' SOL');
+    console.log('    Transaction fees: ', tFees / LAMPORTS_PER_SOL, 'SOL');
 
     return stateAccountPubkey;
 }
@@ -293,6 +298,8 @@ async function withdraw(
     stateAccountPubkey: PublicKey,
     amountToWithdraw: number
 ): Promise<void> {
+
+    console.log("    Amount to withdraw: ", amountToWithdraw);
 
     const PDA = await PublicKey.findProgramAddress([Buffer.from("TokenTransfer")], programId);
     const PDApubKey = PDA[0];
@@ -327,5 +334,5 @@ async function withdraw(
 
     const tFees = await getTransactionFees(withdrawTransaction, connection);
     feesForRecipient += tFees;
-    console.log('    Transaction fees: ', tFees / LAMPORTS_PER_SOL, ' SOL');
+    console.log('    Transaction fees: ', tFees / LAMPORTS_PER_SOL, 'SOL');
 }

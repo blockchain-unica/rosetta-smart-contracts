@@ -6,15 +6,16 @@ import {
     SystemProgram,
     Transaction,
     TransactionInstruction,
-    clusterApiUrl,
     sendAndConfirmTransaction,
 } from '@solana/web3.js';
 
 import {
     buildBufferFromActionAndNumber,
     generateKeyPair,
+    getConnection,
     getPublicKeyFromFile,
     getTransactionFees,
+    printParticipants,
 } from './utils';
 
 import * as borsh from 'borsh';
@@ -89,27 +90,25 @@ let feesForRecovery = 0;
 
 async function main() {
 
-    const connection = new Connection(clusterApiUrl("testnet"), "confirmed");
+    const connection = getConnection();
 
     const programId = await getPublicKeyFromFile(PROGRAM_KEYPAIR_PATH);
     const kpOwner = await generateKeyPair(connection, 1);
     const kpRecovery = await generateKeyPair(connection, 1);
     const kpReceiver = await generateKeyPair(connection, 1);
 
-    let ownerBalance = await connection.getBalance(kpOwner.publicKey);
-    let receiverBalance = await connection.getBalance(kpReceiver.publicKey);
-
-    console.log("programId:          ", programId.toBase58());
-    console.log("owner:              ", kpOwner.publicKey.toBase58());
-    console.log("owner's balance:    ", ownerBalance / LAMPORTS_PER_SOL, " SOL");
-    console.log("receiver:           ", kpReceiver.publicKey.toBase58());
-    console.log("receiver's balance: ", receiverBalance / LAMPORTS_PER_SOL, " SOL");
-    console.log("recovery:           ", kpRecovery.publicKey.toBase58());
+    await printParticipants(connection, programId, [
+        ["owner", kpOwner.publicKey], 
+        ["receiver", kpReceiver.publicKey], 
+        ["recovery", kpRecovery.publicKey], 
+    ]);
 
     // 0. Initialize the valult for the owner (IDLE) 
     console.log("\n--- Initialize. Actor: the owner ---");
-    const initialAmount = 0.2 * LAMPORTS_PER_SOL;
     const waitTime = 2;
+    console.log('    Dutation:', waitTime, 'slots');
+    const initialAmount = 0.2 * LAMPORTS_PER_SOL;
+    console.log('    Initial amount:', initialAmount/LAMPORTS_PER_SOL, 'SOL');
     const stateAccountPublicKey = await initialize(
         connection,
         programId,
@@ -122,6 +121,7 @@ async function main() {
     // 1. Withdraw  IDLE -> REQ
     console.log("\n--- Withdraw. Actor: the owner ---");
     const withdrawAmount = initialAmount / 2;
+    console.log('    Amount:', withdrawAmount/LAMPORTS_PER_SOL, 'SOL');
     await withdraw(
         connection,
         programId,
@@ -132,7 +132,7 @@ async function main() {
     );
 
     // Chose if to finalize or to cancel
-    const choice: Action = Action.Cancel;
+    const choice: Action = Action.Finalize;
     switch (choice.valueOf()) {
         case Action.Finalize:// 3. Finalize  REQ -> IDLE
             console.log("\n--- Finalize. Actor: the owner ---");
@@ -157,13 +157,13 @@ async function main() {
     }
 
     // Costs
-    ownerBalance = await connection.getBalance(kpOwner.publicKey);
-    receiverBalance = await connection.getBalance(kpReceiver.publicKey);
+    const ownerBalance = await connection.getBalance(kpOwner.publicKey);
+    const receiverBalance = await connection.getBalance(kpReceiver.publicKey);
     console.log("\n........");
-    console.log("Fees for owner:         ", feesForOwner / LAMPORTS_PER_SOL, " SOL");
-    console.log("Fees for recovery:      ", feesForRecovery / LAMPORTS_PER_SOL, " SOL");
-    console.log("Owner's balance:        ", ownerBalance / LAMPORTS_PER_SOL, " SOL");
-    console.log("Receiver's balance:     ", receiverBalance / LAMPORTS_PER_SOL, " SOL");
+    console.log("Fees for owner:         ", feesForOwner / LAMPORTS_PER_SOL, "SOL");
+    console.log("Fees for recovery:      ", feesForRecovery / LAMPORTS_PER_SOL, "SOL");
+    console.log("Owner's balance:        ", ownerBalance / LAMPORTS_PER_SOL, "SOL");
+    console.log("Receiver's balance:     ", receiverBalance / LAMPORTS_PER_SOL, "SOL");
 }
 
 main().then(
@@ -218,7 +218,7 @@ async function initialize(
 
     let tFees = await getTransactionFees(transaction, connection);
     feesForOwner += tFees;
-    console.log('    Transaction fees: ', tFees / LAMPORTS_PER_SOL, ' SOL');
+    console.log('    Transaction fees: ', tFees / LAMPORTS_PER_SOL, 'SOL');
 
     return stateAccountPublicKey;
 }
@@ -248,7 +248,7 @@ async function withdraw(
 
     let tFees = await getTransactionFees(transaction, connection);
     feesForOwner += tFees;
-    console.log('    Transaction fees: ', tFees / LAMPORTS_PER_SOL, ' SOL');
+    console.log('    Transaction fees: ', tFees / LAMPORTS_PER_SOL, 'SOL');
 }
 
 async function finalize(
@@ -282,7 +282,7 @@ async function finalize(
 
     let tFees = await getTransactionFees(transaction, connection);
     feesForOwner += tFees;
-    console.log('    Transaction fees: ', tFees / LAMPORTS_PER_SOL, ' SOL');
+    console.log('    Transaction fees: ', tFees / LAMPORTS_PER_SOL, 'SOL');
 }
 
 async function cancel(
@@ -307,5 +307,5 @@ async function cancel(
 
     let tFees = await getTransactionFees(transaction, connection);
     feesForRecovery += tFees;
-    console.log('    Transaction fees: ', tFees / LAMPORTS_PER_SOL, ' SOL');
+    console.log('    Transaction fees: ', tFees / LAMPORTS_PER_SOL, 'SOL');
 }

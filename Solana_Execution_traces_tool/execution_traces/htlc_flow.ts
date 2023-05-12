@@ -6,15 +6,16 @@ import {
     SystemProgram,
     Transaction,
     TransactionInstruction,
-    clusterApiUrl,
     sendAndConfirmTransaction,
 } from '@solana/web3.js';
 
 import {
     generateKeyPair,
+    getConnection,
     getPublicKeyFromFile,
     getTransactionFees,
     hashSHA256,
+    printParticipants,
 } from './utils';
 
 import * as borsh from 'borsh';
@@ -73,15 +74,16 @@ const minimumAmount = 0.1 * LAMPORTS_PER_SOL;
 
 async function main() {
 
-    const connection = new Connection(clusterApiUrl("testnet"), "confirmed");
+    const connection = getConnection();
 
     const programId = await getPublicKeyFromFile(PROGRAM_KEYPAIR_PATH);
     const kpOwner = await generateKeyPair(connection, 1);
     const kpVerifier = await generateKeyPair(connection, 1);
 
-    console.log("programId: ", programId.toBase58());
-    console.log("owner:     ", kpOwner.publicKey.toBase58());
-    console.log("verifier:  ", kpVerifier.publicKey.toBase58());
+    await printParticipants(connection, programId, [
+        ["owner", kpOwner.publicKey], 
+        ["verifier", kpVerifier.publicKey],
+    ]);
 
     /******************* Trace 1 *********************/
     console.log("\n---       Trace 1       ---");
@@ -99,7 +101,7 @@ async function main() {
         hashed_secret,
         delaySlots);
 
-    console.log("After 50 rounds, the owner performs the reveal action.");
+    console.log("\nAfter 50 rounds, the owner performs the reveal action.");
 
     let nSlotsToWait = 50;
     console.log("   Waiting", nSlotsToWait, "slots...");
@@ -133,7 +135,7 @@ async function main() {
         hashed_secret,
         delaySlots);
 
-    console.log("After 100 rounds, the receiver performs the timeout action.");
+    console.log("\nAfter 100 rounds, the receiver performs the timeout action.");
 
     nSlotsToWait = 100;
     console.log("   Waiting", nSlotsToWait, "slots...");
@@ -157,13 +159,13 @@ async function main() {
 
     console.log("\n........");
     console.log("\nTrace 1");
-    console.log("Fees for owner:          ", feesForOwnerTrace1 / LAMPORTS_PER_SOL, " SOL");
-    console.log("Fees for recipient:      ", feesForVerifierTrace1 / LAMPORTS_PER_SOL, " SOL");
-    console.log("Total fees for Trace 1:  ", (feesForOwnerTrace1 + feesForVerifierTrace1) / LAMPORTS_PER_SOL, " SOL");
+    console.log("Fees for owner:          ", feesForOwnerTrace1 / LAMPORTS_PER_SOL, "SOL");
+    console.log("Fees for recipient:      ", feesForVerifierTrace1 / LAMPORTS_PER_SOL, "SOL");
+    console.log("Total fees for Trace 1:  ", (feesForOwnerTrace1 + feesForVerifierTrace1) / LAMPORTS_PER_SOL, "SOL");
     console.log("\nTrace 2");
-    console.log("Fees for owner:          ", feesForOwnerTrace2 / LAMPORTS_PER_SOL, " SOL");
-    console.log("Fees for recipient:      ", feesForVerifierTrace2 / LAMPORTS_PER_SOL, " SOL");
-    console.log("Total fees for Trace 2:  ", (feesForOwnerTrace2 + feesForVerifierTrace2) / LAMPORTS_PER_SOL, " SOL");
+    console.log("Fees for owner:          ", feesForOwnerTrace2 / LAMPORTS_PER_SOL, "SOL");
+    console.log("Fees for recipient:      ", feesForVerifierTrace2 / LAMPORTS_PER_SOL, "SOL");
+    console.log("Total fees for Trace 2:  ", (feesForOwnerTrace2 + feesForVerifierTrace2) / LAMPORTS_PER_SOL, "SOL");
 
 }
 
@@ -228,7 +230,7 @@ async function initialize(
 
     let tFees = await getTransactionFees(initTransaction, connection);
     feesForOwner += tFees;
-    console.log('   Transaction fees: ', tFees / LAMPORTS_PER_SOL, ' SOL');
+    console.log('   Transaction fees: ', tFees / LAMPORTS_PER_SOL, 'SOL');
 
     return writingAccountPublicKey;
 }
@@ -253,7 +255,7 @@ async function reveal(
 
     let tFees = await getTransactionFees(revealTransaction, connection);
     feesForOwner += tFees;
-    console.log('   Transaction fees: ', tFees / LAMPORTS_PER_SOL, ' SOL');
+    console.log('   Transaction fees: ', tFees / LAMPORTS_PER_SOL, 'SOL');
 }
 
 async function timeout(
@@ -278,5 +280,5 @@ async function timeout(
 
     let tFees = await getTransactionFees(revealTransaction, connection);
     feesForVerifier += tFees;
-    console.log('   Transaction fees: ', tFees / LAMPORTS_PER_SOL, ' SOL');
+    console.log('   Transaction fees: ', tFees / LAMPORTS_PER_SOL, 'SOL');
 }

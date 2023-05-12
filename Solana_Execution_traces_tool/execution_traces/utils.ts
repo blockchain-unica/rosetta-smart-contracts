@@ -8,6 +8,7 @@ import {
   LAMPORTS_PER_SOL,
   PublicKey,
   Transaction,
+  clusterApiUrl,
 } from '@solana/web3.js';
 
 import * as crypto from 'crypto';
@@ -86,10 +87,28 @@ export async function hashSHA256(secret: string) {
   return hash.digest();
 }
 
+export async function printParticipants(connection: Connection, programId: PublicKey, participants: [string, PublicKey][]) {
+
+  console.log("programId:\t" + programId.toBase58() + "\n");
+
+  const data = [];
+  for (const [name, publicKey] of participants) {
+    const balance = await connection.getBalance(publicKey);
+    data.push({ name: name, publicKey: publicKey.toBase58(), SOL: balance / LAMPORTS_PER_SOL });
+  }
+  console.table(data, ["name", "publicKey", "SOL"]);
+}
+
 export class NumberHolder {
   number: number;
   constructor(fields: { number: number }) {
-      this.number = fields.number;
+    this.number = fields.number;
   }
   static schema = new Map([[NumberHolder, { kind: 'struct', fields: [['number', 'u64']] }]]);
+}
+
+export function getConnection() {
+  //const connection = new Connection(clusterApiUrl("testnet"), "confirmed");
+  const connection = new Connection("http://localhost:8899", "confirmed");
+  return connection;
 }

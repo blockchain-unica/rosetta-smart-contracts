@@ -6,22 +6,23 @@ import {
     SystemProgram,
     Transaction,
     TransactionInstruction,
-    clusterApiUrl,
     sendAndConfirmTransaction,
 } from '@solana/web3.js';
 
 import {
     buildBufferFromActionAndNumber,
     generateKeyPair,
+    getConnection,
     getPublicKeyFromFile,
     getTransactionFees,
+    printParticipants,
 } from './utils';
 
 import * as borsh from 'borsh';
 import path from 'path';
 import { Buffer } from 'buffer';
 
-const PROGRAM_KEYPAIR_PATH = path.resolve(__dirname, '../solana/dist/escow/escow-keypair.json');
+const PROGRAM_KEYPAIR_PATH = path.resolve(__dirname, '../solana/dist/escrow/escrow-keypair.json');
 
 enum Action {
     Initialize = 0,
@@ -36,7 +37,7 @@ enum State {
     Closed = 2,
 };
 
-class EscowInfo {
+class EscrowInfo {
     seller: Buffer = Buffer.alloc(32);
     buyer: Buffer = Buffer.alloc(32);
     amount: number = 0;
@@ -57,7 +58,7 @@ class EscowInfo {
     }
 
     static schema = new Map([
-        [EscowInfo, {
+        [EscrowInfo, {
             kind: 'struct', fields: [
                 ['seller', [32]],
                 ['buyer', [32]],
@@ -68,8 +69,8 @@ class EscowInfo {
     ]);
 
     static size = borsh.serialize(
-        EscowInfo.schema,
-        new EscowInfo(),
+        EscrowInfo.schema,
+        new EscrowInfo(),
     ).length
 }
 
@@ -77,39 +78,44 @@ let feesForSeller = 0;
 let feesForBuyer = 0;
 
 async function main() {
-    const connection = new Connection(clusterApiUrl("testnet"), "confirmed");
+    
+    const connection = getConnection();
 
     const programId = await getPublicKeyFromFile(PROGRAM_KEYPAIR_PATH);
     const kpSeller = await generateKeyPair(connection, 1);
     const kpBuyer = await generateKeyPair(connection, 1);
 
-    console.log("programId: ", programId.toBase58());
-    console.log("seller:    ", kpSeller.publicKey.toBase58());
-    console.log("buyer:     ", kpBuyer.publicKey.toBase58());
+    await printParticipants(connection, programId, [
+        ["seller", kpSeller.publicKey], 
+        ["buyer", kpBuyer.publicKey],
+    ]);
 
     // 0. Initialize
     console.log("\n--- Initialize. Actor: the seller ---");
-    const amount = 0.1 * LAMPORTS_PER_SOL;
+    const requiredAmount = 0.1 * LAMPORTS_PER_SOL;
+    console.log("    Required amount: ", requiredAmount / LAMPORTS_PER_SOL, "SOL");
     let stateAccountPublicKey = await initialize(
         connection,
         programId,
         kpSeller,
         kpBuyer.publicKey,
-        amount
+        requiredAmount
     );
 
     // 1. Deposit money (the buyer deposits the amout equal to price)
     console.log("\n--- Deposit. Actor: the buyer ---");
+    const amountToDeposit = requiredAmount;
+    console.log("    Amount: ", amountToDeposit / LAMPORTS_PER_SOL, "SOL");
     await deposit(
         connection,
         programId,
         kpBuyer,
         stateAccountPublicKey,
-        amount
+        amountToDeposit
     );
 
     // Chose if to pay or to refund
-    const choice: Action = Action.Pay;
+    const choice: Action = Action.Refund;
     switch (choice.valueOf()) {
         case Action.Pay:     // 2. Payment
             console.log("\n--- Pay. Actor: the buyer ---");
@@ -134,9 +140,9 @@ async function main() {
 
     // Costs
     console.log("\n........");
-    console.log("Fees for seller: ", feesForSeller / LAMPORTS_PER_SOL, " SOL");
-    console.log("Fees for buyer:  ", feesForBuyer / LAMPORTS_PER_SOL, " SOL");
-    console.log("Total fees:      ", (feesForSeller + feesForBuyer) / LAMPORTS_PER_SOL, " SOL");
+    console.log("Fees for seller: ", feesForSeller / LAMPORTS_PER_SOL, "SOL");
+    console.log("Fees for buyer:  ", feesForBuyer / LAMPORTS_PER_SOL, "SOL");
+    console.log("Total fees:      ", (feesForSeller + feesForBuyer) / LAMPORTS_PER_SOL, "SOL");
 }
 
 main().then(
@@ -164,8 +170,8 @@ async function initialize(
         basePubkey: kpSeller.publicKey,
         seed: SEED,
         newAccountPubkey: stateAccountPublicKey,
-        lamports: await connection.getMinimumBalanceForRentExemption(EscowInfo.size),
-        space: EscowInfo.size,
+        lamports: await connection.getMinimumBalanceForRentExemption(EscrowInfo.size),
+        space: EscrowInfo.size,
         programId: programId,
     });
 
@@ -188,7 +194,7 @@ async function initialize(
 
     let tFees = await getTransactionFees(transaction, connection);
     feesForSeller += tFees;
-    console.log('    Transaction fees: ', tFees / LAMPORTS_PER_SOL, ' SOL');
+    console.log('    Transaction fees: ', tFees / LAMPORTS_PER_SOL, 'SOL');
 
     return stateAccountPublicKey;
 }
@@ -226,7 +232,7 @@ async function deposit(
 
     let tFees = await getTransactionFees(transaction, connection);
     feesForBuyer += tFees;
-    console.log('    Transaction fees: ', tFees / LAMPORTS_PER_SOL, ' SOL');
+    console.log('    Transaction fees: ', tFees / LAMPORTS_PER_SOL, 'SOL');
 }
 
 async function pay(
@@ -240,7 +246,7 @@ async function pay(
     if (stateAccountInfo === null) {
         throw new Error('Error: cannot find the state account');
     }
-    const stateInfo = borsh.deserialize(EscowInfo.schema, EscowInfo, stateAccountInfo.data,);
+    const stateInfo = borsh.deserialize(EscrowInfo.schema, EscrowInfo, stateAccountInfo.data,);
 
     // Instruction to the program
     const payInstruction = new TransactionInstruction({
@@ -258,7 +264,7 @@ async function pay(
 
     let tFees = await getTransactionFees(transaction, connection);
     feesForBuyer += tFees;
-    console.log('    Transaction fees: ', tFees / LAMPORTS_PER_SOL, ' SOL');
+    console.log('    Transaction fees: ', tFees / LAMPORTS_PER_SOL, 'SOL');
 }
 
 async function refund(
@@ -272,7 +278,7 @@ async function refund(
     if (stateAccountInfo === null) {
         throw new Error('Error: cannot find the state account');
     }
-    const stateInfo = borsh.deserialize(EscowInfo.schema, EscowInfo, stateAccountInfo.data,);
+    const stateInfo = borsh.deserialize(EscrowInfo.schema, EscrowInfo, stateAccountInfo.data,);
 
     // Instruction to the program
     const refundInstruction = new TransactionInstruction({
@@ -290,5 +296,5 @@ async function refund(
 
     let tFees = await getTransactionFees(transaction, connection);
     feesForSeller += tFees;
-    console.log('    Transaction fees: ', tFees / LAMPORTS_PER_SOL, ' SOL');
+    console.log('    Transaction fees: ', tFees / LAMPORTS_PER_SOL, 'SOL');
 }

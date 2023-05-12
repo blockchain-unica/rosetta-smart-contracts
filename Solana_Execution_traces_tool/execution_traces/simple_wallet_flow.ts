@@ -6,7 +6,6 @@ import {
     SystemProgram,
     Transaction,
     TransactionInstruction,
-    clusterApiUrl,
     sendAndConfirmTransaction,
 } from '@solana/web3.js';
 
@@ -14,8 +13,10 @@ import {
     NumberHolder,
     buildBufferFromActionAndNumber,
     generateKeyPair,
+    getConnection,
     getPublicKeyFromFile,
     getTransactionFees,
+    printParticipants,
 } from './utils';
 
 import * as borsh from 'borsh';
@@ -66,18 +67,16 @@ const SEED_FOR_WALLET = "wallet";
 
 async function main() {
 
-    const connection = new Connection(clusterApiUrl("testnet"), "confirmed");
-
+    const connection = getConnection();
+    
     const programId = await getPublicKeyFromFile(PROGRAM_KEYPAIR_PATH);
     const kpOwner = await generateKeyPair(connection, 1);
     const kpReceiver = await generateKeyPair(connection, 1);
 
-    let ownerBalance = await connection.getBalance(kpOwner.publicKey);
-    let receiverBalance = await connection.getBalance(kpReceiver.publicKey);
-
-    console.log("programId:          ", programId.toBase58());
-    console.log("owner:              ", kpOwner.publicKey.toBase58(), " with balance: ", ownerBalance / LAMPORTS_PER_SOL, " SOL");
-    console.log("receiver:           ", kpReceiver.publicKey.toBase58(), " with balance: ", receiverBalance / LAMPORTS_PER_SOL, " SOL");
+    await printParticipants(connection, programId, [
+        ["owner", kpOwner.publicKey], 
+        ["receiver", kpReceiver.publicKey],
+    ]);
 
     // 1. Deposit money
     const amountToDeposit = 0.2 * LAMPORTS_PER_SOL;
@@ -115,12 +114,12 @@ async function main() {
         kpOwner);
 
     // Costs
-    ownerBalance = await connection.getBalance(kpOwner.publicKey);
-    receiverBalance = await connection.getBalance(kpReceiver.publicKey);
+    const ownerBalance = await connection.getBalance(kpOwner.publicKey);
+    const receiverBalance = await connection.getBalance(kpReceiver.publicKey);
     console.log("\n........");
-    console.log("Fees for owner:         ", feesForOwner / LAMPORTS_PER_SOL, " SOL");
-    console.log("Owner's balance:        ", ownerBalance / LAMPORTS_PER_SOL, " SOL");
-    console.log("Receiver's balance:     ", receiverBalance / LAMPORTS_PER_SOL, " SOL");
+    console.log("Fees for owner:         ", feesForOwner / LAMPORTS_PER_SOL, "SOL");
+    console.log("Owner's balance:        ", ownerBalance / LAMPORTS_PER_SOL, "SOL");
+    console.log("Receiver's balance:     ", receiverBalance / LAMPORTS_PER_SOL, "SOL");
 }
 
 main().then(
@@ -155,11 +154,11 @@ async function deposit(
     await sendAndConfirmTransaction(connection, transaction, [kpOwner]);
 
     const balancePDA = await connection.getBalance(walletPDA);
-    console.log('    Current balance of the owner\'s PDA: ', balancePDA / LAMPORTS_PER_SOL, ' SOL');
+    console.log('    Current balance of the owner\'s PDA: ', balancePDA / LAMPORTS_PER_SOL, 'SOL');
 
     const tFees = await getTransactionFees(transaction, connection);
     feesForOwner += tFees;
-    console.log('    Transaction fees: ', tFees / LAMPORTS_PER_SOL, ' SOL');
+    console.log('    Transaction fees: ', tFees / LAMPORTS_PER_SOL, 'SOL');
 
 }
 
@@ -202,7 +201,7 @@ async function createTransaction(
 
     const tFees = await getTransactionFees(transaction, connection);
     feesForOwner += tFees;
-    console.log('    Transaction fees: ', tFees / LAMPORTS_PER_SOL, ' SOL');
+    console.log('    Transaction fees: ', tFees / LAMPORTS_PER_SOL, 'SOL');
 
 }
 
@@ -241,7 +240,7 @@ async function executeTransaction(
 
     const tFees = await getTransactionFees(transaction, connection);
     feesForOwner += tFees;
-    console.log('    Transaction fees: ', tFees / LAMPORTS_PER_SOL, ' SOL');
+    console.log('    Transaction fees: ', tFees / LAMPORTS_PER_SOL, 'SOL');
 
 }
 
@@ -268,7 +267,7 @@ async function withdraw(
 
     const tFees = await getTransactionFees(transaction, connection);
     feesForOwner += tFees;
-    console.log('    Transaction fees: ', tFees / LAMPORTS_PER_SOL, ' SOL');
+    console.log('    Transaction fees: ', tFees / LAMPORTS_PER_SOL, 'SOL');
 }
 
 async function getNextTransactionId(

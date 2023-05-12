@@ -6,14 +6,15 @@ import {
     SystemProgram,
     Transaction,
     TransactionInstruction,
-    clusterApiUrl,
     sendAndConfirmTransaction,
 } from '@solana/web3.js';
 
 import {
     generateKeyPair,
+    getConnection,
     getPublicKeyFromFile,
     getTransactionFees,
+    printParticipants,
 } from './utils';
 
 import * as borsh from 'borsh';
@@ -69,15 +70,16 @@ let feesForBeneficiary = 0;
 
 async function main() {
 
-    const connection = new Connection(clusterApiUrl("testnet"), "confirmed");
+    const connection = getConnection();
 
     const programId = await getPublicKeyFromFile(PROGRAM_KEYPAIR_PATH);
     const kpFunder = await generateKeyPair(connection, 1);
     const kpBeneficiary = await generateKeyPair(connection, 1);
 
-    console.log("programId:   ", programId.toBase58());
-    console.log("funder:      ", kpFunder.publicKey.toBase58());
-    console.log("beneficiary: ", kpBeneficiary.publicKey.toBase58());
+    await printParticipants(connection, programId, [
+        ["funder", kpFunder.publicKey],
+        ["beneficiary", kpBeneficiary.publicKey],
+    ]);
 
     /*
     There could be 3 possible scenarios at the moment when the beneficiary releases the funds:
@@ -92,7 +94,7 @@ async function main() {
     */
 
     // Chose the number of the scenario
-    const scenario: number = 3;
+    const scenario: number = 2;
 
     let startSlot = 0;
     let duration = 1;
@@ -125,6 +127,7 @@ async function main() {
     // 1. Initialize (the founder initializes and deposits an amout of SOL)
     console.log("\n--- Initialize. Actor: the founder ---");
     const amount = 0.2 * LAMPORTS_PER_SOL; // 0.2 SOL
+    console.log('    Amount:', amount / LAMPORTS_PER_SOL, 'SOL');
     let vestingInfo = new VestingInfo({
         released: 0,
         funder: kpFunder.publicKey.toBuffer(),
@@ -140,8 +143,11 @@ async function main() {
         amount
     );
 
-    while (await connection.getSlot() < targetSlotToWait) {
-        await new Promise(f => setTimeout(f, 1000));//sleep 1 second
+    if (scenario != 1) {
+        console.log("\nWaiting to reach the targhet slot");
+        while (await connection.getSlot() < targetSlotToWait) {
+            await new Promise(f => setTimeout(f, 1000));//sleep 1 second
+        }
     }
 
     // 2. Release 
@@ -154,10 +160,13 @@ async function main() {
     );
 
     // Costs
+    const beneficiaryBalance = await connection.getBalance(kpBeneficiary.publicKey);
+
     console.log("\n........");
-    console.log("Fees for funder:      ", feesForFounder / LAMPORTS_PER_SOL, " SOL");
-    console.log("Fees for beneficiary: ", feesForBeneficiary / LAMPORTS_PER_SOL, " SOL");
-    console.log("Total fees:           ", (feesForFounder + feesForBeneficiary) / LAMPORTS_PER_SOL, " SOL");
+    console.log("Fees for funder:      ", feesForFounder / LAMPORTS_PER_SOL, "SOL");
+    console.log("Fees for beneficiary: ", feesForBeneficiary / LAMPORTS_PER_SOL, "SOL");
+    console.log("Total fees:           ", (feesForFounder + feesForBeneficiary) / LAMPORTS_PER_SOL, "SOL");
+    console.log("Beneficiary's balance:", beneficiaryBalance / LAMPORTS_PER_SOL, "SOL");
 }
 
 main().then(
@@ -218,7 +227,7 @@ async function initialize(
 
     const tFees = await getTransactionFees(transactionDeposit, connection);
     feesForFounder += tFees;
-    console.log('    Transaction fees: ', tFees / LAMPORTS_PER_SOL, ' SOL');
+    console.log('    Transaction fees: ', tFees / LAMPORTS_PER_SOL, 'SOL');
 
     return vestingInfoAccountPublicKey;
 }
@@ -253,5 +262,5 @@ async function release(
 
     const tFees = await getTransactionFees(transaction, connection);
     feesForBeneficiary += tFees;
-    console.log('    Transaction fees: ', tFees / LAMPORTS_PER_SOL, ' SOL');
+    console.log('    Transaction fees: ', tFees / LAMPORTS_PER_SOL, 'SOL');
 }

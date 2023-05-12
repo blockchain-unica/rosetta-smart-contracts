@@ -3,7 +3,7 @@
 
 This tool allows to run traces for various smart contracts in the [Solana Blockchain](https://solana.com) in order to perform a cost analysis.
 
-## Requirements
+## Prereqs
 
 You will need [Solana Tools](https://docs.solana.com/cli/install-solana-cli-tools) to compile the source files, deploy and generate your own File System Wallet Keypair. In the following sections we will explain in detail how to use Solana Tools to do these operations.
 
@@ -29,7 +29,7 @@ Connect to the Testnet cluster:
 $ solana config set --url testnet
 ```
 
-For subsequent operatios as deployment and other transactions you will need to have a certain amount of SOL. You can request a free SOL airdrop to your new wallet by running:
+For subsequent operations as deployment and other transactions you will need to have a certain amount of SOL. You can request a free SOL airdrop to your new wallet by running:
 ```sh
 $ solana airdrop 5
 ```
@@ -64,7 +64,7 @@ In the following example `<SMART_CONTRACT_NAME>` stands for a contract chosen by
 1. [simple_transfer](../contracts/simple_transfer)
 1. [token_transfer](../contracts/token_transfer)
 1. [htlc](../contracts/htlc)
-1. [escow](../contracts/escrow)
+1. [escrow](../contracts/escrow)
 1. [auction](../contracts/auction)
 1. [crowdfund](../contracts/crowdfund)
 1. [vault](../contracts/vault)

@@ -44,7 +44,7 @@ enum State {
 }
 
 #[derive(BorshSerialize, BorshDeserialize, Debug)]
-struct EscowInfo {
+struct EscrowInfo {
     pub seller: Pubkey,
     pub buyer: Pubkey,
     pub amount: u64,
@@ -87,14 +87,14 @@ fn initialize(
         return Err(ProgramError::InvalidInstructionData);
     }
 
-    let escow_info = EscowInfo {
+    let escrow_info = EscrowInfo {
         seller: *seller.key,
         buyer: *buyer.key,
         amount,
         state: State::WaitDeposit,
     };
 
-    escow_info.serialize(&mut &mut state_account.try_borrow_mut_data()?[..])?;
+    escrow_info.serialize(&mut &mut state_account.try_borrow_mut_data()?[..])?;
 
     Ok(())
 }
@@ -114,26 +114,26 @@ fn deposit(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
         return Err(ProgramError::IllegalOwner);
     }
 
-    let mut escow_info = EscowInfo::try_from_slice(*state_account.data.borrow())?;
+    let mut escrow_info = EscrowInfo::try_from_slice(*state_account.data.borrow())?;
 
-    if escow_info.buyer != *buyer_account.key {
+    if escrow_info.buyer != *buyer_account.key {
         msg!("Only the buyer can deposit");
         return Err(ProgramError::InvalidAccountData);
     }
 
     let rent_exemption: u64 = Rent::get()?.minimum_balance(state_account.data_len());
-    if **state_account.try_borrow_lamports()? < escow_info.amount + rent_exemption {
+    if **state_account.try_borrow_lamports()? < escrow_info.amount + rent_exemption {
         msg!("Not enough lamports in the state account");
         return Err(ProgramError::InsufficientFunds);
     }
 
-    if escow_info.state != State::WaitDeposit {
-        msg!("The escow isn't in the state of waiting a deposit");
+    if escrow_info.state != State::WaitDeposit {
+        msg!("The escrow isn't in the state of waiting a deposit");
         return Err(ProgramError::InvalidInstructionData);
     }
 
-    escow_info.state = State::WaitRecipient;
-    escow_info.serialize(&mut &mut state_account.try_borrow_mut_data()?[..])?;
+    escrow_info.state = State::WaitRecipient;
+    escrow_info.serialize(&mut &mut state_account.try_borrow_mut_data()?[..])?;
 
     Ok(())
 }
@@ -154,23 +154,23 @@ fn pay(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
         return Err(ProgramError::IllegalOwner);
     }
 
-    let mut escow_info = EscowInfo::try_from_slice(*state_account.data.borrow())?;
+    let mut escrow_info = EscrowInfo::try_from_slice(*state_account.data.borrow())?;
 
-    if escow_info.buyer != *buyer_account.key {
+    if escrow_info.buyer != *buyer_account.key {
         msg!("Only the buyer can pay");
         return Err(ProgramError::InvalidAccountData);
     }
 
-    if escow_info.state != State::WaitRecipient {
-        msg!("The escow isn't in the state of waiting the recipient");
+    if escrow_info.state != State::WaitRecipient {
+        msg!("The escrow isn't in the state of waiting the recipient");
         return Err(ProgramError::InvalidInstructionData);
     }
 
     **seller_account.try_borrow_mut_lamports()? += **state_account.try_borrow_lamports()?;
     **state_account.try_borrow_mut_lamports()? = 0;
 
-    escow_info.state = State::Closed;
-    escow_info.serialize(&mut &mut state_account.try_borrow_mut_data()?[..])?;
+    escrow_info.state = State::Closed;
+    escrow_info.serialize(&mut &mut state_account.try_borrow_mut_data()?[..])?;
 
     Ok(())
 }
@@ -191,27 +191,27 @@ fn refund(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
         return Err(ProgramError::IllegalOwner);
     }
 
-    let mut escow_info = EscowInfo::try_from_slice(*state_account.data.borrow())?;
+    let mut escrow_info = EscrowInfo::try_from_slice(*state_account.data.borrow())?;
 
-    if escow_info.seller != *seller_account.key {
+    if escrow_info.seller != *seller_account.key {
         msg!("Only the seller can refund");
         return Err(ProgramError::InvalidAccountData);
     }
 
-    if escow_info.state != State::WaitRecipient {
-        msg!("The escow isn't in the state of waiting the recipient");
+    if escrow_info.state != State::WaitRecipient {
+        msg!("The escrow isn't in the state of waiting the recipient");
         return Err(ProgramError::InvalidInstructionData);
     }
 
-    **buyer_account.try_borrow_mut_lamports()? += escow_info.amount;
-    **state_account.try_borrow_mut_lamports()? -= escow_info.amount;
+    **buyer_account.try_borrow_mut_lamports()? += escrow_info.amount;
+    **state_account.try_borrow_mut_lamports()? -= escrow_info.amount;
 
     // Return the rent founds to the seller
     **seller_account.try_borrow_mut_lamports()? += **state_account.try_borrow_lamports()?;
     **state_account.try_borrow_mut_lamports()? = 0;
 
-    escow_info.state = State::Closed;
-    escow_info.serialize(&mut &mut state_account.try_borrow_mut_data()?[..])?;
+    escrow_info.state = State::Closed;
+    escrow_info.serialize(&mut &mut state_account.try_borrow_mut_data()?[..])?;
 
     Ok(())
 }

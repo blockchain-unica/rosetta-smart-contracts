@@ -6,15 +6,15 @@ import {
     SystemProgram,
     Transaction,
     TransactionInstruction,
-    clusterApiUrl,
     sendAndConfirmTransaction,
 } from '@solana/web3.js';
 
 import {
     generateKeyPair,
+    getConnection,
     getPublicKeyFromFile,
-    getSystemKeyPair,
     getTransactionFees,
+    printParticipants,
 } from './utils';
 
 import * as borsh from 'borsh';
@@ -93,24 +93,28 @@ const SEED_FOR_DONATION_ACCOUNTS = "Donation";
 
 async function main() {
 
-    const connection = new Connection(clusterApiUrl("testnet"), "confirmed");
+    const connection = getConnection();
 
     const programId = await getPublicKeyFromFile(PROGRAM_KEYPAIR_PATH);
-    const kpCreator = await getSystemKeyPair();
+    const kpCreator = await generateKeyPair(connection, 1);
     const kpDonor = await generateKeyPair(connection, 1);
 
-    console.log("programId:                      ", programId.toBase58());
-    console.log("creator (owner of the campain): ", kpCreator.publicKey.toBase58());
-    console.log("donor:                          ", kpDonor.publicKey.toBase58());
+    await printParticipants(connection, programId, [
+        ["creator", kpCreator.publicKey],
+        ["donor", kpDonor.publicKey],
+    ]);
 
     // 1. Create campain
     console.log("\n--- Create campain. Actor: the creator ---");
     const nSlotsToWait = 10;
+    console.log('    Dutation:', nSlotsToWait, 'slots');
+
     const campain = new Campaign({
         receiver: kpCreator.publicKey.toBuffer(),
         end_donate_slot: await connection.getSlot() + nSlotsToWait,
         goal: 0.1 * LAMPORTS_PER_SOL, // 0.1 SOL
     });
+
     const campainAccountPubKey = await createCampaign(
         connection,
         programId,
@@ -121,6 +125,7 @@ async function main() {
     // 2. Donate
     console.log("\n--- Donate to campain. Actor: the donor ---");
     const donatedAmount = campain.goal;
+    console.log("    Amount:", donatedAmount / LAMPORTS_PER_SOL, "SOL");
     await donate(
         connection,
         programId,
@@ -136,7 +141,7 @@ async function main() {
     }
 
     // Chose if to withdraw or to reclaim
-    const choice: Action = Action.Reclaim;
+    const choice: Action = Action.Withdraw;
 
     switch (choice.valueOf()) {
         case Action.Withdraw:     // 3. Withdraw
@@ -162,9 +167,9 @@ async function main() {
 
     // Costs
     console.log("\n........");
-    console.log("Fees for creator:  ", feesForCreator / LAMPORTS_PER_SOL, " SOL");
-    console.log("Fees for donor:    ", feesForDonor / LAMPORTS_PER_SOL, " SOL");
-    console.log("Total fees:        ", (feesForCreator + feesForDonor) / LAMPORTS_PER_SOL, " SOL");
+    console.log("Fees for creator:  ", feesForCreator / LAMPORTS_PER_SOL, "SOL");
+    console.log("Fees for donor:    ", feesForDonor / LAMPORTS_PER_SOL, "SOL");
+    console.log("Total fees:        ", (feesForCreator + feesForDonor) / LAMPORTS_PER_SOL, "SOL");
 }
 
 main().then(
@@ -217,7 +222,7 @@ async function createCampaign(
 
     const tFees = await getTransactionFees(transaction, connection);
     feesForCreator += tFees;
-    console.log('    Transaction fees: ', tFees / LAMPORTS_PER_SOL, ' SOL');
+    console.log('    Transaction fees: ', tFees / LAMPORTS_PER_SOL, 'SOL');
 
     return campainAccountPubKey;
 }
@@ -260,7 +265,7 @@ async function donate(
             { pubkey: donationAccountPubKey, isSigner: false, isWritable: true },
         ],
         programId,
-        data:  Buffer.from(new Uint8Array([Action.Donate, ...data]))
+        data: Buffer.from(new Uint8Array([Action.Donate, ...data]))
     })
 
     const transaction = new Transaction().add(
@@ -272,7 +277,7 @@ async function donate(
 
     const tFees = await getTransactionFees(transaction, connection);
     feesForDonor += tFees;
-    console.log('    Transaction fees: ', tFees / LAMPORTS_PER_SOL, ' SOL');
+    console.log('    Transaction fees: ', tFees / LAMPORTS_PER_SOL, 'SOL');
 }
 
 async function withdraw(
@@ -297,7 +302,7 @@ async function withdraw(
 
     const tFees = await getTransactionFees(transaction, connection);
     feesForCreator += tFees;
-    console.log('    Transaction fees: ', tFees / LAMPORTS_PER_SOL, ' SOL');
+    console.log('    Transaction fees: ', tFees / LAMPORTS_PER_SOL, 'SOL');
 }
 
 async function reclaim(
@@ -325,5 +330,5 @@ async function reclaim(
 
     const tFees = await getTransactionFees(transaction, connection);
     feesForDonor += tFees;
-    console.log('    Transaction fees: ', tFees / LAMPORTS_PER_SOL, ' SOL');
+    console.log('    Transaction fees: ', tFees / LAMPORTS_PER_SOL, 'SOL');
 }

@@ -6,14 +6,15 @@ import {
     SystemProgram,
     Transaction,
     TransactionInstruction,
-    clusterApiUrl,
     sendAndConfirmTransaction,
 } from '@solana/web3.js';
 
 import {
     generateKeyPair,
+    getConnection,
     getPublicKeyFromFile,
     getTransactionFees,
+    printParticipants,
 } from './utils';
 
 import * as borsh from 'borsh';
@@ -58,13 +59,14 @@ let feestoStoreString = 0;
 
 async function main() {
 
-    const connection = new Connection(clusterApiUrl("testnet"), "confirmed");
+    const connection = getConnection();
 
     const programId = await getPublicKeyFromFile(PROGRAM_KEYPAIR_PATH);
     const kpSender = await generateKeyPair(connection, 1);
 
-    console.log("programId: ", programId.toBase58());
-    console.log("sender:    ", kpSender.publicKey.toBase58());
+    await printParticipants(connection, programId, [
+        ["sender", kpSender.publicKey], 
+    ]);
 
     // 0. Initialize
     console.log("\n--- Initialize ---");
@@ -117,10 +119,10 @@ async function main() {
 
     // Costs
     console.log("\n........");
-    console.log("Fees for initialization:  ", feesForInitializer / LAMPORTS_PER_SOL, " SOL");
-    console.log("Fees to store bytes:      ", feestoStoreBytes / LAMPORTS_PER_SOL, " SOL");
-    console.log("Fees to store string:     ", feestoStoreString / LAMPORTS_PER_SOL, " SOL");
-    console.log("Total fees:               ", (feesForInitializer + feestoStoreBytes + feestoStoreString) / LAMPORTS_PER_SOL, " SOL");
+    console.log("Fees for initialization:  ", feesForInitializer / LAMPORTS_PER_SOL, "SOL");
+    console.log("Fees to store bytes:      ", feestoStoreBytes / LAMPORTS_PER_SOL, "SOL");
+    console.log("Fees to store string:     ", feestoStoreString / LAMPORTS_PER_SOL, "SOL");
+    console.log("Total fees:               ", (feesForInitializer + feestoStoreBytes + feestoStoreString) / LAMPORTS_PER_SOL, "SOL");
 }
 
 main().then(
