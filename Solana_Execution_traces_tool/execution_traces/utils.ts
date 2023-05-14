@@ -11,7 +11,7 @@ import {
   clusterApiUrl,
 } from '@solana/web3.js';
 
-import * as crypto from 'crypto';
+import { keccak256 } from 'js-sha3';
 import * as BufferLayout from '@solana/buffer-layout';
 
 async function getConfig(): Promise<any> {
@@ -81,10 +81,10 @@ export function buildBufferFromActionAndNumber(action: any, passedNumber: number
   return dataToSend;
 }
 
-export async function hashSHA256(secret: string) {
-  const hash = crypto.createHash('sha256');
+export async function keccak256FromString(secret: string): Promise<Buffer> {
+  const hash = keccak256.create();
   hash.update(secret);
-  return hash.digest();
+  return Buffer.from(hash.digest());
 }
 
 export async function printParticipants(connection: Connection, programId: PublicKey, participants: [string, PublicKey][]) {
@@ -108,7 +108,7 @@ export class NumberHolder {
 }
 
 export function getConnection() {
-  //const connection = new Connection(clusterApiUrl("testnet"), "confirmed");
-  const connection = new Connection("http://localhost:8899", "confirmed");
+  const connection = new Connection(clusterApiUrl("testnet"), "confirmed");
+  //const connection = new Connection("http://localhost:8899", "confirmed");
   return connection;
 }

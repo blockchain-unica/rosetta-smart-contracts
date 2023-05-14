@@ -14,7 +14,7 @@ import {
     getConnection,
     getPublicKeyFromFile,
     getTransactionFees,
-    hashSHA256,
+    keccak256FromString,
     printParticipants,
 } from './utils';
 
@@ -90,7 +90,7 @@ async function main() {
     console.log("The committer creates the contract, setting a deadline of 100 rounds");
 
     let secret = "password123";
-    let hashed_secret = await hashSHA256(secret);
+    let hashed_secret = await keccak256FromString(secret);
     let delaySlots = 100;
 
     let writingAccountPublicKey = await initialize(

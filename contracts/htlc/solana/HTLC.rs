@@ -1,10 +1,10 @@
 use borsh::{BorshDeserialize, BorshSerialize};
-use sha2::{Digest, Sha256};
 use solana_program::{
     account_info::{next_account_info, AccountInfo},
     clock::Clock,
     entrypoint,
     entrypoint::ProgramResult,
+    keccak, 
     msg,
     program_error::ProgramError,
     pubkey::Pubkey,
@@ -66,7 +66,7 @@ fn initialize(
         return Err(ProgramError::MissingRequiredSignature);
     }
 
-    if writing_account.owner.ne(&program_id){
+    if writing_account.owner.ne(&program_id) {
         msg!("The writing account isn't owned by program");
         return Err(ProgramError::IllegalOwner);
     }
@@ -100,7 +100,7 @@ fn reveal(program_id: &Pubkey, accounts: &[AccountInfo], instruction_data: &[u8]
         return Err(ProgramError::MissingRequiredSignature);
     }
 
-    if writing_account.owner.ne(&program_id){
+    if writing_account.owner.ne(&program_id) {
         msg!("The writing account isn't owned by the program");
         return Err(ProgramError::IllegalOwner);
     }
@@ -115,7 +115,7 @@ fn reveal(program_id: &Pubkey, accounts: &[AccountInfo], instruction_data: &[u8]
     // Verify the secret
     let secret_string =
         String::from_utf8(instruction_data[..instruction_data.len()].to_vec()).unwrap();
-    let h: [u8; 32] = hash_data(&secret_string.into_bytes());
+    let h: [u8; 32] = keccak::hash(&secret_string.into_bytes()).to_bytes();
     if h != htlc_info.hashed_secret {
         msg!("Invaild secret");
         return Err(ProgramError::InvalidInstructionData);
@@ -138,7 +138,7 @@ fn timeout(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
         return Err(ProgramError::MissingRequiredSignature);
     }
 
-    if writing_account.owner.ne(&program_id){
+    if writing_account.owner.ne(&program_id) {
         msg!("The writing account isn't owned by program");
         return Err(ProgramError::IllegalOwner);
     }
@@ -160,13 +160,4 @@ fn timeout(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
     **writing_account.try_borrow_mut_lamports()? = 0;
 
     Ok(())
-}
-
-fn hash_data(data: &[u8]) -> [u8; 32] {
-    let mut hasher: Sha256 = Sha256::new();
-    hasher.update(data);
-    let result = hasher.finalize();
-    let mut hash = [0u8; 32];
-    hash.copy_from_slice(&result[..]);
-    hash
 }
