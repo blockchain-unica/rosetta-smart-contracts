@@ -14,6 +14,7 @@
 1. [Wallet](contracts/simple_wallet)
 1. [Payment splitter](contracts/payment_splitter)
 1. [Tiny AMM](contracts/tinyamm)
+1. [Upgradeable Proxy](contracts/upgradeableProxy)
 
 ## Experiments
 

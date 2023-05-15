@@ -74,6 +74,7 @@ abstract contract Proxy {
     receive() external payable virtual {
         _fallback();
     }
+
     function _beforeFallback() internal virtual {}
 }
 
@@ -139,7 +140,7 @@ contract TheProxy is Proxy, SimplifiedERC1967Upgrade {
 
 contract Caller{
 
-    /// @dev This function Calls the Logic function check y passing its same address.
+    /// @dev This function Calls the Logic function "check" passing its same address.
     function callLogicByProxy(address _proxy) public returns(bool,bool){
         string memory _abi = "check(address)";
         address param = address(this);
@@ -154,11 +155,9 @@ contract Caller{
 
 contract Logic{
 
-    /// @dev returns true if the balance of the _toCheck address is even.
+    /// @dev returns true if the balance of the _toCheck address is lower than 100.
     function check(address _toCheck) public view returns(bool) {
-        if (_toCheck.balance < 100){
-            return true;
-        }
+        if (_toCheck.balance < 100) return true;
         return false;
     }
 

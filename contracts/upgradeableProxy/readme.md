@@ -1,4 +1,6 @@
-# Upgradable Proxy
+# Upgradeable Proxy
+
+## Specification
 
 In this Use Case, three contracts and a user are involved.
 The contract *Logic* implements a logic to be stored in the blockchain.
