@@ -17,43 +17,18 @@ import {
     printParticipants,
 } from './utils';
 
-import * as borsh from 'borsh';
 import path from 'path';
 import { Buffer } from 'buffer';
-
 const PROGRAM_KEYPAIR_PATH = path.resolve(__dirname, '../solana/dist/storage/storage-keypair.json');
 
 enum Action {
-    Initialize = 0,
-    StoreBytes = 1,
-    StoreString = 2,
+    StoreBytes = 0,
+    StoreString = 1,
 }
 
-class StorageInfo {
-    byte_sequence: Buffer;
-    text_string: string;
+const SEED_STORAGE_BYTES = "storage_bytes";
+const SEED_STORAGE_STRING = "storage_string";
 
-    constructor(fields: {
-        byte_sequence: Buffer,
-        text_string: string,
-    } | undefined = undefined) {
-        if (fields) {
-            this.byte_sequence = fields.byte_sequence;
-            this.text_string = fields.text_string;
-        }
-    }
-
-    static schema = new Map([
-        [StorageInfo, {
-            kind: 'struct', fields: [
-                ['byte_sequence', [5]],
-                ['text_string', 'string'],
-            ]
-        }],
-    ]);
-}
-
-let feesForInitializer = 0;
 let feestoStoreBytes = 0;
 let feestoStoreString = 0;
 
@@ -64,65 +39,44 @@ async function main() {
     const programId = await getPublicKeyFromFile(PROGRAM_KEYPAIR_PATH);
     const kpSender = await generateKeyPair(connection, 1);
 
-    await printParticipants(connection, programId, [
-        ["sender", kpSender.publicKey], 
-    ]);
-
-    // 0. Initialize
-    console.log("\n--- Initialize ---");
-    const initialBytes = Buffer.from([0, 0, 0, 0, 0]);
-    const initialString = "initial";
-    const stateAccountPubkey = await initialize(
-        connection,
-        programId,
-        initialBytes,
-        initialString);
-
-    console.log("   Initial bytes:   ", initialBytes);
-    console.log("   Initial string:  ", initialString);
+    await printParticipants(connection, programId, [["sender", kpSender.publicKey]]);
 
     // 1. Store bytes
     console.log("\n--- Store bytes ---");
-    const bytesToStore = Buffer.from([1, 2, 3, 4, 5]);
-    console.log("   Storing bytes:   ", bytesToStore);
-    await storeBytes(
-        connection,
-        programId,
-        kpSender,
-        stateAccountPubkey,
-        bytesToStore);
+    const sequences = genereteByteSequences();
+    for (let i = 0; i < sequences.length; i++) {
+        const sequence = sequences[i];
+        console.log("    Storing bytes:   ", sequence);
+        await storeBytes(
+            connection,
+            programId,
+            kpSender,
+            sequence);
+    }
 
     // 2. Store string
     console.log("\n--- Store string ---");
-    const stringToStore = "finalll";
-    console.log("   Storing string:   ", stringToStore);
-    await storeString(
-        connection,
-        programId,
-        kpSender,
-        stateAccountPubkey,
-        stringToStore);
+    const stringsToStore = genereteStringSequences();
+    for (let i = 0; i < stringsToStore.length; i++) {
+        const s = stringsToStore[i];
+        console.log("    Storing string:   ", s);
+        await storeString(
+            connection,
+            programId,
+            kpSender,
+            s);
+    }
 
     // Get the data from the account to confirm the result
-    const stateAccount = await connection.getAccountInfo(stateAccountPubkey);
-    if (stateAccount === null) {
-        throw 'Error: cannot find the state account';
-    }
-    const dserializeDdata = borsh.deserialize(
-        StorageInfo.schema,
-        StorageInfo,
-        stateAccount.data,
-    );
-
-    console.log("\nFinal bytes:   ", dserializeDdata.byte_sequence);
-    console.log("Final string:  ", dserializeDdata.text_string);
+    const [byte_sequence, text_string] = await getState(connection, programId);
+    console.log("\nFinal bytes:   ", byte_sequence);
+    console.log("Final string:  ", text_string);
 
     // Costs
     console.log("\n........");
-    console.log("Fees for initialization:  ", feesForInitializer / LAMPORTS_PER_SOL, "SOL");
     console.log("Fees to store bytes:      ", feestoStoreBytes / LAMPORTS_PER_SOL, "SOL");
     console.log("Fees to store string:     ", feestoStoreString / LAMPORTS_PER_SOL, "SOL");
-    console.log("Total fees:               ", (feesForInitializer + feestoStoreBytes + feestoStoreString) / LAMPORTS_PER_SOL, "SOL");
+    console.log("Total fees:               ", (feestoStoreBytes + feestoStoreString) / LAMPORTS_PER_SOL, "SOL");
 }
 
 main().then(
@@ -133,107 +87,112 @@ main().then(
     }
 );
 
-async function initialize(
-    connection: Connection,
-    programId: PublicKey,
-    initialBytes: Buffer,
-    initialString: string
-): Promise<PublicKey> {
-
-    const feePayer = await generateKeyPair(connection, 1);
-
-    let storageInfo = new StorageInfo({
-        byte_sequence: initialBytes,
-        text_string: initialString,
-    });
-    let data = borsh.serialize(StorageInfo.schema, storageInfo);
-
-    // Instruction to create the state account
-    const SEED = "abcdef" + Math.random().toString();
-    const stateAccountPubkey = await PublicKey.createWithSeed(feePayer.publicKey, SEED, programId);
-    const size = data.length;
-    const createStateAccountInstruction = SystemProgram.createAccountWithSeed({
-        fromPubkey: feePayer.publicKey,
-        basePubkey: feePayer.publicKey,
-        seed: SEED,
-        newAccountPubkey: stateAccountPubkey,
-        lamports: await connection.getMinimumBalanceForRentExemption(size),
-        space: size,
-        programId: programId,
-    });
-
-    // Instruction to the program
-    const data_to_send = Buffer.from(new Uint8Array([Action.Initialize, ...data]));
-    const depositInstruction = new TransactionInstruction({
-        programId: programId,
-        keys: [{ pubkey: stateAccountPubkey, isSigner: false, isWritable: true }],
-        data: data_to_send,
-    });
-
-    const initializeTransaction = new Transaction().add(
-        createStateAccountInstruction,
-        depositInstruction
-    );
-
-    await sendAndConfirmTransaction(
-        connection,
-        initializeTransaction,
-        [feePayer]
-    );
-
-    feesForInitializer = await getTransactionFees(initializeTransaction, connection);
-
-    return stateAccountPubkey;
-}
-
 async function storeBytes(
     connection: Connection,
     programId: PublicKey,
     kpSender: Keypair,
-    stateAccountPubkey: PublicKey,
     bytesToStore: Buffer
 ): Promise<void> {
 
-    const storeStringInstruction = new TransactionInstruction({
-        programId: programId,
-        data: Buffer.from(new Uint8Array([Action.StoreBytes, ...bytesToStore])),
-        keys: [{ pubkey: stateAccountPubkey, isSigner: false, isWritable: true }]
-    });
+    const storagePDAPubKey = await getStorageBytesPDA(programId);
 
-    const transaction = new Transaction().add(storeStringInstruction);
-
-    await sendAndConfirmTransaction(
-        connection,
-        transaction,
-        [kpSender]
+    const transaction = new Transaction().add(
+        new TransactionInstruction({
+            programId: programId,
+            keys: [
+                { pubkey: kpSender.publicKey, isSigner: true, isWritable: false },
+                { pubkey: storagePDAPubKey, isSigner: false, isWritable: true },
+                { pubkey: SystemProgram.programId, isSigner: false, isWritable: false }
+            ],
+            data: Buffer.from(new Uint8Array([Action.StoreBytes, ...bytesToStore])),
+        })
     );
 
-    feestoStoreBytes += await getTransactionFees(transaction, connection);
-
+    const signature = await sendAndConfirmTransaction(connection, transaction, [kpSender]);
+    await connection.confirmTransaction(signature);
+    
+    const tFees = await getTransactionFees(transaction, connection);
+    console.log('    Transaction fees: ', tFees / LAMPORTS_PER_SOL, "SOL\n");
+    feestoStoreBytes += tFees;
 }
 
 async function storeString(
     connection: Connection,
     programId: PublicKey,
     kpSender: Keypair,
-    stateAccountPubkey: PublicKey,
     stringToStore: string
 ): Promise<void> {
+    const storagePDAPubKey = await getStorageStringPDA(programId);
 
-    const storeStringInstruction = new TransactionInstruction({
-        programId: programId,
-        data: Buffer.from(new Uint8Array([Action.StoreString, ...Buffer.from(stringToStore)])),
-        keys: [{ pubkey: stateAccountPubkey, isSigner: false, isWritable: true }]
-    });
-
-    const transaction = new Transaction().add(storeStringInstruction);
-
-    await sendAndConfirmTransaction(
-        connection,
-        transaction,
-        [kpSender]
+    const transaction = new Transaction().add(
+        new TransactionInstruction({
+            programId: programId,
+            keys: [
+                { pubkey: kpSender.publicKey, isSigner: true, isWritable: false },
+                { pubkey: storagePDAPubKey, isSigner: false, isWritable: true },
+                { pubkey: SystemProgram.programId, isSigner: false, isWritable: false }
+            ],
+            data: Buffer.from(new Uint8Array([Action.StoreString, ...Buffer.from(stringToStore)])),
+        })
     );
 
-    feestoStoreString += await getTransactionFees(transaction, connection);
+    const signature = await sendAndConfirmTransaction(connection, transaction, [kpSender]);
+    await connection.confirmTransaction(signature);
 
+    const tFees = await getTransactionFees(transaction, connection);
+    console.log('    Transaction fees: ', tFees / LAMPORTS_PER_SOL, 'SOL\n');
+    feestoStoreString += tFees;
+}
+
+async function getStorageBytesPDA(programId: PublicKey): Promise<PublicKey> {
+    const [walletPDA] = await PublicKey.findProgramAddress(
+        [Buffer.from(SEED_STORAGE_BYTES)],
+        programId
+    );
+    return walletPDA;
+}
+
+async function getStorageStringPDA(programId: PublicKey): Promise<PublicKey> {
+    const [walletPDA] = await PublicKey.findProgramAddress(
+        [Buffer.from(SEED_STORAGE_STRING)],
+        programId
+    );
+    return walletPDA;
+}
+
+function genereteByteSequences() {
+    const sequences = [];
+    sequences.push(Buffer.from([1]));
+    sequences.push(Buffer.from([1, 2]));
+    sequences.push(Buffer.from([1, 2, 3]));
+    sequences.push(Buffer.from([1, 2, 3, 4]));
+    sequences.push(Buffer.from([1, 2, 3, 4, 5]));
+    return sequences;
+}
+
+function genereteStringSequences() {
+    const sequences = [];
+    sequences.push("a");
+    sequences.push("ab");
+    sequences.push("abc");
+    sequences.push("abcd");
+    sequences.push("abcde");
+    return sequences;
+}
+
+async function getState(connection: Connection, programId: PublicKey): Promise<[Buffer, string]> {
+    const storageBytesPDAPubKey = await getStorageBytesPDA(programId);
+    const storageStringPDAPubKey = await getStorageStringPDA(programId);
+
+    const bytesAccount = await connection.getAccountInfo(storageBytesPDAPubKey);
+    const stringAccount = await connection.getAccountInfo(storageStringPDAPubKey);
+
+    if (bytesAccount === null) {
+        throw 'Error: cannot find the bytes account';
+    }
+    if (stringAccount === null) {
+        throw 'Error: cannot find the string account';
+    }
+
+    return [bytesAccount.data, Buffer.from(stringAccount.data).toString('utf8')];
 }

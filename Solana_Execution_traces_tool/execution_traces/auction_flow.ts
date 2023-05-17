@@ -145,6 +145,8 @@ async function main() {
     console.log("Fees for seller:        ", feesForSeller / LAMPORTS_PER_SOL, "SOL");
     console.log("Fees for bidder 1:      ", feesForBidder1 / LAMPORTS_PER_SOL, "SOL");
     console.log("Fees for bidder 2:      ", feesForBidder2 / LAMPORTS_PER_SOL, "SOL");
+    console.log("Total fees:             ", (feesForSeller + feesForBidder1 + feesForBidder2) / LAMPORTS_PER_SOL, "SOL");
+
 }
 
 main().then(

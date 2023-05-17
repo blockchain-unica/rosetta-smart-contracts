@@ -7,46 +7,61 @@
     "build:all": "npm run build:simple_transfer && npm run build:htlc && npm run build:token_transfer && npm run build:simple_wallet && npm run build:vault && npm run build:storage && npm run build:escrow && npm run build:crowdfund && npm run build:vesting && npm run build:auction",
     "deploy:all": "npm run deploy:simple_transfer && npm run deploy:htlc && npm run deploy:token_transfer && npm run deploy:simple_wallet && npm run deploy:vault && npm run deploy:storage && npm run deploy:escrow && npm run deploy:crowdfund && npm run deploy:vesting && npm run deploy:auction",
     "clean:all": "npm run clean:simple_transfer && npm run clean:htlc && npm run clean:token_transfer && npm run clean:simple_wallet && npm run clean:vault && npm run clean:storage && npm run clean:escrow && npm run clean:crowdfund && npm run clean:vesting && npm run clean:auction",
+    
     "build:simple_transfer": "cargo build-bpf --manifest-path=./solana/simple_transfer/Cargo.toml --bpf-out-dir=solana/dist/simple_transfer",
     "deploy:simple_transfer": "solana program deploy solana/dist/simple_transfer/simple_transfer.so",
     "costs:simple_transfer": "ts-node execution_traces/simple_transfer_flow.ts",
     "clean:simple_transfer": "cargo clean --manifest-path=./solana/simple_transfer/Cargo.toml && rm -rf ./solana/dist/simple_transfer",
+    
     "build:htlc": "cargo build-bpf --manifest-path=./solana/htlc/Cargo.toml --bpf-out-dir=solana/dist/htlc",
     "deploy:htlc": "solana program deploy solana/dist/htlc/htlc.so",
     "costs:htlc": "ts-node execution_traces/htlc_flow.ts",
     "clean:htlc": "cargo clean --manifest-path=./solana/htlc/Cargo.toml && rm -rf ./solana/dist/htlc",
+    
     "build:token_transfer": "cargo build-bpf --manifest-path=./solana/token_transfer/Cargo.toml --bpf-out-dir=solana/dist/token_transfer",
     "deploy:token_transfer": "solana program deploy solana/dist/token_transfer/token_transfer.so",
     "costs:token_transfer": "ts-node execution_traces/token_transfer_flow.ts",
     "clean:token_transfer": "cargo clean --manifest-path=./solana/token_transfer/Cargo.toml && rm -rf ./solana/dist/token_transfer",
+    
     "build:simple_wallet": "cargo build-bpf --manifest-path=./solana/simple_wallet/Cargo.toml --bpf-out-dir=solana/dist/simple_wallet",
     "deploy:simple_wallet": "solana program deploy solana/dist/simple_wallet/simple_wallet.so",
     "costs:simple_wallet": "ts-node execution_traces/simple_wallet_flow.ts",
     "clean:simple_wallet": "cargo clean --manifest-path=./solana/simple_wallet/Cargo.toml && rm -rf ./solana/dist/simple_wallet",
+    
     "build:vault": "cargo build-bpf --manifest-path=./solana/vault/Cargo.toml --bpf-out-dir=solana/dist/vault",
     "deploy:vault": "solana program deploy solana/dist/vault/vault.so",
     "costs:vault": "ts-node execution_traces/vault_flow.ts",
     "clean:vault": "cargo clean --manifest-path=./solana/vault/Cargo.toml && rm -rf ./solana/dist/vault",
+    
     "build:storage": "cargo build-bpf --manifest-path=./solana/storage/Cargo.toml --bpf-out-dir=solana/dist/storage",
     "deploy:storage": "solana program deploy solana/dist/storage/storage.so",
     "costs:storage": "ts-node execution_traces/storage_flow.ts",
     "clean:storage": "cargo clean --manifest-path=./solana/storage/Cargo.toml && rm -rf ./solana/dist/storage",
+    
     "build:escrow": "cargo build-bpf --manifest-path=./solana/escrow/Cargo.toml --bpf-out-dir=solana/dist/escrow",
     "deploy:escrow": "solana program deploy solana/dist/escrow/escrow.so",
     "costs:escrow": "ts-node execution_traces/escrow_flow.ts",
     "clean:escrow": "cargo clean --manifest-path=./solana/escrow/Cargo.toml && rm -rf ./solana/dist/escrow",
+    
     "build:crowdfund": "cargo build-bpf --manifest-path=./solana/crowdfund/Cargo.toml --bpf-out-dir=solana/dist/crowdfund",
     "deploy:crowdfund": "solana program deploy solana/dist/crowdfund/crowdfund.so",
     "costs:crowdfund": "ts-node execution_traces/crowdfund_flow.ts",
     "clean:crowdfund": "cargo clean --manifest-path=./solana/crowdfund/Cargo.toml && rm -rf ./solana/dist/crowdfund",
+    
     "build:vesting": "cargo build-bpf --manifest-path=./solana/vesting/Cargo.toml --bpf-out-dir=solana/dist/vesting",
     "deploy:vesting": "solana program deploy solana/dist/vesting/vesting.so",
     "costs:vesting": "ts-node execution_traces/vesting_flow.ts",
     "clean:vesting": "cargo clean --manifest-path=./solana/vesting/Cargo.toml && rm -rf ./solana/dist/vesting",
+    
     "build:auction": "cargo build-bpf --manifest-path=./solana/auction/Cargo.toml --bpf-out-dir=solana/dist/auction",
     "deploy:auction": "solana program deploy solana/dist/auction/auction.so",
     "costs:auction": "ts-node execution_traces/auction_flow.ts",
-    "clean:auction": "cargo clean --manifest-path=./solana/auction/Cargo.toml && rm -rf ./solana/dist/auction"
+    "clean:auction": "cargo clean --manifest-path=./solana/auction/Cargo.toml && rm -rf ./solana/dist/auction",
+
+    "build:tiny_amm": "cargo build-bpf --manifest-path=./solana/tiny_amm/Cargo.toml --bpf-out-dir=solana/dist/tiny_amm",
+    "deploy:tiny_amm": "solana program deploy solana/dist/tiny_amm/tiny_amm.so",
+    "costs:tiny_amm": "ts-node execution_traces/tiny_amm_flow.ts",
+    "clean:tiny_amm": "cargo clean --manifest-path=./solana/tiny_amm/Cargo.toml && rm -rf ./solana/dist/tiny_amm"
   },
   "keywords": [],
   "author": "",

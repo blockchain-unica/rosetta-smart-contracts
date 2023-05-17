@@ -244,7 +244,7 @@ async function deposit(
         amountToSend * Math.pow(10, mint.decimals) // amount. if your decimals is 8, you mint 10^8 for 1 token.
     );
 
-    // Instruction to create the State Account account
+    // Instruction to create the State account
     const SEED = "abcdef" + Math.random().toString();
     const stateAccountPubkey = await PublicKey.createWithSeed(senderKeypair.publicKey, SEED, programId);
     const createDepositInfoAccountInstruction = SystemProgram.createAccountWithSeed({

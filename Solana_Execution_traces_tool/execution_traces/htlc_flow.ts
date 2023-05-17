@@ -87,7 +87,7 @@ async function main() {
 
     /******************* Trace 1 *********************/
     console.log("\n---       Trace 1       ---");
-    console.log("The committer creates the contract, setting a deadline of 100 rounds");
+    console.log("The owner submits the secret, setting a deadline of 100 rounds");
 
     let secret = "password123";
     let hashed_secret = await keccak256FromString(secret);
@@ -126,7 +126,7 @@ async function main() {
 
     /******************* Trace 2 *********************/
     console.log("\n---       Trace 2       ---");
-    console.log("The committer creates the contract, setting a deadline of 100 rounds");
+    console.log("The owner submits the secret, setting a deadline of 100 rounds");
     writingAccountPublicKey = await initialize(
         connection,
         programId,

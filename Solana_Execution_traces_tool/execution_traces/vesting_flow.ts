@@ -90,7 +90,7 @@ async function main() {
         2)  current slot  > start + duration
             The beneficiary will obtain all the funds
         
-        3)  Othervise the beneficiary obtains a fraction of the funds
+        3)  Otherwise the beneficiary obtains a fraction of the funds
     */
 
     // Chose the number of the scenario

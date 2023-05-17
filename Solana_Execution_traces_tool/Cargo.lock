@@ -4311,6 +4311,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "tiny_amm"
+version = "0.1.0"
+dependencies = [
+ "arrayref",
+ "borsh",
+ "borsh-derive 0.10.3",
+ "solana-program",
+ "solana-program-test",
+ "solana-sdk",
+ "spl-associated-token-account",
+ "spl-token",
+ "thiserror",
+]
+
+[[package]]
 name = "tinyvec"
 version = "1.6.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
