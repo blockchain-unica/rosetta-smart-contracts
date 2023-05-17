@@ -40,7 +40,7 @@ app = (
 @app.create
 def create(
     receiver_: pt.abi.Address, 
-    end_donate_: pt.abi.Uint64, 
+    end_donate_: pt.abi.Uint64,
     goal_: pt.abi.Uint64
 ):
     return pt.Seq(
@@ -60,6 +60,7 @@ def donate(
     anyone can transfer native cryptocurrency to the contract until the deadline;
     """
     return Seq(
+        Assert(donation.get().receiver() == Global.current_application_address()),
         Assert(Global.round() <= app.state.end_donate),
         app.state.total_donated.set(app.state.total_donate + donation.get().amount()),
         app.state.donated[Txn.sender()].set(app.state.donate[Txn.sender()] + donation.get().amount()),
@@ -100,4 +101,4 @@ def reclaim():
     )
 
 if __name__ == "__main__":
-    beaker.Application("Crowdfunding").build().export("crowdfunding_src")
+    app.build().export("crowdfunding_src")
