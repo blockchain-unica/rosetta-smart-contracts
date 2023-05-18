@@ -15,6 +15,7 @@
 1. [Payment splitter](contracts/payment_splitter)
 1. [Tiny AMM](contracts/tinyamm)
 1. [Upgradeable Proxy](contracts/upgradeableProxy)
+1. [Factory](contracts/factory)
 
 ## Experiments
 
