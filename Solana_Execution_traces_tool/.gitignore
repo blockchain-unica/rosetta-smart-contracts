@@ -12,7 +12,7 @@ Costs.md
 
 # production
 /build
-/solana/dist
+/contracts/dist
 /target
 /test-ledger
 

@@ -70,7 +70,7 @@ class DepositInfo {
     ).length
 }
 
-const PROGRAM_KEYPAIR_PATH = path.resolve(__dirname, '../solana/dist/token_transfer/token_transfer-keypair.json');
+const PROGRAM_KEYPAIR_PATH = path.resolve(__dirname, '../contracts/dist/token_transfer/token_transfer-keypair.json');
 
 enum Action {
     Deposit = 0,

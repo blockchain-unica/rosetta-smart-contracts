@@ -4314,15 +4314,11 @@ dependencies = [
 name = "tiny_amm"
 version = "0.1.0"
 dependencies = [
- "arrayref",
  "borsh",
  "borsh-derive 0.10.3",
  "solana-program",
  "solana-program-test",
  "solana-sdk",
- "spl-associated-token-account",
- "spl-token",
- "thiserror",
 ]
 
 [[package]]

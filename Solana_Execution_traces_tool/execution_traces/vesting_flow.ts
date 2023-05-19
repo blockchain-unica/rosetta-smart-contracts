@@ -22,7 +22,7 @@ import path from 'path';
 import { Buffer } from 'buffer';
 import * as BufferLayout from '@solana/buffer-layout';
 
-const PROGRAM_KEYPAIR_PATH = path.resolve(__dirname, '../solana/dist/vesting/vesting-keypair.json');
+const PROGRAM_KEYPAIR_PATH = path.resolve(__dirname, '../contracts/dist/vesting/vesting-keypair.json');
 
 enum Action {
     Initialize = 0,

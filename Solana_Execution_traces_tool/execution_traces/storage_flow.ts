@@ -19,7 +19,7 @@ import {
 
 import path from 'path';
 import { Buffer } from 'buffer';
-const PROGRAM_KEYPAIR_PATH = path.resolve(__dirname, '../solana/dist/storage/storage-keypair.json');
+const PROGRAM_KEYPAIR_PATH = path.resolve(__dirname, '../contracts/dist/storage/storage-keypair.json');
 
 enum Action {
     StoreBytes = 0,

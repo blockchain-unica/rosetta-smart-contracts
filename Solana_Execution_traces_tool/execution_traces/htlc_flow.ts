@@ -22,7 +22,7 @@ import * as borsh from 'borsh';
 import path from 'path';
 import { Buffer } from 'buffer';
 
-const PROGRAM_KEYPAIR_PATH = path.resolve(__dirname, '../solana/dist/htlc/htlc-keypair.json');
+const PROGRAM_KEYPAIR_PATH = path.resolve(__dirname, '../contracts/dist/htlc/htlc-keypair.json');
 
 enum Action {
     Initialize = 0,

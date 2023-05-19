@@ -21,7 +21,7 @@ import * as borsh from 'borsh';
 import path from 'path';
 import { Buffer } from 'buffer';
 
-const PROGRAM_KEYPAIR_PATH = path.resolve(__dirname, '../solana/dist/crowdfund/crowdfund-keypair.json');
+const PROGRAM_KEYPAIR_PATH = path.resolve(__dirname, '../contracts/dist/crowdfund/crowdfund-keypair.json');
 
 enum Action {
     CreateCampaign = 0,

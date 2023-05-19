@@ -1,9 +1,9 @@
 [workspace]
 
 members = [
-    "solana/*",
+    "contracts/*",
 ]
 
 exclude = [
-    "solana/dist/"
+    "contracts/dist/"
 ]

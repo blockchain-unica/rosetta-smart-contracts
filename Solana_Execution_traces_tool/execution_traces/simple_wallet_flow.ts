@@ -23,7 +23,7 @@ import * as borsh from 'borsh';
 import path from 'path';
 import { Buffer } from 'buffer';
 
-const PROGRAM_KEYPAIR_PATH = path.resolve(__dirname, '../solana/dist/simple_wallet/simple_wallet-keypair.json');
+const PROGRAM_KEYPAIR_PATH = path.resolve(__dirname, '../contracts/dist/simple_wallet/simple_wallet-keypair.json');
 
 enum Action {
     Deposit = 0,
