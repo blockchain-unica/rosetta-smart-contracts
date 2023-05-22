@@ -77,7 +77,7 @@ The Solana blockchain uses [rent](https://docs.solana.com/developing/intro/rent)
 
 The rent is calculated as follows:
 
-$$rentLamports=(accountStorageOverhead+numBytes)*lamportsPerByteYear*exemptionThreshold$$
+$$rentLamports=(accountStorageOverhead+numBytes)×lamportsPerByteYear×exemptionThreshold$$
 
 where currently:
 - `accountStorageOverhead` = 128
@@ -125,6 +125,7 @@ In the following example `<SMART_CONTRACT_NAME>` stands for a contract chosen by
 1. [vesting](../contracts/vesting)
 1. [storage](../contracts/storage)
 1. [simple_wallet](../contracts/simple_wallet)
+1. [tinyamm](../contracts/tinyamm)
 
 Now we can compile and deploy the on chain program:
 ```sh
@@ -201,3 +202,4 @@ An implementation that is nearly identical to Solidity's has been found for the 
 - [Simple Transfer](../contracts/simple_transfer)
 - [Storage](../contracts/storage)
 - [Simple Wallet](../contracts/simple_wallet)
+- [Tiny AMM](contracts/tinyamm)
