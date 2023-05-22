@@ -76,11 +76,13 @@ console.log('Transaction fees: ', tFees / LAMPORTS_PER_SOL, 'SOL');
 The Solana blockchain uses [rent](https://docs.solana.com/developing/intro/rent) as a tool to encourage users to maintain active the needed accounts. Users make periodic payments for keeping their accounts on the network. The account will be deleted if the rent is not paid. If an account has at least two years' worth of rent in its balance, it can become rent-exempted.
 
 The rent is calculated as follows:
-$$ rentLamports = (accountStorageOverhead + numBytes) * lamportsPerByteYear * exemptionThreshold $$
+
+$$rentLamports=(accountStorageOverhead+numBytes)*lamportsPerByteYear*exemptionThreshold$$
+
 where currently:
-- `accountStorageOverhead = 128`
-- `lamportsPerByteYear = 1_000_000_000 / 100 * 365 / (1024 * 1024)`
-- `exemptionThreshold = 2`
+- `accountStorageOverhead` = 128
+- `lamportsPerByteYear` = 1.000.000.000 / 100 * 365 / (1024 * 1024)
+- `exemptionThreshold` = 2
 
 ```sh
 $ solana rent 10
