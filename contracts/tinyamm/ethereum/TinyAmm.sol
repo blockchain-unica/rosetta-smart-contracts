@@ -75,7 +75,7 @@ contract TinyAMM {
         
         t_in.transferFrom(msg.sender, address(this), x_in);
         
-        uint x_out = x_in * r_out * (r_in + x_in);
+        uint x_out = x_in * r_out / (r_in + x_in);
         
         require (x_out >= x_out_min);
 
