@@ -7,9 +7,8 @@ seller = wapp.fetch_client()
 buyer = wapp.fetch_client()
 
 seller.create(
-    amount_ = 100000,
-    buyer_  = buyer.pk,
-    seller_ = seller.pk,
+    amount_=100000,
+    buyer_=buyer.pk,
 )
 
 ### 2. Deposit money (the buyer deposits the amout equal to price)
