@@ -33,6 +33,7 @@ class WApp:
     SECRET_KEYS = [
         "ugEb7R8jAw8dRgiD/qskL1aG1dN8VgcLJTQiobLP58SExiUwUPRq2X7h0SEEgD5L7PMJehZqL4B//IHYtAJq8Q==",
         "tD+wIcVgrJTJ2KpNOUKo6lTTTOxWgiNp+jhMd5lb/OqnLxRSak/CGgIXbRobiB9/S5NJPrqJy6izFTwtPk7xYQ==",
+        "aIRBtyaUEPdfQCMIQrHr99SJb6+D8wVmugaPL4P6/KQjG+fx7HSkGNbnbhYE4hhepaRpI13Z2IDzPwzXtkDJ8g==",
     ]
     
     def __init__(self, app: ApplicationSpecification):
@@ -41,19 +42,29 @@ class WApp:
         self.clients = []
         self.id = None
         self.address = None
-        
+
     def fetch_client(self) -> 'WApplicationClient':
         sk = self.SECRET_KEYS.pop()
         client = WApplicationClient(self, self.algod, self.app, sk)
         self.clients.append(client)
         return client
-    
+
+    def curr_round(self):
+        return self.algod.status()["last-round"]
+
+    def wait_rounds(self, wait: int):
+        res = self.algod.status()
+        self.wait_rounds_from(res["last-round"], wait)
+
+    def wait_rounds_from(self, frm: int, wait: int):
+        self.algod.status_after_block(frm + wait)
+
     def set_app(self, app_id, app_address):
         self.id = app_id
         self.address = app_address
         for client in self.clients:
             client.app_id = app_id
-            
+
     @property
     def total_fees(self):
         return sum(map(lambda client: client.total_fees, self.clients))
@@ -95,11 +106,11 @@ class WApplicationClient:
         else:
             self.total_fees += info["txn"]["txn"].get("fee", 0)
             self.total_fees += sum(map(lambda itxn: itxn["txn"]["txn"].get("fee", 0), info.get("inner-txns", [])))
-            
+
     @property
     def app_id(self):
         return self.app_client.app_id
-        
+    
     @app_id.setter
     def app_id(self, app_id):
         self.app_client.app_id = app_id
