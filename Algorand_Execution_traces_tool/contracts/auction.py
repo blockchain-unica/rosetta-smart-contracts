@@ -10,43 +10,59 @@ class States:
     CLOSED = Int(2)
 
 class AuctionState:
-    object = beaker.GlobalStateValue(
+    obj = beaker.GlobalStateValue(
         stack_type=pt.TealType.bytes,
         static=True,
+        descr="Descriptor of the auctioned object",
     )
     seller = beaker.GlobalStateValue(
         stack_type=pt.TealType.bytes,
         static=True,
+        descr="Seller of the object",
     )
     end_time = beaker.GlobalStateValue(
         stack_type=pt.TealType.uint64,
         static=True,
+        descr="The last round of the bidding window",
     )
     highest_bid = beaker.GlobalStateValue(
         stack_type=pt.TealType.uint64,
+        descr="The current winning bid",
     )
     highest_bidder = beaker.GlobalStateValue(
         stack_type=pt.TealType.bytes,
+        descr="The current winning bidder",
     )
     state = beaker.GlobalStateValue(
         stack_type=pt.TealType.uint64,
+        descr="The current logical state: WAIT_START/WAIT_CLOSING/CLOSED",
     )
     bid = beaker.LocalStateValue(
         stack_type=pt.TealType.uint64,
+        descr="Bid of an actor",
     )
 
 app = beaker.Application("Auction", state=AuctionState())
 
 @app.create
 def create(
-    object_: pt.abi.String,
+    obj_: pt.abi.String,
     starting_bid_: pt.abi.Uint64,
 ):
     return Seq(
-        app.state.object.set(object_.get()),
+        # If not present we would have multiple problems:
+        # - the first bidder would not be able to bid, as the MBR of the contract would not be satisfied
+        # - when reclaiming the bidded funds, bidder could be stuck not being able to reclaim their bid 
+        #   amount, as that would make the contract balance go below the MBR
+        Assert(starting_bid_.get() >= Int(100000),
+               comment="Must provide at least MBR"),
+
+        # Initialize contract state
+        app.state.obj.set(obj_.get()),
         app.state.seller.set(Txn.sender()),
         app.state.highest_bid.set(starting_bid_.get()),
-        
+
+        # Transition into WAIT_START
         app.state.state.set(States.WAIT_START),
     )
 
@@ -56,28 +72,36 @@ def start(
 ):
     return Seq(
         Assert(app.state.state == States.WAIT_START,
-               comment="Auction already started"),
+               comment="Action must be waiting to be started"),
         Assert(Txn.sender() == app.state.seller,
-               comment="Only the seller"),
+               comment="Callable only by the seller"),
 
+        # Set auction end time
         app.state.end_time.set(Global.round() + duration_.get()),
+
+        # Transition into WAIT_CLOSING
         app.state.state.set(States.WAIT_CLOSING),
     )
 
-@app.external
+@app.external(method_config=pt.MethodConfig(
+    opt_in=pt.CallConfig.CALL,
+    no_op=pt.CallConfig.CALL,
+))
 def bid(
     deposit: pt.abi.PaymentTransaction,
 ):
     return Seq(
-        Assert(app.state.state == States.WAIT_CLOSING,                              
-               comment="Auction not started"),
-        Assert(Global.round() < app.state.end_time,                                 
-               comment="Time ended"),
-        Assert(deposit.get().amount() > app.state.bid[app.state.highest_bidder],
-               comment="value < highest"),
+        Assert(app.state.state == States.WAIT_CLOSING,
+               comment="Auction must be running"),
+        Assert(Global.round() < app.state.end_time,
+               comment="Bids can only happen before the end of the bid period"),
+        Assert(deposit.get().amount() > app.state.highest_bid,
+               comment="Bid must be higher than previous bid"),
 
-        send_algos(app.state.seller, app.state.bid[Txn.sender()]),
+        # Send back to the bidder their previous bid (0 at first bid)
+        pay_or_close(Txn.sender(), app.state.bid[Txn.sender()]),
 
+        # Update bid and highest bid info
         app.state.bid[Txn.sender()].set(deposit.get().amount()),
         app.state.highest_bidder.set(Txn.sender()),
         app.state.highest_bid.set(deposit.get().amount()),
@@ -86,39 +110,61 @@ def bid(
 @app.external
 def withdraw():
     return Seq(
-        Assert(Txn.sender() != app.state.highest_bidder,
-               comment="Not highest bidder"),
         Assert(app.state.state != States.WAIT_START,
-               comment="Auction not started"),
+               comment="Auction must be running"),
+        Assert(Txn.sender() != app.state.highest_bidder,
+               comment="The highest bidder cannot withdraw their bid"),
 
-        send_algos(Txn.sender(), app.state.bid[Txn.sender()]),
+        # Send bid back to caller
+        pay_or_close(Txn.sender(), app.state.bid[Txn.sender()]),
 
-        app.state.bid[Txn.sender()].set(Int(0))
+        # Reset bid amount
+        app.state.bid[Txn.sender()].set(Int(0)),
     )
 
 @app.external
 def end():
     return Seq(
         Assert(Txn.sender() == app.state.seller,
-               comment="Only the seller"),
+               comment="Only the seller can close the contract"),
         Assert(app.state.state == States.WAIT_CLOSING,
-               comment="Auction not started"),
+               comment="Auction must be running"),
         Assert(Global.round() >= app.state.end_time,
-               comment="Auction not ended"),
+               comment="Bid period must be over"),
 
+        # Pay seller the highest bid
+        pay_or_close(app.state.seller, app.state.highest_bid),
+
+        # Transition to end state
         app.state.state.set(States.CLOSED),
-
-        send_algos(app.state.seller, app.state.highest_bid)
     )
 
 @pt.Subroutine(pt.TealType.none)
-def send_algos(receiver: pt.Expr, amount: pt.Expr):
-    return InnerTxnBuilder.Execute({
-        TxnField.type_enum: TxnType.Payment,
-        TxnField.receiver: receiver,
-        TxnField.amount: amount,
-        TxnField.fee: Int(0),
-    })
+def pay_or_close(receiver, amt):
+    return (
+        # Only do something if an amount > 0 is being sent
+        pt.If(amt > Int(0)).Then(
+            # If it is the full balance (minus some < MBR amount), send all
+            # Note that any amount < MBR must have been sent outside of the contracts logic, as the starting
+            # bid is at least the MBR
+            pt.If(pt.Balance(Global.current_application_address()) - amt < Int(100000)).Then(
+                InnerTxnBuilder.Execute({
+                    TxnField.type_enum: TxnType.Payment,
+                    TxnField.close_remainder_to: receiver,
+                    TxnField.fee: Int(0),
+                })
+            # Otherwise, just send the specified amount
+            ).Else(
+                InnerTxnBuilder.Execute({
+                    TxnField.type_enum: TxnType.Payment,
+                    TxnField.receiver: receiver,
+                    TxnField.amount: amt,
+                    TxnField.fee: Int(0),
+                })
+            )
+        )
+    )
+
 
 if __name__ == "__main__":
-    app.build().export("auction_src")
+    app.build().export("artifacts")
