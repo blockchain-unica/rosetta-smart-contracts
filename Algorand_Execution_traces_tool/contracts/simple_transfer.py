@@ -8,6 +8,7 @@ class SimpleTransferState:
     recipient = beaker.GlobalStateValue(
         stack_type=pt.TealType.bytes,
         static=True,
+        descr="Receiver of the transfer",
     )
 
 app = beaker.Application("SimpleTransfer", state=SimpleTransferState())
@@ -17,6 +18,7 @@ def create(
     recipient_: pt.abi.Address,
 ):
     return Seq(
+        # Initialize recipient
         app.state.recipient.set(recipient_.get()),
     )
 
@@ -27,7 +29,8 @@ def withdraw(
     return Seq(
         Assert(Txn.sender() == app.state.recipient,
                comment="Only the recipient can withdraw"),
-    
+
+        # Withdraw specified amount
         InnerTxnBuilder.Execute({
             TxnField.type_enum: TxnType.Payment,
             TxnField.receiver: app.state.recipient,
@@ -42,6 +45,7 @@ def withdraw_all():
         Assert(Txn.sender() == app.state.recipient,
                comment="Only the recipient can withdraw"),
     
+        # Withdraw everything
         InnerTxnBuilder.Execute({
             TxnField.type_enum: TxnType.Payment,
             TxnField.close_remainder_to: app.state.recipient,
@@ -49,5 +53,6 @@ def withdraw_all():
         })
     )
 
+
 if __name__ == "__main__":
-    app.build().export("simple_transfer_src")
+    app.build().export("artifacts")
