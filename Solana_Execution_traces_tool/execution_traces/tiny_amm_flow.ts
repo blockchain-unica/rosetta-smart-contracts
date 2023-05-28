@@ -93,16 +93,16 @@ async function main() {
         amount1,
     );
 
-    /*
+    
     // 3. Redeem tokens
     console.log("\n--- Redeem.--- (user: M)");
-    const amountToRedeem = 10;
+    const amountToRedeem = 6;
     await redeem(
         connection,
         programId,
         MKeypair,
         amountToRedeem,
-    );*/
+    );
 
     // 4. Swap tokens
     console.log("\n--- Swap. --- (user: M)");

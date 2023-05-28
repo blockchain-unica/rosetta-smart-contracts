@@ -189,12 +189,14 @@ For instance, HTLC requires initialization of the owner, the verifier, the hash 
 - [Vault](../contracts/vault)
 - [Vesting](../contracts/vesting)
 - [Crowdfund](../contracts/crowdfund)
+- [Tiny AMM](contracts/tinyamm)
 
 After the contract has been deployed in Solana, a transaction should be issued to initialize those data. After this initialization, the actors can interact with the contract by carrying out the same operations as they would with Solidity-written contracts.
 
 ### Other differences
-The [Auction](../contracts/auction) contract, in the implementation for Solana, stores only the highest bidder. The previous bidders are not stored because the Solana contract sends the currency back to the previous bidder in the same transaction in which the new bid is made.  
+The [Auction](../contracts/auction) program, in the implementation for Solana, stores only the highest bidder. The previous bidders are not stored because the Solana contract sends the currency back to the previous bidder in the same transaction in which the new bid is made.  
 
+For the [Simple Wallet](../contracts/simple_wallet) program, in the custom transaction there is no byte sequence to send to the reciever.
 
 ### Contracts with less differences
 An implementation that is nearly identical to Solidity's has been found for the contracts listed below.
@@ -202,4 +204,3 @@ An implementation that is nearly identical to Solidity's has been found for the 
 - [Simple Transfer](../contracts/simple_transfer)
 - [Storage](../contracts/storage)
 - [Simple Wallet](../contracts/simple_wallet)
-- [Tiny AMM](contracts/tinyamm)
