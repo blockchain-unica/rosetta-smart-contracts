@@ -5,6 +5,7 @@ from typing import Any
 
 from algokit_utils import (
     ApplicationSpecification,
+    OnCompleteCallParameters,
 )
 from algosdk import transaction
 from algosdk.abi import Method
@@ -29,6 +30,20 @@ def set_fee(sp: SuggestedParams, fee=None):
         sp.fee = fee
     return sp
 
+class Env:
+    def __init__(self):
+        self.apps = []
+
+    def wapp(self, app: ApplicationSpecification, app_id: int = 0):
+        wapp = WApp(app, app_id)
+        self.apps.append(wapp)
+        return wapp
+    
+    @property
+    def total_fees(self):
+        return sum(map(lambda app: app.total_fees, self.apps))
+
+
 class WApp:
     SECRET_KEYS = [
         "ugEb7R8jAw8dRgiD/qskL1aG1dN8VgcLJTQiobLP58SExiUwUPRq2X7h0SEEgD5L7PMJehZqL4B//IHYtAJq8Q==",
@@ -36,16 +51,22 @@ class WApp:
         "aIRBtyaUEPdfQCMIQrHr99SJb6+D8wVmugaPL4P6/KQjG+fx7HSkGNbnbhYE4hhepaRpI13Z2IDzPwzXtkDJ8g==",
     ]
     
-    def __init__(self, app: ApplicationSpecification):
+    def __init__(self, app: ApplicationSpecification, app_id: int = 0):
         self.app = app
         self.algod = AlgodClient('', 'https://testnet-api.algonode.cloud')
         self.clients = []
-        self.id = None
-        self.address = None
+        self.id = app_id
+        self.address = algosdk.logic.get_application_address(app_id) if app_id else None
+
+    def get_client(self, other_client: 'WApplicationClient'):
+        sk = other_client.sk
+        client = WApplicationClient(self, self.algod, self.app, sk, app_id=self.id)
+        self.clients.append(client)
+        return client
 
     def fetch_client(self) -> 'WApplicationClient':
         sk = self.SECRET_KEYS.pop()
-        client = WApplicationClient(self, self.algod, self.app, sk)
+        client = WApplicationClient(self, self.algod, self.app, sk, app_id=self.id)
         self.clients.append(client)
         return client
 
@@ -245,3 +266,54 @@ class WApplicationClient:
         res = self.app_client.call(method, self.pk, self.signer, suggested_params, on_complete, accounts, foreign_apps, foreign_assets, boxes, note, lease, rekey_to, atc, **kwargs)
         self._add_fee_txid(res.tx_id)
         return res
+
+    def drycall(
+        self,
+        method: Method | ABIReturnSubroutine | str,
+        sender: str | None = None,
+        suggested_params: transaction.SuggestedParams | None = None,
+        on_complete: transaction.OnComplete = transaction.OnComplete.NoOpOC,
+        accounts: list[str] | None = None,
+        foreign_apps: list[int] | None = None,
+        foreign_assets: list[int] | None = None,
+        boxes: Sequence[tuple[int, bytes | bytearray | str | int]] | None = None,
+        note: bytes | None = None,
+        lease: bytes | None = None,
+        rekey_to: str | None = None,
+        atc: AtomicTransactionComposer | None = None,
+        **kwargs: Any,  # noqa: ANN401
+    ) -> ABIResult:
+        if not atc:
+            atc = AtomicTransactionComposer()
+        deprecated_arguments = [
+            kwargs.pop("local_schema", None),
+            kwargs.pop("global_schema", None),
+            kwargs.pop("approval_program", None),
+            kwargs.pop("clear_program", None),
+            kwargs.pop("extra_pages", None),
+        ]
+        if any(deprecated_arguments):
+            raise Exception(
+                "Can't create an application using call, either create an application from "
+                "the client app_spec using create() or use add_method_call() instead."
+            )
+        self.app_client._app_client.compose_call(
+            atc,
+            call_abi_method=method,
+            transaction_parameters=OnCompleteCallParameters(
+                on_complete=on_complete,
+                sender=sender,
+                signer=self.signer,
+                suggested_params=suggested_params,
+                note=note,
+                lease=lease,
+                accounts=accounts,
+                foreign_apps=foreign_apps,
+                foreign_assets=foreign_assets,
+                boxes=boxes,
+                rekey_to=rekey_to,
+            ),
+            **kwargs,
+        )
+        result = atc.simulate(self._wapp.algod)
+        return result.abi_results[0]
