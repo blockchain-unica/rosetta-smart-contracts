@@ -126,6 +126,7 @@ In the following example `<SMART_CONTRACT_NAME>` stands for a contract chosen by
 1. [storage](../contracts/storage)
 1. [simple_wallet](../contracts/simple_wallet)
 1. [tinyamm](../contracts/tinyamm)
+1. [payment_splitter](../contracts/payment_splitter)
 
 Now we can compile and deploy the on chain program:
 ```sh
@@ -190,6 +191,7 @@ For instance, HTLC requires initialization of the owner, the verifier, the hash 
 - [Vesting](../contracts/vesting)
 - [Crowdfund](../contracts/crowdfund)
 - [Tiny AMM](contracts/tinyamm)
+- [Payment Splitter](contracts/payment_splitter)
 
 After the contract has been deployed in Solana, a transaction should be issued to initialize those data. After this initialization, the actors can interact with the contract by carrying out the same operations as they would with Solidity-written contracts.
 
@@ -203,4 +205,3 @@ An implementation that is nearly identical to Solidity's has been found for the 
 - [Token Transfer](../contracts/token_transfer)
 - [Simple Transfer](../contracts/simple_transfer)
 - [Storage](../contracts/storage)
-- [Simple Wallet](../contracts/simple_wallet)

@@ -7,11 +7,6 @@
     
     "add": "./add_use_case.sh",
     
-    "build:all": "npm run build:simple_transfer && npm run build:htlc && npm run build:token_transfer && npm run build:simple_wallet && npm run build:vault && npm run build:storage && npm run build:escrow && npm run build:crowdfund && npm run build:vesting && npm run build:auction && npm run build:tiny_amm",
-    "deploy:all": "npm run deploy:simple_transfer && npm run deploy:htlc && npm run deploy:token_transfer && npm run deploy:simple_wallet && npm run deploy:vault && npm run deploy:storage && npm run deploy:escrow && npm run deploy:crowdfund && npm run deploy:vesting && npm run deploy:auction && npm run deploy:tiny_amm",
-    "costs:all": "npm run costs:simple_transfer && npm run costs:htlc && npm run costs:token_transfer && npm run costs:simple_wallet && npm run costs:vault && npm run costs:storage && npm run costs:escrow && npm run costs:crowdfund && npm run costs:vesting && npm run costs:auction && npm run costs:tiny_amm",
-    "clean:all": "npm run clean:simple_transfer && npm run clean:htlc && npm run clean:token_transfer && npm run clean:simple_wallet && npm run clean:vault && npm run clean:storage && npm run clean:escrow && npm run clean:crowdfund && npm run clean:vesting && npm run clean:auction && npm run clean:tiny_amm",
-    
     "build:simple_transfer": "cargo build-bpf --manifest-path=./contracts/simple_transfer/Cargo.toml --bpf-out-dir=contracts/dist/simple_transfer",
     "deploy:simple_transfer": "solana program deploy contracts/dist/simple_transfer/simple_transfer.so",
     "costs:simple_transfer": "ts-node execution_traces/simple_transfer_flow.ts",
@@ -65,7 +60,12 @@
     "build:tiny_amm": "cargo build-bpf --manifest-path=./contracts/tiny_amm/Cargo.toml --bpf-out-dir=contracts/dist/tiny_amm",
     "deploy:tiny_amm": "solana program deploy contracts/dist/tiny_amm/tiny_amm.so",
     "costs:tiny_amm": "ts-node execution_traces/tiny_amm_flow.ts",
-    "clean:tiny_amm": "cargo clean --manifest-path=./contracts/tiny_amm/Cargo.toml && rm -rf ./contracts/dist/tiny_amm"
+    "clean:tiny_amm": "cargo clean --manifest-path=./contracts/tiny_amm/Cargo.toml && rm -rf ./contracts/dist/tiny_amm",
+
+    "build:payment_splitter": "cargo build-bpf --manifest-path=./contracts/payment_splitter/Cargo.toml --bpf-out-dir=contracts/dist/payment_splitter",
+    "deploy:payment_splitter": "solana program deploy contracts/dist/payment_splitter/payment_splitter.so",
+    "costs:payment_splitter": "ts-node execution_traces/payment_splitter_flow.ts",
+    "clean:payment_splitter": "cargo clean --manifest-path=./contracts/payment_splitter/Cargo.toml && rm -rf ./contracts/dist/payment_splitter"
   },
   "keywords": [],
   "author": "",
