@@ -14,6 +14,7 @@ import {
     generateKeyPair,
     getConnection,
     getPublicKeyFromFile,
+    getSystemKeyPair,
     getTransactionFees,
     printParticipants,
 } from './utils';
@@ -56,7 +57,7 @@ const PS_INFO_SCHEMA = new Map([
                     "released_map",
                     { kind: "map", key: [32], value: "u64" },
                 ],
-                ['initial_lamports', 'u64'],
+                ['current_lamports', 'u64'],
             ],
         },
     ],
@@ -72,7 +73,7 @@ async function main() {
     const connection = getConnection();
 
     const programId = await getPublicKeyFromFile(PROGRAM_KEYPAIR_PATH);
-    const kpInitializer = await generateKeyPair(connection, 1);
+    const kpInitializer = await getSystemKeyPair();
     const kpPayee1 = await generateKeyPair(connection, 1);
     const kpPayee2 = await generateKeyPair(connection, 1);
 
@@ -86,7 +87,7 @@ async function main() {
     const shares_map = new Map<Buffer, number>();
     shares_map.set(kpPayee1.publicKey.toBuffer(), 1);
     shares_map.set(kpPayee2.publicKey.toBuffer(), 1);
-    const initial_lamports = 0.5 * LAMPORTS_PER_SOL;
+    const initial_lamports = 0.25 * LAMPORTS_PER_SOL;
     console.log("\n--- Initialize with ", initial_lamports / LAMPORTS_PER_SOL, " SOL. Actor: the initializer ---");
     printShareMap(shares_map);
     await initialize(
@@ -141,7 +142,7 @@ async function initialize(
     const psInfo = new PaymentSplitterInfo({
         shares_map,
         released_map,
-        initial_lamports,
+        current_lamports: initial_lamports,
     });
 
     const transaction = new Transaction().add(
@@ -168,6 +169,7 @@ async function getPSPDA(programId: PublicKey): Promise<PublicKey> {
         [Buffer.from(PS_SEED)],
         programId
     );
+    console.log("    PSPDA: ", ammPDA.toBase58());
     return ammPDA;
 }
 
@@ -193,7 +195,6 @@ async function release(
 
     let tFees = await getTransactionFees(transaction, connection);
     feesForPayees += tFees;
-    console.log('    Transaction fees: ', tFees / LAMPORTS_PER_SOL, 'SOL');
 }
 
 function printShareMap(shares_map: Map<Buffer, number>): void {

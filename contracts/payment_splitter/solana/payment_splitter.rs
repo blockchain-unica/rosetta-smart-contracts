@@ -22,7 +22,7 @@ const PS_SEED: &str = "PS_SEED";
 pub struct PaymentSplitterInfo {
     pub shares_map: BTreeMap<Pubkey, u64>,
     pub released_map: BTreeMap<Pubkey, u64>,
-    pub initial_lamports: u64,
+    pub current_lamports: u64,
 }
 
 impl PaymentSplitterInfo {
@@ -70,6 +70,16 @@ impl PaymentSplitterInfo {
 
     pub fn get_shares(&self, account: &Pubkey) -> u64 {
         return self.shares_map[account];
+    }
+
+    pub fn get_releasable_for_account(&self, account: &Pubkey) -> u64 {
+        let total_received = self.current_lamports + self.get_total_released();
+        let already_released = self.get_released(&account);
+
+        let payment = (total_received * self.shares_map[&account]) / self.get_total_shares()
+            - already_released;
+
+        return payment;
     }
 }
 
@@ -134,7 +144,7 @@ fn initialize<'a>(
         initializer_account,
         ps_state_account,
         system_program_account,
-        ps_info.initial_lamports,
+        ps_info.current_lamports,
         program_id,
         &[&[PS_SEED.as_bytes(), &[_ps_bump]]],
         pda_size,
@@ -158,18 +168,13 @@ fn release<'a>(program_id: &Pubkey, accounts: &'a [AccountInfo<'a>]) -> ProgramR
 
     let mut ps_info = PaymentSplitterInfo::try_from_slice(*ps_state_account.data.borrow())?;
 
-    // error if payee_account has shares = 0
     let payee_shares = ps_info.get_shares(payee_account.key);
     if payee_shares == 0 {
         msg!("Account has no shares");
         return Err(ProgramError::InvalidAccountData);
     }
 
-    let payment_value: u64 = get_releasable(
-        &ps_info,
-        **ps_state_account.lamports.borrow(),
-        *payee_account.key,
-    );
+    let payment_value: u64 = ps_info.get_releasable_for_account(&payee_account.key);
 
     if payment_value == 0 {
         msg!("Account is not due payment");
@@ -180,6 +185,8 @@ fn release<'a>(program_id: &Pubkey, accounts: &'a [AccountInfo<'a>]) -> ProgramR
     ps_info
         .released_map
         .insert(*payee_account.key, payee_released + payment_value);
+
+    ps_info.current_lamports -= payment_value;
 
     **payee_account.try_borrow_mut_lamports()? += payment_value;
     **ps_state_account.try_borrow_mut_lamports()? -= payment_value;
@@ -235,18 +242,4 @@ pub fn create_pda_account<'a>(
     ];
 
     invoke_signed(&instruction, &account_infos, signers_seeds)
-}
-
-pub fn get_releasable(
-    ps_info: &PaymentSplitterInfo,
-    current_lamports: u64,
-    account: Pubkey,
-) -> u64 {
-    let total_received = current_lamports + ps_info.get_total_released();
-    let already_released = ps_info.get_released(&account);
-
-    let payment = (total_received * ps_info.shares_map[&account]) / ps_info.get_total_shares()
-        - already_released;
-
-    return payment;
 }
