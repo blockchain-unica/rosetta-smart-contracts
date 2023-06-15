@@ -16,6 +16,7 @@
 1. [Tiny AMM](contracts/tinyamm)
 1. [Upgradeable Proxy](contracts/upgradeableProxy)
 1. [Factory](contracts/factory)
+1. [Decentralized Identity](contracts/decentralized_identity)
 
 ## Experiments
 
