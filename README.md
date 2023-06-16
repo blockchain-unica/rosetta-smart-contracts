@@ -17,7 +17,7 @@
 1. [Upgradeable Proxy](contracts/upgradeableProxy)
 1. [Factory](contracts/factory)
 1. [Decentralized Identity](contracts/decentralized_identity)
-
+1. [Bet Oracle](contracts/bet_oracle)
 ## Experiments
 
 TBA
