@@ -19,6 +19,7 @@
 1. [Decentralized Identity](contracts/decentralized_identity)
 1. [Bet Oracle](contracts/bet_oracle)
 1. [Editable NFT](contracts/editableNFT)
+1. [Anonymous Data](contracts/anonymous_data)
 ## Experiments
 
 TBA
