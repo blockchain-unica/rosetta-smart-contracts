@@ -68,9 +68,18 @@ impl AmmInfo {
 
 pub enum AmmInstruction {
     Initialize,
-    Deposit { amount0: u64, amount1: u64 },
-    Redeem { amount: u64 },
-    Swap { is_mint0: bool, amount_in: u64, min_out_amount: u64 },
+    Deposit {
+        amount0: u64,
+        amount1: u64,
+    },
+    Redeem {
+        amount: u64,
+    },
+    Swap {
+        is_mint0: bool,
+        amount_in: u64,
+        min_out_amount: u64,
+    },
 }
 
 impl AmmInstruction {
@@ -99,7 +108,11 @@ impl AmmInstruction {
         let is_mint0 = 0 == u64::from_le_bytes(instruction_data[0..8].try_into().unwrap());
         let amount_in = u64::from_le_bytes(instruction_data[8..16].try_into().unwrap());
         let min_out_amount = u64::from_le_bytes(instruction_data[16..24].try_into().unwrap());
-        Some(Self::Swap { is_mint0, amount_in, min_out_amount })
+        Some(Self::Swap {
+            is_mint0,
+            amount_in,
+            min_out_amount,
+        })
     }
 }
 
@@ -118,9 +131,15 @@ pub fn process_instruction<'a>(
 
     match instruction {
         AmmInstruction::Initialize => initialize(program_id, accounts),
-        AmmInstruction::Deposit { amount0, amount1 } => deposit(program_id, accounts, amount0, amount1),
+        AmmInstruction::Deposit { amount0, amount1 } => {
+            deposit(program_id, accounts, amount0, amount1)
+        }
         AmmInstruction::Redeem { amount } => redeem(program_id, accounts, amount),
-        AmmInstruction::Swap { is_mint0, amount_in , min_out_amount} => swap(program_id, accounts, is_mint0, amount_in, min_out_amount),
+        AmmInstruction::Swap {
+            is_mint0,
+            amount_in,
+            min_out_amount,
+        } => swap(program_id, accounts, is_mint0, amount_in, min_out_amount),
     }
 }
 
@@ -271,9 +290,11 @@ fn deposit<'a>(
         )?;
     }
 
+    let minted_amount =
+        to_mint + u64::from_le_bytes(minted_pda_account.data.borrow()[0..8].try_into().unwrap());
     minted_pda_account
         .try_borrow_mut_data()?
-        .copy_from_slice(&to_mint.to_le_bytes());
+        .copy_from_slice(&minted_amount.to_le_bytes());
 
     Ok(())
 }
@@ -596,7 +617,7 @@ pub fn check_pda<'a>(
 
 pub fn calculate_to_mint(amm_info: &mut AmmInfo, x0: u64, x1: u64) -> Result<u64, ProgramError> {
     let to_mint: u64;
-    
+
     if amm_info.ever_deposited {
         if (amm_info.reserve0 * x1) != (amm_info.reserve1 * x0) {
             msg!("Dep precondition");
