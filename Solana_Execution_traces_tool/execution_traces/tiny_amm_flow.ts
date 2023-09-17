@@ -93,30 +93,36 @@ async function main() {
         amount1,
     );
 
-    
-    // 3. Redeem tokens
-    console.log("\n--- Redeem.--- (user: M)");
-    const amountToRedeem = 6;
-    await redeem(
-        connection,
-        programId,
-        MKeypair,
-        amountToRedeem,
-    );
+    // Chose if to redeem or to swap
+    const choice: Action = Action.Redeem;
 
-    // 4. Swap tokens
-    console.log("\n--- Swap. --- (user: M)");
-    const sendedMint = 0;
-    const amountIn = 3;
-    const minOutAmount = 2;
-    await swap(
-        connection,
-        programId,
-        MKeypair,
-        sendedMint,
-        amountIn,
-        minOutAmount,
-    );
+    switch (choice.valueOf()) {
+        case Action.Redeem:     // 3. Withdraw
+            console.log("\n--- Redeem.--- (user: M)");
+            const amountToRedeem = 6;
+            await redeem(
+                connection,
+                programId,
+                MKeypair,
+                amountToRedeem,
+            );
+            break;
+
+        case Action.Swap:        // 3. Swap
+            console.log("\n--- Swap. --- (user: M)");
+            const sendedMint = 0;
+            const amountIn = 3;
+            const minOutAmount = 2;
+            await swap(
+                connection,
+                programId,
+                MKeypair,
+                sendedMint,
+                amountIn,
+                minOutAmount,
+            );
+            break;
+    }
 
     // Costs
     console.log("\n........");
