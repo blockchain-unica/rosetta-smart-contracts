@@ -26,7 +26,7 @@ use aiken/list
 use aiken/transaction.{ScriptContext, Transaction, Spend, InlineDatum}
 use aiken/transaction/value
 
-use token_transfer/utils.{VerificationKeyHash}
+use token_transfer/utils.{VerificationKeyHash, Lovelace}
 
 // use aiken/cbor // diagnostic
 
@@ -38,13 +38,13 @@ use token_transfer/utils.{VerificationKeyHash}
 // /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 type Datum {
-    /// The recipient's public key's hash
-    recipient: VerificationKeyHash, 
+    owner: VerificationKeyHash,
+    recipient: VerificationKeyHash
 }
 
 type Redeemer {
-    /// The withdrawal amount specified by the recipient
-    amount: Int 
+    Deposit { amount: Lovelace }
+    Withdraw { amount: Lovelace }
 }
 
 // /////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -106,38 +106,80 @@ validator {
         // Validator's main logic
         when ctx.purpose is {
             Spend(_) -> {
+                // Owner
+                let owner_outputs = utils.get_outputs_by_vkh(tx.outputs, datum.owner)
+                let owner_inputs = utils.get_inputs_by_vkh(tx.inputs, datum.owner)
+
+                let owner_inputs_lovelace_balance = utils.get_ada_from_inputs(owner_inputs)
+                let owner_outputs_lovelace_balance = utils.get_ada_from_outputs(owner_outputs)
+                //
+
+                // Recipient
                 let recipient_outputs = utils.get_outputs_by_vkh(tx.outputs, datum.recipient)
                 let recipient_inputs = utils.get_inputs_by_vkh(tx.inputs, datum.recipient)
-                let recipient_inputs_lovelace_balance = utils.get_ada_from_inputs(recipient_inputs)
 
+                let recipient_inputs_lovelace_balance = utils.get_ada_from_inputs(recipient_inputs)
+                let recipient_outputs_lovelace_balance = utils.get_ada_from_outputs(recipient_outputs)
+                
+                let recipient_inputs_token_balance = utils.get_tokens_balance_from_inputs(recipient_inputs)
+                let recipient_outputs_token_balance = utils.get_tokens_balance_from_outputs(recipient_outputs)
+                //
+                
+                // Contract
                 let contract_outputs = utils.get_outputs_by_address(tx.outputs, contract_address)
                 let contract_inputs = utils.get_inputs_by_address(tx.inputs, contract_address) 
+
                 let contract_inputs_lovelace_balance = utils.get_ada_from_inputs(contract_inputs)
+                let contract_outputs_lovelace_balance = utils.get_ada_from_outputs(contract_outputs)
 
-                and {
-                    utils.must_be_signed_by(tx, datum.recipient),
-
-                    !list.is_empty(recipient_outputs), // has recipient as output
-
-                    !list.is_empty(contract_outputs),  // has contract as output
-
+                let contract_inputs_token_balance = utils.get_tokens_balance_from_inputs(contract_inputs)
+                let contract_outputs_token_balance = utils.get_tokens_balance_from_outputs(contract_outputs)
+                //
+    
+                expect True = and {
                     // The new UTXOs kept by the contract must have the same datum as before
                     list.all(contract_outputs, fn(output) { output.datum == InlineDatum(datum) }),
 
-                    // Since we are not spending ADA from the contract: its new output value must be the same as before
-                    utils.get_ada_from_outputs(contract_outputs) == contract_inputs_lovelace_balance,
-
-                    // This is true for the recipient as well, but he's paying the tx's ADA fees
-                    utils.get_ada_from_outputs(recipient_outputs) == recipient_inputs_lovelace_balance - value.lovelace_of(tx.fee),
-
                     // There must be only one token in the transaction
                     must_manage_exactly_one_token(tx),
-                    
-                    // The contract's output token value must be its previous balance minus the amount declared in the redeemer
-                    utils.get_tokens_balance_from_outputs(contract_outputs) == utils.get_tokens_balance_from_inputs(contract_inputs) - redeemer.amount,
 
-                    // The recipient's output instead has to contain the withdraw amount (doing so we also assure the recipient is the one directly withdrawing the tokens)
-                    utils.get_tokens_balance_from_outputs(recipient_outputs) == utils.get_tokens_balance_from_inputs(recipient_inputs) + redeemer.amount
+                    !list.is_empty(contract_outputs),  // has contract as output
+                    
+                    // Contract's ADA balance must be the same everytime
+                    contract_outputs_lovelace_balance == contract_inputs_lovelace_balance
+                }
+
+                when redeemer is {
+                    Deposit(amount) -> {
+                        and {
+                            utils.must_be_signed_by(tx, datum.owner),
+
+                            !list.is_empty(owner_outputs), // has owner as output
+
+                            // Owner should only pay fee with ADA
+                            owner_outputs_lovelace_balance == owner_inputs_lovelace_balance - value.lovelace_of(tx.fee),
+
+                            // Contract must receive the declared token amount
+                            contract_outputs_token_balance == contract_inputs_token_balance + amount
+                        }
+                    }
+
+                    Withdraw(amount) -> {
+                        and {
+                            utils.must_be_signed_by(tx, datum.recipient),
+
+                            !list.is_empty(recipient_outputs), // has recipient as output
+
+                            // Recipient should only pay transaction's fee
+                            recipient_outputs_lovelace_balance == recipient_inputs_lovelace_balance - value.lovelace_of(tx.fee),
+                            
+                            // Contract's output token value must be its previous balance minus the amount declared in the redeemer
+                            contract_outputs_token_balance == contract_inputs_token_balance - amount,
+
+                            // The recipient's output instead has to contain the withdraw amount (doing so we also assure the recipient is the one directly withdrawing the tokens)
+                            recipient_outputs_token_balance == recipient_inputs_token_balance + amount
+                        }
+                    }
                 }
             }
             _ -> False

@@ -20,6 +20,8 @@ use aiken/transaction/value
 
 pub type VerificationKeyHash = Hash<Blake2b_224, VerificationKey>
 
+pub type Lovelace = Int
+
 // /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -130,6 +132,31 @@ pub fn get_inputs_by_address(inputs: List<Input>, addr: Address) {
     list.filter(
         inputs,
         fn (input) { input.output.address == addr }
+    )
+}
+
+
+/// ***
+/// @funct get_inputs_by_vkh
+/// @brief - Keeps in the inputs list only the ones having vkh as their address
+/// @param inputs
+/// @param vkh
+/// @return inputs - The Input list containing UTXOs own by vkh  
+/// ***
+pub fn get_inputs_by_vkh(inputs: List<Input>, vkc: VerificationKeyHash) -> List<Input> {
+    list.filter(
+        inputs,
+        fn(input) { // filter function
+            when input.output.address.payment_credential is {
+                VerificationKeyCredential(_) -> {
+                    // Performs the unsafe cast only if payment_credential has the type VerificationKeyCredential
+                    expect VerificationKeyCredential(tx_output_address) = input.output.address.payment_credential
+
+                    tx_output_address == vkc
+                }
+                _ -> False
+            }
+        }
     )
 }
 
