@@ -1,6 +1,4 @@
-# Measuring execution costs of smart contracts
-
-## Use cases
+# A comparison of smart contracts languages in different blockchain platforms
 
 1. [Simple transfer](contracts/simple_transfer)
 1. [Token transfer](contracts/token_transfer)
@@ -20,6 +18,3 @@
 1. [Bet Oracle](contracts/bet_oracle)
 1. [Editable NFT](contracts/editableNFT)
 1. [Anonymous Data](contracts/anonymous_data)
-## Experiments
-
-TBA
