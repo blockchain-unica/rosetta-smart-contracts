@@ -1,6 +1,7 @@
 # A comparison of smart contracts languages in different blockchain platforms
 
 ## Use cases
+1. [Oracle Bet](contracts/oracle_bet)
 1. [Simple transfer](contracts/simple_transfer)
 1. [Token transfer](contracts/token_transfer)
 1. [HTLC](contracts/htlc)
@@ -16,7 +17,6 @@
 1. [Upgradeable Proxy](contracts/upgradeableProxy)
 1. [Factory](contracts/factory)
 1. [Decentralized Identity](contracts/decentralized_identity)
-1. [Bet Oracle](contracts/bet_oracle)
 1. [Editable NFT](contracts/editableNFT)
 1. [Anonymous Data](contracts/anonymous_data)
 
