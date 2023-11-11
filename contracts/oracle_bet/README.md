@@ -1,7 +1,7 @@
 # Oracle Bet
 
 The OracleBet contract involves two players and an oracle.
-Upon stipulation, the first player deposit 1 token unit in the contract,
+Upon stipulation, the first player deposits 1 token unit in the contract,
 and specifies the opponent and an oracle.
 A deadline is set to the current block height plus 1000.
 
