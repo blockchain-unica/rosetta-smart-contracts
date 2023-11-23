@@ -8,7 +8,7 @@ module deploy_address::data_storage {
         text_string: vector<u8>
     }
 
-    public fun init(sender: &signer) {
+    fun init_module(sender: &signer) {
         let data_storage = DataStorage {
             byte_sequence:  vector::empty<u8>(),
             text_string:  vector::empty<u8>()
