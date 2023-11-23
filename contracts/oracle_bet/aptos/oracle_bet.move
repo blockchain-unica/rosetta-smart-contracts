@@ -1,4 +1,4 @@
-module deploy_address::bet_v2 {
+module smart_contracts_comparison::oracle_bet {
     
     use aptos_framework::coin::{Coin, Self};
     use std::signer::{address_of};
