@@ -2184,6 +2184,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "oracle_bet"
+version = "0.1.0"
+dependencies = [
+ "borsh",
+ "borsh-derive 0.10.3",
+ "solana-program",
+ "solana-program-test",
+ "solana-sdk",
+]
+
+[[package]]
 name = "ouroboros"
 version = "0.14.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"

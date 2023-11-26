@@ -65,7 +65,12 @@
     "build:payment_splitter": "cargo build-bpf --manifest-path=./contracts/payment_splitter/Cargo.toml --bpf-out-dir=contracts/dist/payment_splitter",
     "deploy:payment_splitter": "solana program deploy contracts/dist/payment_splitter/payment_splitter.so",
     "costs:payment_splitter": "ts-node execution_traces/payment_splitter_flow.ts",
-    "clean:payment_splitter": "cargo clean --manifest-path=./contracts/payment_splitter/Cargo.toml && rm -rf ./contracts/dist/payment_splitter"
+    "clean:payment_splitter": "cargo clean --manifest-path=./contracts/payment_splitter/Cargo.toml && rm -rf ./contracts/dist/payment_splitter",
+  
+    "build:oracle_bet": "cargo build-bpf --manifest-path=./contracts/oracle_bet/Cargo.toml --bpf-out-dir=contracts/dist/oracle_bet",
+    "deploy:oracle_bet": "solana program deploy contracts/dist/oracle_bet/oracle_bet.so",
+    "costs:oracle_bet": "ts-node execution_traces/oracle_bet_flow.ts",
+    "clean:oracle_bet": "cargo clean --manifest-path=./contracts/oracle_bet/Cargo.toml && rm -rf ./contracts/dist/oracle_bet"
   },
   "keywords": [],
   "author": "",

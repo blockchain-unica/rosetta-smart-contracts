@@ -108,7 +108,7 @@ export class NumberHolder {
 }
 
 export function getConnection() {
-  const connection = new Connection(clusterApiUrl("testnet"), "confirmed");
-  //const connection = new Connection("http://localhost:8899", "confirmed");
+  //const connection = new Connection(clusterApiUrl("testnet"), "confirmed");
+  const connection = new Connection("http://localhost:8899", "confirmed");
   return connection;
 }
