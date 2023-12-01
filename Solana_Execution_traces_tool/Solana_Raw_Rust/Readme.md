@@ -1,11 +1,11 @@
 
-# Solana Execution Traces Tool
+# Solana Execution Traces Tool with Raw Rust
 
-Welcome to the Solana Cost Analysis Tool! This tool is designed for analyzing and understanding the costs associated with transactions and smart contract execution on the [Solana blockchain](https://solana.com).
+Welcome to the Solana Cost Analysis Tool! This tool is designed for analyzing and understanding the costs associated with transactions and smart contract execution on the [Solana blockchain](https://solana.com) using the [Rust programming language](https://www.rust-lang.org/).
 
 ## Contents
 
-- [Dependencies](#dependences_anchor)
+- [Pre-requisites](#dependences_anchor)
 - [Getting Started](#getting_started_anchor)
 - [Fees in Solana](#fees_in_solana_anchor)
 - [Costs Analysis](#costs_analysis_anchor)
@@ -13,7 +13,7 @@ Welcome to the Solana Cost Analysis Tool! This tool is designed for analyzing an
 - [Differences respect to Solidity](#differences_anchor)
 
 <a name="dependences_anchor"></a>
-## Dependencies
+## Pre-requisites
 
 You will need [Solana Tools](https://docs.solana.com/cli/install-solana-cli-tools) to compile the source files, deploy and generate your own File System Wallet Keypair. In the following sections we will explain in detail how to use Solana Tools to do these operations.
 
@@ -115,18 +115,19 @@ Make sure you select the right cluster. In our examples we use the Testnet.
 
 In the following example `<SMART_CONTRACT_NAME>` stands for a contract chosen by the user and could be one of the following:
 
-1. [simple_transfer](../contracts/simple_transfer)
-1. [token_transfer](../contracts/token_transfer)
-1. [htlc](../contracts/htlc)
-1. [escrow](../contracts/escrow)
-1. [auction](../contracts/auction)
-1. [crowdfund](../contracts/crowdfund)
-1. [vault](../contracts/vault)
-1. [vesting](../contracts/vesting)
-1. [storage](../contracts/storage)
-1. [simple_wallet](../contracts/simple_wallet)
-1. [tinyamm](../contracts/tinyamm)
-1. [payment_splitter](../contracts/payment_splitter)
+1. [simple_transfer](../../contracts/simple_transfer)
+1. [token_transfer](../../contracts/token_transfer)
+1. [htlc](../../contracts/htlc)
+1. [escrow](../../contracts/escrow)
+1. [auction](../../contracts/auction)
+1. [crowdfund](../../contracts/crowdfund)
+1. [vault](../../contracts/vault)
+1. [vesting](../../contracts/vesting)
+1. [storage](../../contracts/storage)
+1. [simple_wallet](../../contracts/simple_wallet)
+1. [tinyamm](../../contracts/tinyamm)
+1. [payment_splitter](../../contracts/payment_splitter)
+1. [oracle_bet](../../contracts/oracle_bet)
 
 Now we can compile and deploy the on chain program:
 ```sh
@@ -185,23 +186,24 @@ A brief observation is that Solana does not offer the option to initialize data 
 
 In the Solidity implementation of the following contracts some data is initialized at the time of deployment. 
 For instance, HTLC requires initialization of the owner, the verifier, the hash and the reveal timeout at the time of deployment.
-- [HTLC](../contracts/htlc)
-- [Escrow](../contracts/escrow)
-- [Vault](../contracts/vault)
-- [Vesting](../contracts/vesting)
-- [Crowdfund](../contracts/crowdfund)
-- [Tiny AMM](contracts/tinyamm)
-- [Payment Splitter](contracts/payment_splitter)
+- [HTLC](../../contracts/htlc)
+- [Escrow](../../contracts/escrow)
+- [Vault](../../contracts/vault)
+- [Vesting](../../contracts/vesting)
+- [Crowdfund](../../contracts/crowdfund)
+- [Tiny AMM](../../contracts/tinyamm)
+- [Payment Splitter](../../contracts/payment_splitter)
+- [Oracle Bet](../../contracts/oracle_bet)
 
 After the contract has been deployed in Solana, a transaction should be issued to initialize those data. After this initialization, the actors can interact with the contract by carrying out the same operations as they would with Solidity-written contracts.
 
 ### Other differences
-The [Auction](../contracts/auction) program, in the implementation for Solana, stores only the highest bidder. The previous bidders are not stored because the Solana contract sends the currency back to the previous bidder in the same transaction in which the new bid is made.  
+The [Auction](../../contracts/auction) program, in the implementation for Solana, stores only the highest bidder. The previous bidders are not stored because the Solana contract sends the currency back to the previous bidder in the same transaction in which the new bid is made.  
 
-For the [Simple Wallet](../contracts/simple_wallet) program, in the custom transaction there is no byte sequence to send to the reciever.
+For the [Simple Wallet](../../contracts/simple_wallet) program, in the custom transaction there is no byte sequence to send to the reciever.
 
 ### Contracts with less differences
 An implementation that is nearly identical to Solidity's has been found for the contracts listed below.
-- [Token Transfer](../contracts/token_transfer)
-- [Simple Transfer](../contracts/simple_transfer)
-- [Storage](../contracts/storage)
+- [Token Transfer](../../contracts/token_transfer)
+- [Simple Transfer](../../contracts/simple_transfer)
+- [Storage](../../contracts/storage)
