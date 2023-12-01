@@ -1,0 +1,40 @@
+[features]
+seeds = true
+skip-lint = false
+[programs.localnet]
+auction = "9xxNCzXwzaHWwKVvj2jqLdz1kT63BND3oXH8MMaXg33C"
+crowdfund = "Dz55GKPsGsxuwb7zSruModp6cfiWfBDxn7Z3ikTRXKiE"
+escrow = "5vC84nZpsCLev3GTqMzDHcbuvJRcGBRaxEs2JtwPxFwp"
+htlc = "CXMv5rvhxqcrEQGzdEcjNMoUMq67NzaW3ZBAFbS633cF"
+oracle_bet = "DQ9cypFFhA8NJFPRL5KUtuuFPjQaa1nM3PdcmFYu29FC"
+payment_splitter = "2nh21WYLmcWLt3TvxzDyTb8rwB8FSn99XAXDEtsNn68x"
+simple_transfer = "94j5tza8BnLMM8Bb19c9i2vfPxZiBs3iprfchTT7Qyrq"
+simple_wallet = "BKM1M6DvbXRQPGncCftEVsGwVusLt2FaBWuWCAgKs3oh"
+storage = "8equx4XB9oc3nWqLVFBRQkDcbacCTuz8K2AYFe1Z1nWx"
+tiny_amm = "1W3g3gk49DXGEbPdAnrJjKNVYJ9jiJptuXi9o64LpPM"
+token_transfer = "CQ9atVHStwY7GrCdGwfDYCFmKrv2rqmFn2tBRNrwF1Eg"
+vault = "Ggkq6FhxcibBbDmnVR1pCrLB9ASkWfbqEQDwZrj59qp7"
+vesting = "5W3bM2p13agpD6pTBJHagwNLNT9LmLSncBSFUbK17t1s"
+
+[registry]
+url = "https://api.apr.dev"
+
+[provider]
+cluster = "Localnet"
+wallet = "/Users/vtkachenko/.config/solana/id.json"
+
+[scripts]
+test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
+test_auction = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/auction.ts"
+test_crowdfund = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/crowdfund.ts"
+test_escrow = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/escrow.ts"
+test_htlc = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/htlc.ts"
+test_payment_splitter = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/payment_splitter.ts"
+test_simple_transfer = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/simple_transfer.ts"
+test_simple_wallet = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/simple_wallet.ts"
+test_storage = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/storage.ts"
+test_tiny_amm = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/tiny_amm.ts"
+test_token_transfer = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/token_transfer.ts"
+test_vault = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/vault.ts"
+test_vesting = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/vesting.ts"
+test_oracle_bet = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/oracle_bet.ts"
