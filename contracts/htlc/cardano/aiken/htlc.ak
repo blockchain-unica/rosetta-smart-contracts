@@ -27,10 +27,13 @@
 // ////////////////////////////////////////////////////////////////////////////////
 
 use aiken/list
-use aiken/hash.{Blake2b_224, Sha3_256, Hash, sha3_256}
-use aiken/transaction/credential.{VerificationKey}
-use aiken/transaction.{Transaction, ScriptContext, Spend, ValidityRange}
+use aiken/hash.{Sha3_256, Hash, sha3_256}
+use aiken/transaction.{Transaction, ScriptContext, Spend, ValidityRange, Input}
 use aiken/interval.{Finite}
+
+use aiken/transaction/value
+
+use htlc/utils.{VerificationKeyHash, POSIXTime}
 
 // ////////////////////////////////////////////////////////////////////////////////
 
@@ -39,19 +42,18 @@ use aiken/interval.{Finite}
 // Types: 
 // ////////////////////////////////////////////////////////////////////////////////
 
-type VerificationKeyHash = Hash<Blake2b_224, VerificationKey>
 type SecretHash = Hash<Sha3_256, ByteArray>
-type POSIXTime = Int
 
 type Datum {
     committer: VerificationKeyHash,
     receiver: VerificationKeyHash,
     secret_hash: SecretHash,
-    timeout: POSIXTime // we cannot access blocks and epochs on chain (source: Aiken's Discord)
+    timeout: POSIXTime // we cannot access blocks and epochs on chain
 }
 
 type Redeemer {
-    secret: ByteArray,
+    Reveal { secret: ByteArray }
+    Timeout
 }
 
 // ////////////////////////////////////////////////////////////////////////////////
@@ -74,22 +76,40 @@ fn must_start_after(range: ValidityRange, timeout: POSIXTime) {
 
 validator {
     fn htlc(datum: Datum, redeemer: Redeemer, ctx: ScriptContext)  {
+        let tx = ctx.transaction
+
+        expect Some(tx_signer) = list.at(tx.extra_signatories, 0)
+        
+        let tx_signer_inputs = utils.get_inputs_by_vkh(tx.inputs, tx_signer)
+        let tx_signer_outputs = utils.get_outputs_by_vkh(tx.outputs, tx_signer)
+
+        let tx_signer_inputs_ada = utils.get_ada_from_inputs(tx_signer_inputs)
+        let tx_signers_outputs_ada = utils.get_ada_from_outputs(tx_signer_outputs)
+
+        let own_input = utils.get_own_input(ctx)
+        let tx_value = value.lovelace_of(own_input.output.value)
+
         when ctx.purpose is {
-            Spend(_) -> 
-            // (more like a XOR because they cannot happen simultaneously) 
-            or { 
-                // reveal:
-                and { 
-                    must_be_signed_by(ctx.transaction, datum.committer),
-                    sha3_256(redeemer.secret) == datum.secret_hash,
-                    !must_start_after(ctx.transaction.validity_range, datum.timeout)
-                },
-                // timeout:
-                and { 
-                    must_be_signed_by(ctx.transaction, datum.receiver),
-                    must_start_after(ctx.transaction.validity_range, datum.timeout)
-                }
-            }
+            Spend(_) -> {
+                expect True = tx_signers_outputs_ada == tx_signer_inputs_ada + tx_value - value.lovelace_of(tx.fee)
+
+                when redeemer is {
+                    Reveal(secret) -> {
+                        and {
+                            must_be_signed_by(tx, datum.committer),
+                            sha3_256(secret) == datum.secret_hash,
+                            !must_start_after(tx.validity_range, datum.timeout)
+                        }
+                        
+                    }
+                    Timeout -> {
+                        and {
+                            must_be_signed_by(tx, datum.receiver),
+                            must_start_after(tx.validity_range, datum.timeout)
+                        }
+                    }
+                }       
+            }                
             _ -> False
         }
     }
