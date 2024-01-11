@@ -3,7 +3,7 @@ use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token::{self, Mint, SetAuthority, Token, TokenAccount};
 pub use spl_token::instruction::AuthorityType::AccountOwner;
 
-declare_id!("CQ9atVHStwY7GrCdGwfDYCFmKrv2rqmFn2tBRNrwF1Eg");
+declare_id!("8rE3uJr3hGxxsC5qW9d64VUmZdmvXUqxbWm7M4rPERyt");
 
 #[program]
 pub mod token_transfer {

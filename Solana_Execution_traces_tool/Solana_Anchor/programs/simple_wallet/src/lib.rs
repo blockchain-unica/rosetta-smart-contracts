@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-declare_id!("BKM1M6DvbXRQPGncCftEVsGwVusLt2FaBWuWCAgKs3oh");
+declare_id!("4EX6HbWT7T485PXCpH2LkgcES6MnDaiLvV8m7xhBEuAv");
 
 #[program]
 pub mod simple_wallet {

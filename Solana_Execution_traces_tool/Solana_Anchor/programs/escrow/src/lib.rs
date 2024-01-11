@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use borsh::{BorshDeserialize, BorshSerialize};
 
-declare_id!("5vC84nZpsCLev3GTqMzDHcbuvJRcGBRaxEs2JtwPxFwp");
+declare_id!("BjnzdLZze5AvqMKoPJ3UYo8ruAWspVMKo258TCeTuQ55");
 
 #[program]
 pub mod escrow {
