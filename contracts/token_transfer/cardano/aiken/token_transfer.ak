@@ -26,7 +26,7 @@ use aiken/list
 use aiken/transaction.{ScriptContext, Transaction, Spend, InlineDatum}
 use aiken/transaction/value
 
-use token_transfer/utils.{VerificationKeyHash, Lovelace}
+use token_transfer/utils.{VerificationKeyHash}
 
 // use aiken/cbor // diagnostic
 
@@ -43,8 +43,8 @@ type Datum {
 }
 
 type Redeemer {
-    Deposit { amount: Lovelace }
-    Withdraw { amount: Lovelace }
+    Deposit { amount: Int }
+    Withdraw { amount: Int }
 }
 
 // /////////////////////////////////////////////////////////////////////////////////////////////////////////

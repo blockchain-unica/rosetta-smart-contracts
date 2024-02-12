@@ -127,20 +127,6 @@ pub fn get_outputs_by_address(outputs: List<Output>, addr: Address) -> List<Outp
 
 
 /// ***
-/// @funct get_inputs_by_address
-/// @brief - Keeps in the inputs list only the ones having addr as their address
-/// @param inputs
-/// @return List<Input> - The Input list containing inputs own by addr
-/// *** 
-pub fn get_inputs_by_address(inputs: List<Input>, addr: Address) {
-    list.filter(
-        inputs,
-        fn (input) { input.output.address == addr }
-    )
-}
-
-
-/// ***
 /// @funct get_inputs_by_vkh
 /// @brief - Keeps in the inputs list only the ones having vkh as their address
 /// @param inputs

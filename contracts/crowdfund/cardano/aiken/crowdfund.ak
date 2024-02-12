@@ -22,8 +22,6 @@ type Datum {
     recipient: VerificationKeyHash,
     goal: Int,
     deadline: POSIXTime,
-    latest_donor: VerificationKeyHash,
-    latest_donation: Int,
     wallets: Dict<VerificationKeyHash, Int>
 }
 
@@ -31,7 +29,7 @@ type Datum {
 /// we're not checking input.output.address and input.output.value since input's address may be different from donor's one. 
 
 type Redeemer {
-    Donate
+    Donate { amount: Int, donor: VerificationKeyHash }
     Withdraw
     Reclaim
 }
@@ -51,34 +49,31 @@ validator {
 
         let contract_inputs = utils.get_inputs_by_address(tx.inputs, contract_address)
         let contract_outputs = utils.get_outputs_by_address(tx.outputs, contract_address)
-
+        
         let contract_amount = dict.foldl(datum.wallets, 0, fn(_k, v, r) { v + r }) // summing up all the values in the wallets
         expect True = contract_amount == utils.get_ada_from_inputs(contract_inputs)
 
         when ctx.purpose is {
             Spend(_) -> {
                 when redeemer is {
-                    Donate -> {
+                    Donate(amount, donor) -> {
                         // We expect there's only one output addressed to the contract
                         expect True = list.length(contract_outputs) == 1
                         expect Some(contract_output) = list.at(contract_outputs, 0)
-
+        
                         // Checking the datum
                         expect InlineDatum(untyped_datum) = contract_output.datum
                         expect contract_output_datum: Datum = untyped_datum
-
-                        let declared_donation = contract_output_datum.latest_donation
-                        let declared_donor = contract_output_datum.latest_donor
 
                         expect True = and {
                             // Accept new donations only if the transaction starts before the deadline
                             utils.must_start_before_timeout(tx.validity_range, datum.deadline),
                             
-                            // They must be signed by 'latest_donor' declared in the new datum
-                            utils.must_be_signed_by(tx, declared_donor),
+                            // They must be signed by donor
+                            utils.must_be_signed_by(tx, donor),
 
                             // Contract must receive back its own wallets' amount + the one declared in the new datum 
-                            utils.get_ada_from_outputs(contract_outputs) == contract_amount + declared_donation,
+                            utils.get_ada_from_outputs(contract_outputs) == contract_amount + amount,
 
                             // Static parts of datum must not change in the new output:
                             contract_output_datum.recipient == datum.recipient,
@@ -88,21 +83,27 @@ validator {
 
                         let output_wallets = contract_output_datum.wallets
 
+                        ////////////////////////////////////////////////////////////////////////////////
+
+                        // TODO: better handling of this dict.insert_with() // https://aiken-lang.github.io/stdlib/aiken/dict.html#insert_with
+                        
                         // Current donor is not altering the other donor's wallets
-                        expect True = dict.filter(datum.wallets,fn(k, _v) { k != declared_donor }) == dict.filter(output_wallets, fn(k, _v) { k != declared_donor })
+                        expect True = dict.filter(datum.wallets,fn(k, _v) { k != donor }) == dict.filter(output_wallets, fn(k, _v) { k != donor })
 
-                        expect Some(output_wallet_amount) = dict.get(output_wallets, declared_donor)
+                        expect Some(output_wallet_amount) = dict.get(output_wallets, donor)
 
-                        if(!dict.has_key(datum.wallets, declared_donor)) {
+                        if(!dict.has_key(datum.wallets, donor)) {
                             // In case of new donations, donors have to insert themselves into the new wallet with the correct amount
-                            contract_output_datum.latest_donation == output_wallet_amount
+                            amount == output_wallet_amount
                         } 
                         else { 
-                            expect Some(previous_wallet_amount) = dict.get(datum.wallets, declared_donor)
+                            expect Some(previous_wallet_amount) = dict.get(datum.wallets, donor)
 
                             // In case of subsequent donations, donors have to correctly update the wallet: value associated to donor must be the previous one plus the new donated amount
-                            output_wallet_amount == previous_wallet_amount + declared_donation
+                            output_wallet_amount == previous_wallet_amount + amount
                         }
+
+                        ////////////////////////////////////////////////////////////////////////////////
                     }
 
                     Withdraw -> {
@@ -144,8 +145,6 @@ validator {
                                 contract_output_datum.recipient == datum.recipient,
                                 contract_output_datum.goal == datum.goal,
                                 contract_output_datum.deadline == datum.deadline,
-                                contract_output_datum.latest_donor == datum.latest_donor,
-                                contract_output_datum.latest_donation == datum.latest_donation,
                                 contract_output_datum.wallets == dict.filter(datum.wallets, fn(k, _v) { k!= current_signer })
                             }
                         }
