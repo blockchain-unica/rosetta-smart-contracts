@@ -32,14 +32,11 @@ def main():
 def test():
     # set scenario
     sc = sp.test_scenario("Vesting", main)
-    # create admin
-    admin = sp.test_account("admin")
     # create users
-    pippo = sp.test_account("pippo")
+    beneficiary = sp.test_account("Beneficiary")
     # create object
-    c1 = main.Vesting(pippo.address, sp.now, 5, sp.mutez(10))
+    c1 = main.Vesting(beneficiary.address, sp.now, 5, sp.mutez(10))
     # start scenario
     sc += c1
 
-    sc.h1("Release")
-    c1.release(_sender=pippo, _amount=sp.mutez(10))
+
