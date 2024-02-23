@@ -106,12 +106,12 @@ pub mod crowdfund {
             CustomError::GoalReached
         );
 
-        // Close the deposit_pda account and tenturn the rent to the donor
+        // Close the deposit_pda account and return the rent to the donor
         **donor.to_account_info().try_borrow_mut_lamports()? +=
             **deposit_pda.to_account_info().try_borrow_mut_lamports()?;
         **deposit_pda.to_account_info().try_borrow_mut_lamports()? = 0;
 
-        // Return the donated aamount to the donor
+        // Return the donated amount to the donor
         **donor.to_account_info().try_borrow_mut_lamports()? += deposit_pda.total_donated;
         **campain_pda.to_account_info().try_borrow_mut_lamports()? -= deposit_pda.total_donated;
 

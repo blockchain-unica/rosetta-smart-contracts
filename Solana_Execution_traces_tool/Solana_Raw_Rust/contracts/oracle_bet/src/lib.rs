@@ -5,9 +5,11 @@ use solana_program::{
     entrypoint,
     entrypoint::ProgramResult,
     msg,
+    program::invoke_signed,
     program_error::ProgramError,
     pubkey::Pubkey,
     rent::Rent,
+    system_instruction, system_program,
     sysvar::Sysvar,
 };
 
@@ -15,57 +17,34 @@ entrypoint!(process_instruction);
 
 #[derive(BorshSerialize, BorshDeserialize, Debug)]
 pub struct OracleBetInfo {
-    pub oracle: Pubkey,
-    pub participant1: Pubkey,
-    pub participant1_has_deposited: bool,
-    pub participant2: Pubkey,
-    pub participant2_has_deposited: bool,
-    pub wager: u64,
-    pub deadline: u64,
-    pub winner_was_chosen: bool,
+    pub oracle: Pubkey,       // 32 bytes
+    pub participant1: Pubkey, // 32 bytes
+    pub participant2: Pubkey, // 32 bytes
+    pub wager: u64,           // 8 bytes
+    pub deadline: u64,        // 8 bytes
+    pub joined: bool,         // 1 byte
 }
 
 impl OracleBetInfo {
-    pub fn new(
-        oracle: Pubkey,
-        participant1: Pubkey,
-        participant2: Pubkey,
-        deadline: u64,
-        wager: u64,
-    ) -> Self {
-        return Self {
-            oracle,
-            participant1,
-            participant1_has_deposited: false,
-            participant2,
-            participant2_has_deposited: false,
-            wager,
-            deadline,
-            winner_was_chosen: false,
-        };
-    }
-
-    pub fn participants_have_deposited(&self) -> bool {
-        self.participant1_has_deposited && self.participant2_has_deposited
-    }
-
-    pub fn only_ne_has_deposited(&self) -> bool {
-        self.participant1_has_deposited ^ self.participant2_has_deposited
-    }
+    pub const LEN: usize = 32 + 32 + 32 + 8 + 8 + 1;
 }
+
+const SEED_FOR_PDA: &str = "oracle_bet";
 
 pub enum OracleBetInstruction {
     Initialize { deadline: u64, wager: u64 },
-    Bet,
-    OracleSetResult
+    Join,
+    Win,
+    Timeout,
 }
 
 impl OracleBetInstruction {
     pub fn from_instruction_data(instruction_data: &[u8]) -> Option<Self> {
         match instruction_data {
             [0, tail @ ..] => Self::get_initialize_context(tail),
-            [1, _tail @ ..] => Self::get_bet_context(),
-            [2, _tail @ ..] => Self::get_oracle_set_result_context(),
+            [1, _tail @ ..] => Self::get_join_context(),
+            [2, _tail @ ..] => Self::get_win_context(),
+            [3, _tail @ ..] => Self::get_timeout_context(),
             _ => None,
         }
     }
@@ -76,12 +55,16 @@ impl OracleBetInstruction {
         Some(Self::Initialize { deadline, wager })
     }
 
-    fn get_bet_context() -> Option<Self> {
-        Some(Self::Bet)
+    fn get_join_context() -> Option<Self> {
+        Some(Self::Join)
     }
 
-    fn get_oracle_set_result_context() -> Option<Self> {
-        Some(Self::OracleSetResult)
+    fn get_win_context() -> Option<Self> {
+        Some(Self::Win)
+    }
+
+    fn get_timeout_context() -> Option<Self> {
+        Some(Self::Timeout)
     }
 }
 
@@ -97,8 +80,9 @@ pub fn process_instruction<'a>(
         OracleBetInstruction::Initialize { deadline, wager } => {
             initialize(program_id, accounts, deadline, wager)
         }
-        OracleBetInstruction::Bet => bet(program_id, accounts),
-        OracleBetInstruction::OracleSetResult => oracle_set_result(program_id, accounts),
+        OracleBetInstruction::Join => join(program_id, accounts),
+        OracleBetInstruction::Win => win(program_id, accounts),
+        OracleBetInstruction::Timeout => timeout(program_id, accounts),
     }
 }
 
@@ -114,21 +98,11 @@ fn initialize<'a>(
     let oracle_account: &AccountInfo = next_account_info(accounts_iter)?;
     let participant1_account: &AccountInfo = next_account_info(accounts_iter)?;
     let participant2_account: &AccountInfo = next_account_info(accounts_iter)?;
-    let oracle_bet_info_account: &AccountInfo = next_account_info(accounts_iter)?;
+    let oracle_bet_pda: &AccountInfo = next_account_info(accounts_iter)?;
+    let system_account: &AccountInfo = next_account_info(accounts_iter)?;
 
     if !oracle_account.is_signer {
         return Err(ProgramError::MissingRequiredSignature);
-    }
-
-    if oracle_bet_info_account.owner.ne(&program_id) {
-        msg!("The oracle_bet_info_account isn't owned by program");
-        return Err(ProgramError::IllegalOwner);
-    }
-
-    let rent_exemption: u64 = Rent::get()?.minimum_balance(oracle_bet_info_account.data_len());
-    if **oracle_bet_info_account.lamports.borrow() < rent_exemption {
-        msg!("The oracle_bet_info_account should be rent exempted");
-        return Err(ProgramError::AccountNotRentExempt);
     }
 
     let current_slot: u64 = Clock::get()?.slot;
@@ -137,44 +111,93 @@ fn initialize<'a>(
         return Err(ProgramError::InvalidInstructionData);
     }
 
-    let oracle_bet_info = OracleBetInfo{
+    let rent_lamports = Rent::get()?.minimum_balance(OracleBetInfo::LEN);
+
+    let (expected_pda, pda_bump) = Pubkey::find_program_address(
+        &[SEED_FOR_PDA.as_bytes(), oracle_account.key.as_ref()],
+        program_id,
+    );
+
+    if expected_pda != *oracle_bet_pda.key {
+        msg!("Invalid PDA");
+        return Err(ProgramError::InvalidAccountData);
+    }
+
+    invoke_signed(
+        &system_instruction::create_account(
+            oracle_account.key,
+            oracle_bet_pda.key,
+            rent_lamports,
+            OracleBetInfo::LEN as u64,
+            program_id,
+        ),
+        &[
+            oracle_account.clone(),
+            oracle_bet_pda.clone(),
+            system_account.clone(),
+        ],
+        &[&[
+            SEED_FOR_PDA.as_bytes(),
+            oracle_account.key.as_ref(),
+            &[pda_bump],
+        ]],
+    )?;
+
+    let oracle_bet_info = OracleBetInfo {
         oracle: *oracle_account.key,
         participant1: *participant1_account.key,
-        participant1_has_deposited: false,
         participant2: *participant2_account.key,
-        participant2_has_deposited: false,
         wager,
         deadline,
-        winner_was_chosen: false,
+        joined: false,
     };
-
-    oracle_bet_info.serialize(&mut &mut oracle_bet_info_account.try_borrow_mut_data()?[..])?;
+    oracle_bet_info.serialize(&mut &mut oracle_bet_pda.try_borrow_mut_data()?[..])?;
 
     Ok(())
 }
 
-fn bet<'a>(program_id: &Pubkey, accounts: &'a [AccountInfo<'a>]) -> ProgramResult {
-    msg!("Bet");
+fn join<'a>(program_id: &Pubkey, accounts: &'a [AccountInfo<'a>]) -> ProgramResult {
+    msg!("join");
     let accounts_iter: &mut std::slice::Iter<AccountInfo> = &mut accounts.iter();
 
-    let participant_account: &AccountInfo = next_account_info(accounts_iter)?;
-    let oracle_bet_info_account: &AccountInfo = next_account_info(accounts_iter)?;
+    let participant1_account: &AccountInfo = next_account_info(accounts_iter)?;
+    let participant2_account: &AccountInfo = next_account_info(accounts_iter)?;
+    let oracle_bet_pda: &AccountInfo = next_account_info(accounts_iter)?;
+    let system_account: &AccountInfo = next_account_info(accounts_iter)?;
 
-    if !participant_account.is_signer {
+    assert!(system_program::check_id(system_account.key));
+
+    let mut oracle_bet_info: OracleBetInfo =
+        OracleBetInfo::try_from_slice(*oracle_bet_pda.data.borrow())?;
+
+    if !participant1_account.is_signer {
         return Err(ProgramError::MissingRequiredSignature);
     }
 
-    if oracle_bet_info_account.owner.ne(&program_id) {
+    if !participant2_account.is_signer {
+        return Err(ProgramError::MissingRequiredSignature);
+    }
+
+    if oracle_bet_info.participant1 != *participant1_account.key
+        || oracle_bet_info.participant2 != *participant2_account.key
+    {
+        msg!("One or both of the provided actors are not in the oracle_bet_info");
+        return Err(ProgramError::InvalidInstructionData);
+    }
+
+    if oracle_bet_pda.owner.ne(&program_id) {
         msg!("The oracle_bet_info_account isn't owned by program");
         return Err(ProgramError::IllegalOwner);
     }
 
-    let mut oracle_bet_info: OracleBetInfo =
-        OracleBetInfo::try_from_slice(*oracle_bet_info_account.data.borrow())?;
+    let (expected_pda, pda_bump) = Pubkey::find_program_address(
+        &[SEED_FOR_PDA.as_bytes(), oracle_bet_info.oracle.as_ref()],
+        program_id,
+    );
 
-    if oracle_bet_info.participants_have_deposited() {
-        msg!("The participants have already deposited");
-        return Err(ProgramError::IllegalOwner);
+    if expected_pda != *oracle_bet_pda.key {
+        msg!("Invalid PDA");
+        return Err(ProgramError::InvalidAccountData);
     }
 
     let current_slot: u64 = Clock::get()?.slot;
@@ -183,95 +206,148 @@ fn bet<'a>(program_id: &Pubkey, accounts: &'a [AccountInfo<'a>]) -> ProgramResul
         return Err(ProgramError::InvalidInstructionData);
     }
 
-    if oracle_bet_info.winner_was_chosen {
-        msg!("The winner was already chosen");
+    if oracle_bet_info.joined {
+        msg!("The bet was already joined");
         return Err(ProgramError::InvalidInstructionData);
     }
 
-    if oracle_bet_info.participant1 == *participant_account.key {
-        oracle_bet_info.participant1_has_deposited = true;
-    } else if oracle_bet_info.participant2 == *participant_account.key {
-        oracle_bet_info.participant2_has_deposited = true;
-    } else {
-        msg!("The participant isn't in the oracle_bet_info");
-        return Err(ProgramError::InvalidInstructionData);
-    }
+    invoke_signed(
+        &system_instruction::transfer(
+            participant1_account.key,
+            oracle_bet_pda.key,
+            oracle_bet_info.wager,
+        ),
+        &[participant1_account.clone(), oracle_bet_pda.clone()],
+        &[&[
+            SEED_FOR_PDA.as_bytes(),
+            oracle_bet_info.oracle.as_ref(),
+            &[pda_bump],
+        ]],
+    )?;
 
-    let rent_exemption: u64 = Rent::get()?.minimum_balance(oracle_bet_info_account.data_len());
+    invoke_signed(
+        &system_instruction::transfer(
+            participant2_account.key,
+            oracle_bet_pda.key,
+            oracle_bet_info.wager,
+        ),
+        &[participant2_account.clone(), oracle_bet_pda.clone()],
+        &[&[
+            SEED_FOR_PDA.as_bytes(),
+            oracle_bet_info.oracle.as_ref(),
+            &[pda_bump],
+        ]],
+    )?;
 
-    let minimum_amount: u64 = if oracle_bet_info.only_ne_has_deposited() {
-        oracle_bet_info.wager * 2
-    } else {
-        oracle_bet_info.wager
-    };
+    oracle_bet_info.joined = true;
+    oracle_bet_info.serialize(&mut &mut oracle_bet_pda.try_borrow_mut_data()?[..])?;
 
-    if **participant_account.lamports.borrow() - rent_exemption < minimum_amount {
-        msg!("Insufficent sended amount");
-        return Err(ProgramError::InvalidInstructionData);
-    }
-
-    oracle_bet_info.serialize(&mut &mut oracle_bet_info_account.try_borrow_mut_data()?[..])?;
     Ok(())
 }
 
-
-fn oracle_set_result<'a>(program_id: &Pubkey, accounts: &'a [AccountInfo<'a>]) -> ProgramResult {
-    msg!("oracle_set_result");
+fn win<'a>(program_id: &Pubkey, accounts: &'a [AccountInfo<'a>]) -> ProgramResult {
+    msg!("win");
     let accounts_iter: &mut std::slice::Iter<AccountInfo> = &mut accounts.iter();
 
     let oracle_account: &AccountInfo = next_account_info(accounts_iter)?;
     let winner_account: &AccountInfo = next_account_info(accounts_iter)?;
-    let oracle_bet_info_account: &AccountInfo = next_account_info(accounts_iter)?;
+    let oracle_bet_pda: &AccountInfo = next_account_info(accounts_iter)?;
+
+    let oracle_bet_info: OracleBetInfo =
+        OracleBetInfo::try_from_slice(*oracle_bet_pda.data.borrow())?;
+
+    if !oracle_bet_info.joined {
+        msg!("The bet was not joined yet");
+        return Err(ProgramError::InvalidInstructionData);
+    }
 
     if !oracle_account.is_signer {
         return Err(ProgramError::MissingRequiredSignature);
     }
 
-    if oracle_bet_info_account.owner.ne(&program_id) {
+    if oracle_bet_pda.owner.ne(&program_id) {
         msg!("The oracle_bet_info_account isn't owned by program");
         return Err(ProgramError::IllegalOwner);
     }
 
-    let mut oracle_bet_info: OracleBetInfo =
-        OracleBetInfo::try_from_slice(*oracle_bet_info_account.data.borrow())?;
+    let (expected_pda, _pda_bump) = Pubkey::find_program_address(
+        &[SEED_FOR_PDA.as_bytes(), oracle_bet_info.oracle.as_ref()],
+        program_id,
+    );
 
+    if expected_pda != *oracle_bet_pda.key {
+        msg!("Invalid PDA");
+        return Err(ProgramError::InvalidAccountData);
+    }
 
     if oracle_bet_info.oracle != *oracle_account.key {
         msg!("The oracle isn't in the oracle_bet_info");
         return Err(ProgramError::InvalidInstructionData);
     }
 
-    if oracle_bet_info.winner_was_chosen {
-        msg!("The winner was already chosen");
-        return Err(ProgramError::InvalidInstructionData);
-    }
-
-    oracle_bet_info.winner_was_chosen = true;
-
-    if oracle_bet_info.participant1 == *winner_account.key || oracle_bet_info.participant2 == *winner_account.key {
-        oracle_bet_info.winner_was_chosen = true;
-    } else {
+    if oracle_bet_info.participant1 != *winner_account.key
+        && oracle_bet_info.participant2 != *winner_account.key
+    {
         msg!("The winner isn't in the oracle_bet_info");
         return Err(ProgramError::InvalidInstructionData);
     }
 
-    if !oracle_bet_info.participants_have_deposited() {
-        msg!("The participants have not deposited");
+    let amount_to_winner = oracle_bet_info.wager * 2;
+    let amount_to_oracle = **oracle_bet_pda.lamports.borrow() - amount_to_winner;
+
+    **winner_account.try_borrow_mut_lamports()? += amount_to_winner;
+    **oracle_account.try_borrow_mut_lamports()? += amount_to_oracle;
+    **oracle_bet_pda.try_borrow_mut_lamports()? = 0;
+    Ok(())
+}
+
+fn timeout<'a>(program_id: &Pubkey, accounts: &'a [AccountInfo<'a>]) -> ProgramResult {
+    msg!("timeout");
+    let accounts_iter: &mut std::slice::Iter<AccountInfo> = &mut accounts.iter();
+
+    let oracle_account: &AccountInfo = next_account_info(accounts_iter)?;
+    let participant1_account: &AccountInfo = next_account_info(accounts_iter)?;
+    let participant2_account: &AccountInfo = next_account_info(accounts_iter)?;
+    let oracle_bet_pda: &AccountInfo = next_account_info(accounts_iter)?;
+    
+    let oracle_bet_info: OracleBetInfo =
+        OracleBetInfo::try_from_slice(*oracle_bet_pda.data.borrow())?;
+
+    if oracle_bet_pda.owner.ne(&program_id) {
+        msg!("The oracle_bet_info_account isn't owned by program");
         return Err(ProgramError::IllegalOwner);
     }
 
-    let current_slot: u64 = Clock::get()?.slot;
-    if current_slot < oracle_bet_info.deadline {
+    let (expected_pda, _pda_bump) = Pubkey::find_program_address(
+        &[SEED_FOR_PDA.as_bytes(), oracle_bet_info.oracle.as_ref()],
+        program_id,
+    );
+
+    if expected_pda != *oracle_bet_pda.key {
+        msg!("Invalid PDA");
+        return Err(ProgramError::InvalidAccountData);
+    }
+
+    if !oracle_bet_info.joined {
+        msg!("The bet was not joined yet");
+        return Err(ProgramError::InvalidInstructionData);
+    }
+
+    if Clock::get()?.slot < oracle_bet_info.deadline {
         msg!("The timeout was not reached yet");
         return Err(ProgramError::InvalidInstructionData);
     }
 
-    let amount_to_winner = oracle_bet_info.wager * 2;
-    let amount_to_oracle = **oracle_bet_info_account.lamports.borrow() - amount_to_winner;
+    if oracle_account.key != &oracle_bet_info.oracle {
+        msg!("The oracle isn't in the oracle_bet_info");
+        return Err(ProgramError::InvalidInstructionData);
+    }
 
-    **winner_account.try_borrow_mut_lamports()? += amount_to_winner;
-    **oracle_account.try_borrow_mut_lamports()? += amount_to_oracle;
-    **oracle_bet_info_account.try_borrow_mut_lamports()?  = 0;
-    
+    **participant1_account.try_borrow_mut_lamports()? += oracle_bet_info.wager;
+    **participant2_account.try_borrow_mut_lamports()? += oracle_bet_info.wager;
+
+    let amount_to_oracle = **oracle_bet_pda.lamports.borrow() - oracle_bet_info.wager * 2;
+    **oracle_account.try_borrow_mut_lamports()? +=  amount_to_oracle;
+    **oracle_bet_pda.try_borrow_mut_lamports()? = 0;
     Ok(())
 }

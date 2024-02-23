@@ -35,7 +35,7 @@ pub mod auction {
             return err!(CustomError::InvalidBidAmount);
         }
 
-        msg!("Transfering the amount");
+        msg!("Transferring the amount");
         let transfer_instruction = anchor_lang::solana_program::system_instruction::transfer(
             &bidder.key(),
             &auction_info.key(),

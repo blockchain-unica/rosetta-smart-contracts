@@ -200,7 +200,7 @@ After the contract has been deployed in Solana, a transaction should be issued t
 ### Other differences
 The [Auction](../../contracts/auction) program, in the implementation for Solana, stores only the highest bidder. The previous bidders are not stored because the Solana contract sends the currency back to the previous bidder in the same transaction in which the new bid is made.  
 
-For the [Simple Wallet](../../contracts/simple_wallet) program, in the custom transaction there is no byte sequence to send to the reciever.
+For the [Simple Wallet](../../contracts/simple_wallet) program, in the custom transaction there is no byte sequence to send to the receiver.
 
 ### Contracts with less differences
 An implementation that is nearly identical to Solidity's has been found for the contracts listed below.

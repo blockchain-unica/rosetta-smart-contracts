@@ -26,63 +26,12 @@ const PROGRAM_KEYPAIR_PATH = path.resolve(__dirname, '../contracts/dist/oracle_b
 
 enum Action {
     Initialize = 0,
-    Bet,
-    OracleSetResult,
+    Join,
+    Win,
+    Timeout,
 }
 
-class OracleBetInfo {
-    oracle: Buffer = Buffer.alloc(32);
-    participant1: Buffer = Buffer.alloc(32);
-    participant2: Buffer = Buffer.alloc(32);
-    wager: number = 0;
-    deadline: number = 0;
-    participant1_has_deposited: boolean = false;
-    participant2_has_deposited: boolean = false;
-    winner_was_chosen: boolean = false;
-
-    constructor(fields: {
-        oracle: Buffer,
-        participant1: Buffer,
-        participant2: Buffer,
-        wager: number,
-        deadline: number,
-        participant1_has_deposited: boolean,
-        participant2_has_deposited: boolean,
-        winner_was_chosen: boolean,
-    } | undefined = undefined) {
-        if (fields) {
-            this.oracle = fields.oracle;
-            this.participant1 = fields.participant1;
-            this.participant2 = fields.participant2;
-            this.wager = fields.wager;
-            this.deadline = fields.deadline;
-            this.participant1_has_deposited = fields.participant1_has_deposited;
-            this.participant2_has_deposited = fields.participant2_has_deposited;
-            this.winner_was_chosen = fields.winner_was_chosen;
-        }
-    }
-
-    static schema = new Map([
-        [OracleBetInfo, {
-            kind: 'struct', fields: [
-                ['oracle', [32]],
-                ['participant1', [32]],
-                ['participant2', [32]],
-                ['wager', 'u64'],
-                ['deadline', 'u64'],
-                ['participant1_has_deposited', 'u8'],
-                ['participant2_has_deposited', 'u8'],
-                ['winner_was_chosen', 'u8'],
-            ]
-        }],
-    ]);
-
-    static size = borsh.serialize(
-        OracleBetInfo.schema,
-        new OracleBetInfo(),
-    ).length
-};
-
+const SEED_FOR_PDA = "oracle_bet";
 
 let totalFees = 0;
 
@@ -102,15 +51,14 @@ async function main() {
     ]);
 
     const deadlineSlot = await connection.getSlot() + 10;
-    const wagerInLamports = 100;
+    const wagerInLamports = 0.1 * LAMPORTS_PER_SOL;
 
     /******************* Trace 1 *********************/
     console.log("\n---       Trace 1       ---");
     console.log("All participants join and the oracle choses the winner");
 
-    // 1. Initialize
     console.log("\n--- Initialize. ---");
-    const oracleBetPubKey = await initialize(
+    const contractStoragePubKey = await initialize(
         connection,
         programId,
         kpOracle,
@@ -120,37 +68,22 @@ async function main() {
         wagerInLamports
     );
 
-    console.log('\n--- Join participant 1 ---');
-    await bet(
+    console.log('\n--- Join participants ---');
+    await join(
         connection,
         programId,
         kpParticipant1,
-        oracleBetPubKey,
-        wagerInLamports,
-    );
-
-    console.log('\n--- Join participant 2 ---');
-    await bet(
-        connection,
-        programId,
         kpParticipant2,
-        oracleBetPubKey,
-        wagerInLamports,
+        contractStoragePubKey,
     );
-
-    console.log('\n--- Waiting for the deadline ---');
-    while (await connection.getSlot() <  deadlineSlot) {
-        await new Promise(f => setTimeout(f, 1000));//sleep 1 second
-    }
-    console.log('Deadline reached');
 
     const winnerPubKey = kpParticipant1.publicKey;
     console.log('\n--- Oracle sets the result: winner: ', winnerPubKey.toBase58(), ' ---');
-    await oracleSetResult(
+    await win(
         connection,
         programId,
         kpOracle,
-        oracleBetPubKey,
+        contractStoragePubKey,
         winnerPubKey,
     );
 
@@ -159,6 +92,49 @@ async function main() {
     console.log("Total fees:            ", totalFees / LAMPORTS_PER_SOL, "SOL");
 
     totalFees = 0;
+
+    // /******************* Trace 2 *********************/
+    console.log("\n---       Trace 2       ---");
+    console.log("All participants join and the oracle does not set the winner");
+
+    console.log("\n--- Initialize. ---");
+    const contractStoragePubKey2 = await initialize(
+        connection,
+        programId,
+        kpOracle,
+        kpParticipant1.publicKey,
+        kpParticipant2.publicKey,
+        deadlineSlot,
+        wagerInLamports
+    );
+
+    console.log('\n--- Join participants ---');
+    await join(
+        connection,
+        programId,
+        kpParticipant1,
+        kpParticipant2,
+        contractStoragePubKey2,
+    );
+
+    console.log('\n--- Oracle does not set the result. ---');
+
+    console.log('\n--- Waiting for the deadline ---');
+    while (await connection.getSlot() < deadlineSlot) {
+        await new Promise(f => setTimeout(f, 1000));//sleep 1 second
+    }
+    console.log('Deadline reached');
+
+    console.log('\n--- Timeout ---');
+
+    await timeout(
+        connection,
+        programId,
+        kpOracle,
+        kpParticipant1.publicKey,
+        kpParticipant2.publicKey,
+        contractStoragePubKey2,
+    );
 }
 
 main().then(
@@ -181,40 +157,25 @@ async function initialize(
 
     console.log('The oracle starts the game setting a deadline to', deadline, ' and a wager of', wagerInLamports, 'lamports');
 
-    // Generate the public key for the state account
-    const SEED = "abcdef" + Math.random().toString();
-    const oracleBetPubKey = await PublicKey.createWithSeed(kpOracle.publicKey, SEED, programId);
+    const contractStoragePubKey = await getPDA(programId, kpOracle.publicKey);
 
-    // Instruction to create the State Account account
-    const rentExemptionAmount = await connection.getMinimumBalanceForRentExemption(OracleBetInfo.size);
-    const createStateAccountInstruction = SystemProgram.createAccountWithSeed({
-        fromPubkey: kpOracle.publicKey,
-        basePubkey: kpOracle.publicKey,
-        seed: SEED,
-        newAccountPubkey: oracleBetPubKey,
-        lamports: rentExemptionAmount,
-        space: OracleBetInfo.size,
-        programId: programId,
-    });
-
-    // Encode the data to send
     interface Settings { action: number, deadline: number, wagerInLamports: number }
     const layout = BufferLayout.struct<Settings>([BufferLayout.u8("action"), BufferLayout.nu64("deadline"), BufferLayout.nu64("wagerInLamports")]);
     const dataToSend = Buffer.alloc(layout.span);
     layout.encode({ action: Action.Initialize, deadline, wagerInLamports }, dataToSend);
 
-    const initInstruction = new TransactionInstruction({
+    const transaction = new Transaction().add(
+        new TransactionInstruction({
         programId: programId,
         keys: [
             { pubkey: kpOracle.publicKey, isSigner: true, isWritable: true },
             { pubkey: participant1PubKey, isSigner: false, isWritable: false },
             { pubkey: participant2PubKey, isSigner: false, isWritable: false },
-            { pubkey: oracleBetPubKey, isSigner: false, isWritable: true },
+            { pubkey: contractStoragePubKey, isSigner: false, isWritable: true },
+            { pubkey: SystemProgram.programId, isSigner: false, isWritable: false }
         ],
         data: dataToSend
-    });
-
-    const transaction = new Transaction().add(createStateAccountInstruction, initInstruction);
+    }));
 
     const signature = await sendAndConfirmTransaction(connection, transaction, [kpOracle]);
 
@@ -223,36 +184,32 @@ async function initialize(
     console.log('    Transaction hash: ', signature);
     console.log('    Transaction fees: ', tFees / LAMPORTS_PER_SOL, 'SOL');
 
-    return oracleBetPubKey;
+    return contractStoragePubKey;
 }
 
-async function bet(
+async function join(
     connection: Connection,
     programId: PublicKey,
-    kpParticipant: Keypair,
-    oracleBetPubKey: PublicKey,
-    wagerInLamports: number
+    kpParticipant1: Keypair,
+    kpParticipant2: Keypair,
+    contractStoragePubKey: PublicKey,
 ) {
-
-    const transferInstruction = SystemProgram.transfer({
-        fromPubkey: kpParticipant.publicKey,
-        toPubkey: oracleBetPubKey,
-        lamports: wagerInLamports,
-    });
-
     const joinInstruction = new TransactionInstruction({
         programId: programId,
         keys: [
-            { pubkey: kpParticipant.publicKey, isSigner: true, isWritable: true },
-            { pubkey: oracleBetPubKey, isSigner: false, isWritable: true },
+            { pubkey: kpParticipant1.publicKey, isSigner: true, isWritable: true },
+            { pubkey: kpParticipant2.publicKey, isSigner: true, isWritable: true },
+            { pubkey: contractStoragePubKey, isSigner: false, isWritable: true },
             { pubkey: SystemProgram.programId, isSigner: false, isWritable: false }
         ],
-        data: Buffer.from([Action.Bet])
+        data: Buffer.from([Action.Join])
     });
 
-    const transaction = new Transaction().add(transferInstruction, joinInstruction);
+    const transaction = new Transaction().add(
+        joinInstruction
+    );
 
-    const signature = await sendAndConfirmTransaction(connection, transaction, [kpParticipant]);
+    const signature = await sendAndConfirmTransaction(connection, transaction, [kpParticipant1, kpParticipant2]);
     console.log('    Transaction hash: ', signature);
 
     const tFees = await getTransactionFees(transaction, connection);
@@ -260,11 +217,11 @@ async function bet(
     console.log('    Transaction fees: ', tFees / LAMPORTS_PER_SOL, 'SOL');
 }
 
-async function oracleSetResult(
+async function win(
     connection: Connection,
     programId: PublicKey,
     kpOracle: Keypair,
-    oracleBetPubKey: PublicKey,
+    contractStoragePubKey: PublicKey,
     winner: PublicKey,
 ) {
     const setResultInstruction = new TransactionInstruction({
@@ -272,9 +229,9 @@ async function oracleSetResult(
         keys: [
             { pubkey: kpOracle.publicKey, isSigner: true, isWritable: true },
             { pubkey: winner, isSigner: false, isWritable: true },
-            { pubkey: oracleBetPubKey, isSigner: false, isWritable: true },
+            { pubkey: contractStoragePubKey, isSigner: false, isWritable: true },
         ],
-        data: Buffer.from([Action.OracleSetResult])
+        data: Buffer.from([Action.Win])
     });
 
     const transaction = new Transaction().add(setResultInstruction);
@@ -285,4 +242,40 @@ async function oracleSetResult(
     const tFees = await getTransactionFees(transaction, connection);
     totalFees += tFees;
     console.log('    Transaction fees: ', tFees / LAMPORTS_PER_SOL, 'SOL');
+}
+
+async function timeout(
+    connection: Connection,
+    programId: PublicKey,
+    kpOracle: Keypair,
+    participant1PubKey: PublicKey,
+    participant2PubKey: PublicKey,
+    contractStoragePubKey: PublicKey,
+) {
+    const transaction = new Transaction().add(
+         new TransactionInstruction({
+        programId: programId,
+        keys: [
+            { pubkey: kpOracle.publicKey, isSigner: true, isWritable: true },
+            { pubkey: participant1PubKey, isSigner: false, isWritable: true },
+            { pubkey: participant2PubKey, isSigner: false, isWritable: true },
+            { pubkey: contractStoragePubKey, isSigner: false, isWritable: true },
+        ],
+        data: Buffer.from([Action.Timeout])
+    }));
+
+    const signature = await sendAndConfirmTransaction(connection, transaction, [kpOracle]);
+    console.log('    Transaction hash: ', signature);
+
+    const tFees = await getTransactionFees(transaction, connection);
+    totalFees += tFees;
+    console.log('    Transaction fees: ', tFees / LAMPORTS_PER_SOL, 'SOL');
+}
+
+async function getPDA(programId: PublicKey, oraclePubkey: PublicKey): Promise<PublicKey> {
+    const [pda] = await PublicKey.findProgramAddress(
+        [Buffer.from(SEED_FOR_PDA), oraclePubkey.toBuffer()],
+        programId
+    );
+    return pda;
 }
