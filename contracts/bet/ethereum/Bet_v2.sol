@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
 
-contract OracleBet {
+contract Bet {
 
     // player = players[choice]
     mapping (uint => address payable) players;
@@ -42,7 +42,6 @@ contract OracleBet {
 
     }
 
-
     function timeout() external payable {
         require(deadline < block.number, "The bets are still open");
         require(address(this).balance == 2*wager, "Invalid Balance");
@@ -51,6 +50,4 @@ contract OracleBet {
         (bool success2,) = players[1].call{value: wager}("");
         require (success2, "Transfer failed.");
     }
-
 }
-

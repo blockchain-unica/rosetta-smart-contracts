@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.0;
 
-contract OracleBet {
+contract Bet {
 
     // player = players[choice]
     mapping (uint => address payable) players;
@@ -44,10 +44,5 @@ contract OracleBet {
         address payable winner = players[result];
         (bool success,) = winner.call{value: address(this).balance}("");
         require (success, "Transfer failed.");
-
-
-
     }
-
-
 }
