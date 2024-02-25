@@ -57,6 +57,7 @@ class WApp:
         self.clients = []
         self.id = app_id
         self.address = algosdk.logic.get_application_address(app_id) if app_id else None
+        self.keys = self.SECRET_KEYS.copy()
 
     def get_client(self, other_client: 'WApplicationClient'):
         sk = other_client.sk
@@ -65,7 +66,7 @@ class WApp:
         return client
 
     def fetch_client(self) -> 'WApplicationClient':
-        sk = self.SECRET_KEYS.pop()
+        sk = self.keys.pop()
         client = WApplicationClient(self, self.algod, self.app, sk, app_id=self.id)
         self.clients.append(client)
         return client

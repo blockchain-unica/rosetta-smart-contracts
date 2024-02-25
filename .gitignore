@@ -2,3 +2,4 @@
 **/_build
 *.opam
 .DS_Store
+*.pyc
