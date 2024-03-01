@@ -1,7 +1,7 @@
 # Bet
 
 The Bet contract involves two players and an oracle. 
-At construction, a deadline is set to the current block height plus 1000, and an oracle is specified.
+At construction, a deadline is set to the current block height plus 1000, and the address of an oracle is specified.
 
 The players join the contract by depositing 1 token unit each.
 
