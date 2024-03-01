@@ -1,7 +1,7 @@
 # A comparison of smart contracts languages in different blockchain platforms
 
 ## Use cases
-1. [Bet](contracts/oracle_bet)
+1. [Bet](contracts/bet)
 1. [Simple transfer](contracts/simple_transfer)
 1. [Token transfer](contracts/token_transfer)
 1. [HTLC](contracts/htlc)
