@@ -29,7 +29,11 @@ allows one action:
 beneficiary the amount of the remaining 
 vested amount 
 
+## Implementations
 
-## Execution traces
-
-... 
+- **Solidity/Ethereum**: 
+- **Rust/Solana**:
+- **Aiken/Cardano**:
+- **PyTeal/Algorand**:
+- **SmartPy/Tezos**:
+- **Move/Aptos**:
