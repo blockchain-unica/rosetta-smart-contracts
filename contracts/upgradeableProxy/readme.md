@@ -1,5 +1,7 @@
 # Upgradeable Proxy
 
+## Specification
+
 This use case involves three contracts:
 - *Logic* implements a logic to be stored in the blockchain;
 - *TheProxy* is an upgradeable proxy that forwards a received call to
@@ -20,3 +22,12 @@ returns *true* if the balance of the contract passed as an argument is lower tha
 The Solidity implementation uses low-level instructions for memory access.
 The Solidity reference implementation in this use case is adapted from the ERC1967 Openzeppelin
 implementation.
+
+## Implementations
+
+- **Solidity/Ethereum**: 
+- **Rust/Solana**:
+- **Aiken/Cardano**:
+- **PyTeal/Algorand**:
+- **SmartPy/Tezos**:
+- **Move/Aptos**:
