@@ -1,6 +1,7 @@
 # Decentralized Identity
 
 ## Specification
+
 This case study is intended to represent the SSI context.
 The reference implementation is an extraction from the EIP 1056 implementation.
 
@@ -42,3 +43,12 @@ and the validity, namely the number of blocks for which the delegation is valid.
 
 - **Delegate validity check**. Actor: Owner2
 Using validDelegate, this action verifies that the delegation is valid within the validity term and not valid beyond the validity term.
+
+## Implementations
+
+- **Solidity/Ethereum**: 
+- **Rust/Solana**:
+- **Aiken/Cardano**:
+- **PyTeal/Algorand**:
+- **SmartPy/Tezos**:
+- **Move/Aptos**:
