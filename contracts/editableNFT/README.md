@@ -24,5 +24,11 @@ to transfer the ownership of the token with ID 1 to Owner2.
 This action is intended to allow the current owner to seal a specific token.
 Owner2 seals a token by passing the token ID of the token he wants to seal.
 
+## Implementations
 
-Note: in EVM based systems, the token is implemented by importing an Openzeppelin ERC721 token.
+- **Solidity/Ethereum**: the token is implemented by importing an Openzeppelin ERC721 token.
+- **Rust/Solana**:
+- **Aiken/Cardano**:
+- **PyTeal/Algorand**:
+- **SmartPy/Tezos**:
+- **Move/Aptos**:
