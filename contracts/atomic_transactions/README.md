@@ -20,3 +20,12 @@ Each transaction must be executed while preserving the context of the caller (th
 to delete the sequence of transactions and remove the seal
 (the owner can then use the contract for 
 another atomic sequence of transactions).
+
+## Implementations
+
+- **Solidity/Ethereum**: 
+- **Rust/Solana**:
+- **Aiken/Cardano**:
+- **PyTeal/Algorand**:
+- **SmartPy/Tezos**:
+- **Move/Aptos**:
