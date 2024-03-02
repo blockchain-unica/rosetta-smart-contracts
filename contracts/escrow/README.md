@@ -37,3 +37,11 @@ in this case, the contract issues a
 refund,transferring back the whole 
 contract balance to the buyer.
 
+## Implementations
+
+- **Solidity/Ethereum**: 
+- **Rust/Solana**:
+- **Aiken/Cardano**:
+- **PyTeal/Algorand**:
+- **SmartPy/Tezos**:
+- **Move/Aptos**:
