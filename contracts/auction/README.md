@@ -21,3 +21,12 @@ the participant.
 if this is not the currently highest one.
 - **end**: after the deadline, the seller ends the auction
 and withdraws the highest bid.
+
+## Implementations
+
+- **Solidity/Ethereum**: 
+- **Rust/Solana**:
+- **Aiken/Cardano**:
+- **PyTeal/Algorand**:
+- **SmartPy/Tezos**:
+- **Move/Aptos**:
