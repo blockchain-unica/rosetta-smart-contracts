@@ -17,3 +17,12 @@ until the deadline;
 stored in the contract, provided that the goal has been reached;
 - **reclaim**: after the deadline, if the goal has not been reached
 donors can withdraw the amounts they have donated.
+
+## Implementations
+
+- **Solidity/Ethereum**: 
+- **Rust/Solana**:
+- **Aiken/Cardano**:
+- **PyTeal/Algorand**:
+- **SmartPy/Tezos**:
+- **Move/Aptos**:
