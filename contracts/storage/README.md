@@ -17,5 +17,11 @@ sequence of bytes (1 to 5 bytes, 128 bytes);
 to store a string of arbitrary 
 length (1 to 5 simple characters, 128 simple characters).
 
+## Implementations
 
-## Execution traces
+- **Solidity/Ethereum**: 
+- **Rust/Solana**:
+- **Aiken/Cardano**:
+- **PyTeal/Algorand**:
+- **SmartPy/Tezos**:
+- **Move/Aptos**:
