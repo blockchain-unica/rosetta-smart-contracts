@@ -24,3 +24,11 @@ Product contract.
 of the Factory contract that generated the 
 Product.
 
+## Implementations
+
+- **Solidity/Ethereum**: 
+- **Rust/Solana**:
+- **Aiken/Cardano**:
+- **PyTeal/Algorand**:
+- **SmartPy/Tezos**:
+- **Move/Aptos**:
