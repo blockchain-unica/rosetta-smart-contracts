@@ -8,9 +8,9 @@ use aiken/transaction.{ScriptContext, Spend, InlineDatum}
 
 use aiken/interval.{Finite}
 
-use aiken/cbor // diagnostic
+// use aiken/cbor // diagnostic
 
-use oracle_bet/utils.{VerificationKeyHash, POSIXTime}
+use bet/utils.{VerificationKeyHash, POSIXTime}
 
 // ////////////////////////////////////////////////////////////////////////////////
 
@@ -41,7 +41,7 @@ type Redeemer {
 
 
 validator {
-    fn oracle_bet(datum: Datum, redeemer: Redeemer, ctx: ScriptContext) {
+    fn bet(datum: Datum, redeemer: Redeemer, ctx: ScriptContext) {
         let tx = ctx.transaction
 
         let tx_earliest_time =

@@ -10,7 +10,7 @@ use aiken/interval.{Finite}
 
 // use aiken/cbor // diagnostic
 
-use oracle_bet/utils.{VerificationKeyHash, POSIXTime}
+use bet/utils.{VerificationKeyHash, POSIXTime}
 
 // ////////////////////////////////////////////////////////////////////////////////
 
@@ -66,7 +66,7 @@ type Status {
 
 
 validator {
-    fn oracle_bet(datum: Datum, redeemer: Redeemer, ctx: ScriptContext) {
+    fn bet(datum: Datum, redeemer: Redeemer, ctx: ScriptContext) {
 
         let tx = ctx.transaction
 
