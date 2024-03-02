@@ -17,14 +17,11 @@ and tranfers the whole contract balance to the committer;
 - **timeout**, which can be called only after the deadline, and
 and tranfers the whole contract balance to the receiver.
 
-## Execution traces
+## Implementations
 
-### Trace 1
-
-1. The committer creates the contract, setting a deadline of 100 rounds;
-1. After 50 rounds, A performs the **reveal** action.
-
-### Trace 2
-
-1. The committer creates the contract, setting a deadline of 100 rounds;
-1. After 100 rounds, the receiver performs the **timeout** action.
+- **Solidity/Ethereum**: 
+- **Rust/Solana**:
+- **Aiken/Cardano**:
+- **PyTeal/Algorand**:
+- **SmartPy/Tezos**:
+- **Move/Aptos**:
