@@ -87,7 +87,7 @@ validator {
 
                         // TODO: better handling of this dict.insert_with() // https://aiken-lang.github.io/stdlib/aiken/dict.html#insert_with
                         
-                        // Current donor is not altering the other donor's wallets
+                        // Current donor is not altering the other donors' wallets
                         expect True = dict.filter(datum.wallets,fn(k, _v) { k != donor }) == dict.filter(output_wallets, fn(k, _v) { k != donor })
 
                         expect Some(output_wallet_amount) = dict.get(output_wallets, donor)

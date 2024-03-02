@@ -51,18 +51,6 @@ pub fn get_own_input(ctx: ScriptContext) -> Input {
 
 
 /// ***
-/// @funct must_be_signed_by
-/// @brief Checks if the provided Transaction is signed by the provided VerificationKeyHash
-/// @param transaction
-/// @param vk
-/// @return Bool - True if the transaction contains vk in the signatories, False otherwise 
-/// *** 
-pub fn must_be_signed_by(transaction: Transaction, vk: VerificationKeyHash) {
-    list.has(transaction.extra_signatories, vk)
-} 
-
-
-/// ***
 /// @funct get_ada_from_outputs
 /// @brief - Sums up all the lovelace values in the outputs list 
 /// @param outputs

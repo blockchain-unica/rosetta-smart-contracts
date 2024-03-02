@@ -98,7 +98,7 @@ validator {
                     }
 
                     Withdraw(withdraw_amount) -> {
-                        let tolerance_treshold = 1000 // one second (in milliseconds)
+                        let tolerance_threshold = 1000 // one second (in milliseconds)
 
                         and {
                             utils.must_be_signed_by(tx, datum.owner),
@@ -121,8 +121,8 @@ validator {
 
                             // Declared request time must be coherent with the transaction's time (there're not other ways to let this correspond to the one we send through Lucid)
                             and {
-                                contract_output_datum.request_time >= tx_earliest_time - tolerance_treshold,
-                                contract_output_datum.request_time <= tx_earliest_time + tolerance_treshold
+                                contract_output_datum.request_time >= tx_earliest_time - tolerance_threshold,
+                                contract_output_datum.request_time <= tx_earliest_time + tolerance_threshold
                             }
                         }
                         

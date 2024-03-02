@@ -1,28 +1,4 @@
 // ////////////////////////////////////////////////////////////////////////////////
-
-/// Partecipants
-/// - committer (C)
-/// - receiver  (R)
-
-/// Transactions
-/// - create-contract
-/// - reveal
-/// - timeout
-
-/// Validators
-/// - reveal
-/// - timeout
-
-/// Trace 1
-/// (C): create-contract(datum)    -> UTXO_1 (* this one is "contended" between (C) and (R) *)
-/// (C): reveal(redeemer, UTXO_1)  -> UTXO_2 (* this one fully belongs to (C) *) 
-
-/// Trace 2
-/// (C): create-contract(datum)    -> UTXO_1 (* this one is "contended" between (C) and (R) *)
-/// (C): timeout(redeemer, UTXO_1) -> UTXO_3 (* this one fully belongs to (R) *) 
-
-
-// ////////////////////////////////////////////////////////////////////////////////
 // Imports:
 // ////////////////////////////////////////////////////////////////////////////////
 
