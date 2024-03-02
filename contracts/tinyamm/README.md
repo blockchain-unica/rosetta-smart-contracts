@@ -1,5 +1,7 @@
 # Constant-product AMM
 
+## Specification
+
 Tiny AMM (Automated Market Maker) allows users to deposit, redeem, and swap a
 pair of ERC20 tokens in a decentralized manner. 
 
@@ -29,3 +31,12 @@ address. The token balances in the liquidity pool, represented by `r0` and
 `r1`, are updated based on the direction of the swap. Finally, it is ensured
 that the contract holds the correct balances of `t0` and `t1` tokens to
 maintain the integrity of the exchange.
+
+## Implementations
+
+- **Solidity/Ethereum**: 
+- **Rust/Solana**:
+- **Aiken/Cardano**:
+- **PyTeal/Algorand**:
+- **SmartPy/Tezos**:
+- **Move/Aptos**:
