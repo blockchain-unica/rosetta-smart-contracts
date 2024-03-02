@@ -18,7 +18,7 @@ then both players can redeem their bets, withdrawing 1 token units each.
 - **Solidity/Ethereum**: since the platform does not support multi-signature verification, the join is split in two actions: 
 the first player acts first, by depositing 1 ETH. After that, the second player joins by depositing 1 ETH.
 - **Rust/Solana**:
-- **Aiken/Cardano**:
+- **Aiken/Cardano**: since we cannot access the current block height where the transaction is being validated, the deadline is represented as a UNIX timestamp, which is checked against the lowest bound of the transaction's validity interval.
 - **PyTeal/Algorand**:
 - **SmartPy/Tezos**:
 - **Move/Aptos**:  

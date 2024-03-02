@@ -4,7 +4,7 @@
 
 
 The contract Storage allows a user to 
-store insiede the blockchain two 
+store inside the blockchain two 
 typologies of dynamic size data: 
 a byte sequence and a string.
 
@@ -21,7 +21,7 @@ length (1 to 5 simple characters, 128 simple characters).
 
 - **Solidity/Ethereum**: 
 - **Rust/Solana**:
-- **Aiken/Cardano**:
+- **Aiken/Cardano**: implementation coherent with the specification.
 - **PyTeal/Algorand**:
 - **SmartPy/Tezos**:
 - **Move/Aptos**:

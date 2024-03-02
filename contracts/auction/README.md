@@ -26,7 +26,7 @@ and withdraws the highest bid.
 
 - **Solidity/Ethereum**: 
 - **Rust/Solana**:
-- **Aiken/Cardano**:
+- **Aiken/Cardano**: implementation coherent with the specification.
 - **PyTeal/Algorand**:
 - **SmartPy/Tezos**:
 - **Move/Aptos**:

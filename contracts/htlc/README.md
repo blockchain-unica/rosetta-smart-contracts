@@ -14,14 +14,13 @@ in case the deposit is not revealed within the deadline.
 After contract creation, the HTLC allows two actions:
 - **reveal**, which requires the caller to provide a preimage of the commit,
 and tranfers the whole contract balance to the committer;
-- **timeout**, which can be called only after the deadline, and
-and tranfers the whole contract balance to the receiver.
+- **timeout**, which can be called only after the deadline, and tranfers the whole contract balance to the receiver.
 
 ## Implementations
 
 - **Solidity/Ethereum**: 
 - **Rust/Solana**:
-- **Aiken/Cardano**:
+- **Aiken/Cardano**: implementation coherent with the specification.
 - **PyTeal/Algorand**:
 - **SmartPy/Tezos**:
 - **Move/Aptos**:
