@@ -30,7 +30,7 @@ describe('PaymentSplitter', async () => {
 
         const mapPayeesNamesPublicKeys = []
         for (let i = 0; i < payees.length; i++) {
-            mapPayeesNamesPublicKeys.push([`paye${i}`, payees[i].publicKey]);
+            mapPayeesNamesPublicKeys.push([`payee${i}`, payees[i].publicKey]);
         }
 
         await printParticipants(connection, [
@@ -41,20 +41,20 @@ describe('PaymentSplitter', async () => {
         ]);
     });
 
-    it('The initializer has initialized the payement splitter', async () => {
+    it('The initializer has initialized the payment splitter', async () => {
         const lamportsToTransfer = 1000000; // 0.25 * LAMPORTS_PER_SOL;
         const sharesAmounts: anchor.BN[] = [];
         console.log('The initializer initializes the payment splitter with ', lamportsToTransfer / web3.LAMPORTS_PER_SOL, ' SOL');
         console.log('The shares map is:');
-        for (const paye of payees) {
+        for (const payee of payees) {
             const share = new anchor.BN(1);
             sharesAmounts.push(share);
-            console.log(`\t${paye.publicKey.toBase58()}: ${share}`);
+            console.log(`\t${payee.publicKey.toBase58()}: ${share}`);
         }
 
         // We need to calculate the size of the account to be created and pass it to the instruction
         // because anchor expects the account to be created before the instruction is executed
-        // See the off chain code to checck the structure of the account
+        // See the off chain code to check the structure of the account
         // and also https://book.anchor-lang.com/anchor_references/space.html
 
         const totalSpace =
@@ -71,8 +71,8 @@ describe('PaymentSplitter', async () => {
                 sharesAmounts
             )
             .accounts({ initializer: initializer.publicKey })
-            .remainingAccounts(payees.map(paye => {
-                return { pubkey: paye.publicKey, isWritable: false, isSigner: false };
+            .remainingAccounts(payees.map(payee => {
+                return { pubkey: payee.publicKey, isWritable: false, isSigner: false };
             }))
             .instruction();
 
@@ -97,15 +97,15 @@ describe('PaymentSplitter', async () => {
     });
 
     it('The release instruction was called by all payees', async () => {
-        for (const paye of payees) {
-            console.log('The paye', paye.publicKey.toBase58(), 'releases the payment');
+        for (const payee of payees) {
+            console.log('The payee', payee.publicKey.toBase58(), 'releases the payment');
 
             const instruction = await program.methods
                 .release()
-                .accounts({ payee: paye.publicKey, initializer: initializer.publicKey })
+                .accounts({ payee: payee.publicKey, initializer: initializer.publicKey })
                 .instruction();
 
-            await sendAnchorInstructions(connection, [instruction], [paye]);
+            await sendAnchorInstructions(connection, [instruction], [payee]);
 
             console.log('');
         }

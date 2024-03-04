@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-declare_id!("2nh21WYLmcWLt3TvxzDyTb8rwB8FSn99XAXDEtsNn68x");
+declare_id!("2NpQpiMnHxzpYrtixekkjhbbkTREzFMg5mn6U66YAGfT");
 
 #[program]
 pub mod payment_splitter {
@@ -44,16 +44,16 @@ pub mod payment_splitter {
 
         ps_info.released_amounts = vec![0; payees.len()];
 
-        for paye in payees.iter() {
+        for payee in payees.iter() {
             // Check if the payee already has shares
             for already_present_payee in ps_info.payees.iter() {
-                if already_present_payee == paye.key {
+                if already_present_payee == payee.key {
                     return err!(CustomError::AccountAlreadyHasShares);
                 }
             }
 
             // Add the new payee
-            ps_info.payees.push(*paye.key);
+            ps_info.payees.push(*payee.key);
 
             // Add the new payee's share amount
             let payee_index = ps_info.payees.len() - 1;
@@ -66,7 +66,7 @@ pub mod payment_splitter {
 
             msg!(
                 "Added payee {:?} with share amount {}",
-                paye.key,
+                payee.key,
                 payee_share_amount
             );
         }
