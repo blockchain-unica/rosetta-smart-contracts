@@ -9,46 +9,46 @@ const program = anchor.workspace.Crowdfund as Program<Crowdfund>;
 
 describe('Crowdfund', async () => {
 
-    let campainOwner: web3.Keypair;
+    let campaignOwner: web3.Keypair;
     let donor: web3.Keypair;
 
     before(async () => {
-        [campainOwner, donor] = await Promise.all([
+        [campaignOwner, donor] = await Promise.all([
             generateKeyPair(connection, 1),
             generateKeyPair(connection, 1),
         ]);
         
         await printParticipants(connection, [
             ['programId', program.programId],
-            ['campain_owner', campainOwner.publicKey],
+            ['campaign_owner', campaignOwner.publicKey],
             ['donor', donor.publicKey],
         ]);
     });
 
 
-    async function createCampin(campainOwnerKeyPair: web3.Keypair, campainName: string, goalLamports: number, end_slot: number): Promise<void> {
+    async function createCampaign(campaignOwnerKeyPair: web3.Keypair, campaignName: string, goalLamports: number, end_slot: number): Promise<void> {
         const instruction = await program.methods
             .initialize(
-                campainName,
+                campaignName,
                 new anchor.BN(end_slot),
                 new anchor.BN(goalLamports),
             )
-            .accounts({ campainOwner: campainOwnerKeyPair.publicKey })
+            .accounts({ campaignOwner: campaignOwnerKeyPair.publicKey })
             .instruction();
 
-        await sendAnchorInstructions(connection, [instruction], [campainOwnerKeyPair]);
+        await sendAnchorInstructions(connection, [instruction], [campaignOwnerKeyPair]);
     }
 
-    async function donateToCampain(donorKeyPair: web3.Keypair, campainName: string, lamportsToDonate: number): Promise<void> {
+    async function donateToCampaign(donorKeyPair: web3.Keypair, campaignName: string, lamportsToDonate: number): Promise<void> {
         const [depositPda, _] = web3.PublicKey.findProgramAddressSync(
-            [Buffer.from('deposit'), Buffer.from(campainName), donorKeyPair.publicKey.toBuffer()],
+            [Buffer.from('deposit'), Buffer.from(campaignName), donorKeyPair.publicKey.toBuffer()],
             program.programId
         );
         console.log('Deposit PDA:', depositPda.toBase58());
 
         const instruction = await program.methods
             .donate(
-                campainName,
+                campaignName,
                 new anchor.BN(lamportsToDonate),
             )
             .accounts({ donor: donorKeyPair.publicKey })
@@ -57,21 +57,21 @@ describe('Crowdfund', async () => {
         await sendAnchorInstructions(connection, [instruction], [donorKeyPair]);
     }
 
-    async function witwdrawFunds(campainOwnerKeyPair: web3.Keypair, campainName: string): Promise<void> {
+    async function withdrawFunds(campaignOwnerKeyPair: web3.Keypair, campaignName: string): Promise<void> {
         const instruction = await program.methods
             .withdraw(
-                campainName,
+                campaignName,
             )
-            .accounts({ campainOwner: campainOwnerKeyPair.publicKey })
+            .accounts({ campaignOwner: campaignOwnerKeyPair.publicKey })
             .instruction();
 
-        await sendAnchorInstructions(connection, [instruction], [campainOwnerKeyPair]);
+        await sendAnchorInstructions(connection, [instruction], [campaignOwnerKeyPair]);
     }
 
-    async function reclaimFunds(donorKeyPair: web3.Keypair, campainName: string): Promise<void> {
+    async function reclaimFunds(donorKeyPair: web3.Keypair, campaignName: string): Promise<void> {
         const instruction = await program.methods
             .reclaim(
-                campainName,
+                campaignName,
             )
             .accounts({ donor: donorKeyPair.publicKey })
             .instruction();
@@ -80,93 +80,62 @@ describe('Crowdfund', async () => {
     }
 
     it('The first trace was completed (final action: withdraw)', async () => {
-        // Initialized with random values to not fail by creating a campain with the same name (same account)
-        const campainName = 'myCampain' + Math.random().toString(); // Attention: must be 30 bytes at most
+        // Initialized with random values to not fail by creating a campaign with the same name (same account)
+        const campaignName = 'myCampaign' + Math.random().toString(); // Attention: must be 30 bytes at most
         const goalLamports = 1000;
         const nSlotsToWait = 10;
         let end_slot = await connection.getSlot() + nSlotsToWait;;
 
-        console.log('\nThe campain owner creates the campain:', campainName, "with the goal of", goalLamports / web3.LAMPORTS_PER_SOL, "SOL");
+        console.log('\nThe campaign owner creates the campaign:', campaignName, "with the goal of", goalLamports / web3.LAMPORTS_PER_SOL, "SOL");
         // No needed here but useful to know how to obtain the address 
-        const [campainPDA, _] = web3.PublicKey.findProgramAddressSync(
-            [Buffer.from(campainName)],
+        const [campaignPDA, _] = web3.PublicKey.findProgramAddressSync(
+            [Buffer.from(campaignName)],
             program.programId
         );
-        console.log('Campain PDA:', campainPDA.toBase58());
-        await createCampin(campainOwner, campainName, goalLamports, end_slot);
+        console.log('Campaign PDA:', campaignPDA.toBase58());
+        await createCampaign(campaignOwner, campaignName, goalLamports, end_slot);
 
-        const lamporstsToSend = goalLamports; // Try to decrement this value to see the error
-        console.log("\nThe donor donates", lamporstsToSend / web3.LAMPORTS_PER_SOL, "SOL")
-        await donateToCampain(donor, campainName, lamporstsToSend);
+        const lamportsToSend = goalLamports; // Try to decrement this value to see the error
+        console.log("\nThe donor donates", lamportsToSend / web3.LAMPORTS_PER_SOL, "SOL")
+        await donateToCampaign(donor, campaignName, lamportsToSend);
 
-        console.log('\nWaiting', nSlotsToWait, 'slots for the campain to end...');
+        console.log('\nWaiting', nSlotsToWait, 'slots for the campaign to end...');
         while (await connection.getSlot() < end_slot) {
             await new Promise(f => setTimeout(f, 1000));//sleep 1 second
         }
 
-        console.log("\nThe campain owner withdraws the funds");
-        await witwdrawFunds(campainOwner, campainName);
+        console.log("\nThe campaign owner withdraws the funds");
+        await withdrawFunds(campaignOwner, campaignName);
     });
 
 
     it('The second trace was completed (final action: reclaim)', async () => {
-        // Initialized with random values to not fail by creating a campain with the same name (same account)
-        const campainName = 'myCampain' + Math.random().toString(); // Attention: must be 30 bytes at most
+        // Initialized with random values to not fail by creating a campaign with the same name (same account)
+        const campaignName = 'myCampaign' + Math.random().toString(); // Attention: must be 30 bytes at most
         const goalLamports = 1000;
         const nSlotsToWait = 10;
         let end_slot = await connection.getSlot() + nSlotsToWait;;
 
-        console.log('\nThe campain owner creates the campain:', campainName, "with the goal of", goalLamports / web3.LAMPORTS_PER_SOL, "SOL");
+        console.log('\nThe campaign owner creates the campaign:', campaignName, "with the goal of", goalLamports / web3.LAMPORTS_PER_SOL, "SOL");
         // No needed here but useful to know how to obtain the address 
-        const [campainPDA, _] = web3.PublicKey.findProgramAddressSync(
-            [Buffer.from(campainName)],
+        const [campaignPDA, _] = web3.PublicKey.findProgramAddressSync(
+            [Buffer.from(campaignName)],
             program.programId
         );
-        console.log('Campain PDA:', campainPDA.toBase58());
-        await createCampin(campainOwner, campainName, goalLamports, end_slot);
+        console.log('Campaign PDA:', campaignPDA.toBase58());
+        await createCampaign(campaignOwner, campaignName, goalLamports, end_slot);
 
-        const lamporstsToSend = goalLamports - 10; // Try to set to the goal amount to see the error
-        console.log("\nThe donor donates", lamporstsToSend / web3.LAMPORTS_PER_SOL, "SOL")
-        await donateToCampain(donor, campainName, lamporstsToSend);
+        const lamportsToSend = goalLamports - 10;
+        console.log("\nThe donor donates", lamportsToSend / web3.LAMPORTS_PER_SOL, "SOL")
+        await donateToCampaign(donor, campaignName, lamportsToSend);
 
-        console.log('\nWaiting', nSlotsToWait, 'slots for the campain to end...');
+        console.log('\nWaiting', nSlotsToWait, 'slots for the campaign to end...');
         while (await connection.getSlot() < end_slot) {
             await new Promise(f => setTimeout(f, 1000));//sleep 1 second
         }
 
         console.log("\nThe donor reclaims");
-        await reclaimFunds(donor, campainName);
+        await reclaimFunds(donor, campaignName);
     });
-
-    it('The third trace was completed (final action: reclaim)', async () => {
-        // Initialized with random values to not fail by creating a campain with the same name (same account)
-        const campainName = 'myCampain' + Math.random().toString(); // Attention: must be 30 bytes at most
-        const goalLamports = 1000;
-        const nSlotsToWait = 10;
-        let end_slot = await connection.getSlot() + nSlotsToWait;;
-
-        console.log('\nThe campain owner creates the campain:', campainName, "with the goal of", goalLamports / web3.LAMPORTS_PER_SOL, "SOL");
-        // No needed here but useful to know how to obtain the address 
-        const [campainPDA, _] = web3.PublicKey.findProgramAddressSync(
-            [Buffer.from(campainName)],
-            program.programId
-        );
-        console.log('Campain PDA:', campainPDA.toBase58());
-        await createCampin(campainOwner, campainName, goalLamports, end_slot);
-
-        const lamporstsToSend = goalLamports / 2 - 1 ; // Try to set to the goal amount to see the error
-        console.log("\nThe donor has donates", lamporstsToSend / web3.LAMPORTS_PER_SOL, "SOL")
-        await donateToCampain(donor, campainName, lamporstsToSend);
-        await donateToCampain(donor, campainName, lamporstsToSend);
-
-        console.log('\nWaiting', nSlotsToWait, 'slots for the campain to end...');
-        while (await connection.getSlot() < end_slot) {
-            await new Promise(f => setTimeout(f, 1000));//sleep 1 second
-        }
-
-        console.log("\nThe donor reclaims");
-        await reclaimFunds(donor, campainName);
-    });
-
 
 });

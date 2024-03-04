@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-declare_id!("Dz55GKPsGsxuwb7zSruModp6cfiWfBDxn7Z3ikTRXKiE");
+declare_id!("8Bk7qQpQxqBz5XVX3LqV3vbpnNuZLhCnKq316UHThMHV");
 
 #[program]
 pub mod crowdfund {
@@ -8,7 +8,7 @@ pub mod crowdfund {
 
     pub fn initialize(
         ctx: Context<InitializeCtx>,
-        campain_name: String,
+        campaign_name: String,
         end_donate_slot: u64,
         goal_in_lamports: u64,
     ) -> Result<()> {
@@ -18,26 +18,26 @@ pub mod crowdfund {
             CustomError::InvalidEndSlot
         );
 
-        let campain_pda = &mut ctx.accounts.campain_pda;
-        campain_pda.campain_name = campain_name;
-        campain_pda.campain_owner = *ctx.accounts.campain_owner.key;
-        campain_pda.end_donate_slot = end_donate_slot;
-        campain_pda.goal_in_lamports = goal_in_lamports;
+        let campaign_pda = &mut ctx.accounts.campaign_pda;
+        campaign_pda.campaign_name = campaign_name;
+        campaign_pda.campaign_owner = *ctx.accounts.campaign_owner.key;
+        campaign_pda.end_donate_slot = end_donate_slot;
+        campaign_pda.goal_in_lamports = goal_in_lamports;
         Ok(())
     }
 
     pub fn donate(
         ctx: Context<DonateCtx>,
-        _campain_name: String, // prefixed because not used in instruction, but used for seeds in context
+        _campaign_name: String, // prefixed because not used in instruction, but used for seeds in context
         donated_lamports: u64,
     ) -> Result<()> {
-        let campain_pda = &mut ctx.accounts.campain_pda;
+        let campaign_pda = &mut ctx.accounts.campaign_pda;
         let donor = &mut ctx.accounts.donor;
         let deposit_pda = &mut ctx.accounts.deposit_pda;
 
         require!(donated_lamports > 0, CustomError::InvalidAmount);
         require!(
-            Clock::get()?.slot <= campain_pda.end_donate_slot,
+            Clock::get()?.slot <= campaign_pda.end_donate_slot,
             CustomError::TimeoutReached
         );
 
@@ -45,13 +45,13 @@ pub mod crowdfund {
 
         let transfer_instruction = anchor_lang::solana_program::system_instruction::transfer(
             &donor.key(),
-            &campain_pda.key(),
+            &campaign_pda.key(),
             donated_lamports,
         );
 
         anchor_lang::solana_program::program::invoke(
             &transfer_instruction,
-            &[donor.to_account_info(), campain_pda.to_account_info()],
+            &[donor.to_account_info(), campaign_pda.to_account_info()],
         )
         .unwrap();
 
@@ -60,92 +60,94 @@ pub mod crowdfund {
 
     pub fn withdraw(
         ctx: Context<WithdrawCtx>,
-        _campain_name: String, // prefixed because not used in instruction, but used for seeds in context
+        _campaign_name: String, // prefixed because not used in instruction, but used for seeds in context
     ) -> Result<()> {
-        let campain_pda = &mut ctx.accounts.campain_pda;
-        let campain_owner = &mut ctx.accounts.campain_owner;
+        let campaign_pda = &mut ctx.accounts.campaign_pda;
+        let campaign_owner = &mut ctx.accounts.campaign_owner;
 
         require!(
-            Clock::get()?.slot >= campain_pda.end_donate_slot,
+            Clock::get()?.slot >= campaign_pda.end_donate_slot,
             CustomError::TimeoutNotReached
         );
 
-        let balance = **campain_pda.to_account_info().try_borrow_mut_lamports()?;
-        let rent_exemption = Rent::get()?.minimum_balance(campain_pda.to_account_info().data_len());
+        let balance = **campaign_pda.to_account_info().try_borrow_mut_lamports()?;
+        let rent_exemption =
+            Rent::get()?.minimum_balance(campaign_pda.to_account_info().data_len());
         let lamports_reached = balance - rent_exemption;
         require!(
-            lamports_reached >= campain_pda.goal_in_lamports,
+            lamports_reached >= campaign_pda.goal_in_lamports,
             CustomError::GoalNotReached
         );
 
-        **campain_owner.to_account_info().try_borrow_mut_lamports()? +=
-            **campain_pda.to_account_info().try_borrow_mut_lamports()?;
-        **campain_pda.to_account_info().try_borrow_mut_lamports()? = 0;
+        **campaign_owner.to_account_info().try_borrow_mut_lamports()? +=
+            **campaign_pda.to_account_info().try_borrow_mut_lamports()?;
+        **campaign_pda.to_account_info().try_borrow_mut_lamports()? = 0;
 
         Ok(())
     }
 
     pub fn reclaim(
         ctx: Context<ReclaimCtx>,
-        _campain_name: String, // prefixed because not used in instruction, but used for seeds in context
+        _campaign_name: String, // prefixed because not used in instruction, but used for seeds in context
     ) -> Result<()> {
         let donor = &mut ctx.accounts.donor;
-        let campain_pda = &mut ctx.accounts.campain_pda;
+        let campaign_pda = &mut ctx.accounts.campaign_pda;
         let deposit_pda = &mut ctx.accounts.deposit_pda;
 
         require!(
-            Clock::get()?.slot >= campain_pda.end_donate_slot,
+            Clock::get()?.slot >= campaign_pda.end_donate_slot,
             CustomError::TimeoutNotReached
         );
 
-        let balance = **campain_pda.to_account_info().try_borrow_mut_lamports()?;
-        let rent_exemption = Rent::get()?.minimum_balance(campain_pda.to_account_info().data_len());
+        let balance = **campaign_pda.to_account_info().try_borrow_mut_lamports()?;
+        let rent_exemption =
+            Rent::get()?.minimum_balance(campaign_pda.to_account_info().data_len());
         let lamports_reached = balance - rent_exemption;
         require!(
-            lamports_reached < campain_pda.goal_in_lamports,
+            lamports_reached < campaign_pda.goal_in_lamports,
             CustomError::GoalReached
         );
 
-        // Close the deposit_pda account and tenturn the rent to the donor
+        // Close the deposit_pda account and return the rent to the donor
         **donor.to_account_info().try_borrow_mut_lamports()? +=
             **deposit_pda.to_account_info().try_borrow_mut_lamports()?;
         **deposit_pda.to_account_info().try_borrow_mut_lamports()? = 0;
 
-        // Return the donated aamount to the donor
+        // Return the donated amount to the donor
         **donor.to_account_info().try_borrow_mut_lamports()? += deposit_pda.total_donated;
-        **campain_pda.to_account_info().try_borrow_mut_lamports()? -= deposit_pda.total_donated;
+        **campaign_pda.to_account_info().try_borrow_mut_lamports()? -= deposit_pda.total_donated;
 
         Ok(())
     }
 }
 
 #[derive(Accounts)]
-#[instruction(campain_name: String)]
+#[instruction(campaign_name: String)]
 pub struct InitializeCtx<'info> {
     #[account(mut)]
-    pub campain_owner: Signer<'info>,
+    pub campaign_owner: Signer<'info>,
     #[account(
         init, 
-        payer = campain_owner, 
-        seeds = [campain_name.as_ref()],
+        payer = campaign_owner, 
+        seeds = [campaign_name.as_ref()],
         bump,
-        space = 8 + CampainPDA::INIT_SPACE
+        space = 8 + CampaignPDA::INIT_SPACE
     )]
-    pub campain_pda: Account<'info, CampainPDA>,
+    pub campaign_pda: Account<'info, CampaignPDA>,
     pub system_program: Program<'info, System>,
 }
 
 #[derive(Accounts)]
-#[instruction(_campain_name: String)]
+#[instruction(_campaign_name: String)]
 pub struct DonateCtx<'info> {
     #[account(mut)]
     pub donor: Signer<'info>,
-    #[account(mut, seeds = [_campain_name.as_ref()], bump )]
-    pub campain_pda: Account<'info, CampainPDA>,
+    #[account(mut, seeds = [_campaign_name.as_ref()], bump )]
+    pub campaign_pda: Account<'info, CampaignPDA>,
     #[account(
         init_if_needed,
         payer = donor, 
-        seeds = ["deposit".as_ref(), _campain_name.as_ref(), donor.key().as_ref()],
+        seeds = ["deposit".as_ref(), _campaign_name.as_ref(), donor.key().as_ref()],
         bump,
         space = 8 + DepositPDA::INIT_SPACE
     )]
@@ -154,24 +156,24 @@ pub struct DonateCtx<'info> {
 }
 
 #[derive(Accounts)]
-#[instruction(_campain_name: String)]
+#[instruction(_campaign_name: String)]
 pub struct WithdrawCtx<'info> {
     #[account(mut)]
-    pub campain_owner: Signer<'info>,
-    #[account(mut, seeds = [_campain_name.as_ref()], bump )]
-    pub campain_pda: Account<'info, CampainPDA>,
+    pub campaign_owner: Signer<'info>,
+    #[account(mut, seeds = [_campaign_name.as_ref()], bump )]
+    pub campaign_pda: Account<'info, CampaignPDA>,
 }
 
 #[derive(Accounts)]
-#[instruction(_campain_name: String)]
+#[instruction(_campaign_name: String)]
 pub struct ReclaimCtx<'info> {
     #[account(mut)]
     pub donor: Signer<'info>,
-    #[account(mut, seeds = [_campain_name.as_ref()], bump )]
-    pub campain_pda: Account<'info, CampainPDA>,
+    #[account(mut, seeds = [_campaign_name.as_ref()], bump )]
+    pub campaign_pda: Account<'info, CampaignPDA>,
     #[account( 
         mut, 
-        seeds = ["deposit".as_ref(), _campain_name.as_ref(), donor.key().as_ref()],
+        seeds = ["deposit".as_ref(), _campaign_name.as_ref(), donor.key().as_ref()],
         bump,
     )]
     pub deposit_pda: Account<'info, DepositPDA>,
@@ -179,12 +181,12 @@ pub struct ReclaimCtx<'info> {
 
 #[account]
 #[derive(InitSpace)]
-pub struct CampainPDA {
+pub struct CampaignPDA {
     #[max_len(30)]
-    pub campain_name: String,
-    pub campain_owner: Pubkey, // 32 bytes
-    pub end_donate_slot: u64,  // 8 bytes
-    pub goal_in_lamports: u64, // 8 bytes
+    pub campaign_name: String,
+    pub campaign_owner: Pubkey, // 32 bytes
+    pub end_donate_slot: u64,   // 8 bytes
+    pub goal_in_lamports: u64,  // 8 bytes
 }
 
 #[account]
