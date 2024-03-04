@@ -14,7 +14,7 @@ After contract creation, the contract allows two actions:
 ## Implementations
 
 - **Solidity/Ethereum**: 
-- **Anchor/Solana**: 
+- **Anchor/Solana**: implementation coherent with the specification.
 - **Aiken/Cardano**: implementation coherent with the specification; however, a full withdrawal operation would not preserve the covenant as an output associated with the contract would not be created. Therefore, the withdrawal is considered valid if the recipient leaves a pre-declared offset amount of currency in the contract during a full withdraw.
 - **PyTeal/Algorand**:
 - **SmartPy/Tezos**:
