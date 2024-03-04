@@ -27,7 +27,7 @@ pub mod oracle_bet {
         let oracle_bet_info = &mut ctx.accounts.oracle_bet_info;
 
         require!(
-            !oracle_bet_info.participants_have_deposited(),
+            !oracle_bet_info.participants_have_deposited,
             CustomError::AllParticipantsHaveDeposited
         );
 
@@ -67,8 +67,7 @@ pub mod oracle_bet {
         )
         .unwrap();
 
-        oracle_bet_info.participant1_has_deposited = true;
-        oracle_bet_info.participant2_has_deposited = true;
+        oracle_bet_info.participants_have_deposited = true;
 
         Ok(())
     }
@@ -80,7 +79,7 @@ pub mod oracle_bet {
         let oracle_bet_info = &mut ctx.accounts.oracle_bet_info;
 
         require!(
-            oracle_bet_info.participants_have_deposited(),
+            oracle_bet_info.participants_have_deposited,
             CustomError::ParticipantsHaveNotDeposited
         );
         require!(
@@ -143,9 +142,8 @@ pub mod oracle_bet {
 pub struct OracleBetInfo {
     pub oracle: Pubkey,
     pub participant1: Pubkey,
-    pub participant1_has_deposited: bool,
     pub participant2: Pubkey,
-    pub participant2_has_deposited: bool,
+    pub participants_have_deposited: bool,
     pub wager: u64,
     pub deadline: u64,
     pub winner_was_chosen: bool,
@@ -162,16 +160,11 @@ impl OracleBetInfo {
     ) {
         self.oracle = oracle;
         self.participant1 = participant1;
-        self.participant1_has_deposited = false;
         self.participant2 = participant2;
-        self.participant2_has_deposited = false;
+        self.participants_have_deposited = false;
         self.deadline = deadline;
         self.wager = wager;
         self.winner_was_chosen = false;
-    }
-
-    pub fn participants_have_deposited(&self) -> bool {
-        self.participant1_has_deposited && self.participant2_has_deposited
     }
 }
 

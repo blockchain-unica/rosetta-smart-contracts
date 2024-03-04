@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-declare_id!("DQ9cypFFhA8NJFPRL5KUtuuFPjQaa1nM3PdcmFYu29FC");
+declare_id!("Af66eBB9urMrYPgLR3RKBhyrQd5HWj3cYXC1nNUe2ma5");
 
 #[program]
 pub mod oracle_bet {
@@ -27,7 +27,7 @@ pub mod oracle_bet {
         let oracle_bet_info = &mut ctx.accounts.oracle_bet_info;
 
         require!(
-            !oracle_bet_info.participants_have_deposited(),
+            !oracle_bet_info.participants_have_deposited,
             CustomError::AllParticipantsHaveDeposited
         );
 
@@ -43,22 +43,31 @@ pub mod oracle_bet {
 
         anchor_lang::solana_program::program::invoke(
             &anchor_lang::solana_program::system_instruction::transfer(
-                &ctx.accounts.participant.key(),
+                &ctx.accounts.participant1.key(),
                 &oracle_bet_info.key(),
                 oracle_bet_info.wager,
             ),
             &[
-                ctx.accounts.participant.to_account_info(),
+                ctx.accounts.participant1.to_account_info(),
                 oracle_bet_info.to_account_info(),
             ],
         )
         .unwrap();
 
-        if *ctx.accounts.participant.key == oracle_bet_info.participant1 {
-            oracle_bet_info.participant1_has_deposited = true;
-        } else {
-            oracle_bet_info.participant2_has_deposited = true;
-        }
+        anchor_lang::solana_program::program::invoke(
+            &anchor_lang::solana_program::system_instruction::transfer(
+                &ctx.accounts.participant2.key(),
+                &oracle_bet_info.key(),
+                oracle_bet_info.wager,
+            ),
+            &[
+                ctx.accounts.participant2.to_account_info(),
+                oracle_bet_info.to_account_info(),
+            ],
+        )
+        .unwrap();
+
+        oracle_bet_info.participants_have_deposited = true;
 
         Ok(())
     }
@@ -70,7 +79,7 @@ pub mod oracle_bet {
         let oracle_bet_info = &mut ctx.accounts.oracle_bet_info;
 
         require!(
-            oracle_bet_info.participants_have_deposited(),
+            oracle_bet_info.participants_have_deposited,
             CustomError::ParticipantsHaveNotDeposited
         );
         require!(
@@ -85,8 +94,14 @@ pub mod oracle_bet {
         oracle_bet_info.winner_was_chosen = true;
 
         let amount = oracle_bet_info.wager * 2;
-        **oracle_bet_info.to_account_info().try_borrow_mut_lamports()? -= amount;
-        **ctx.accounts.winner.to_account_info().try_borrow_mut_lamports()? += amount;
+        **oracle_bet_info
+            .to_account_info()
+            .try_borrow_mut_lamports()? -= amount;
+        **ctx
+            .accounts
+            .winner
+            .to_account_info()
+            .try_borrow_mut_lamports()? += amount;
 
         Ok(())
     }
@@ -104,9 +119,19 @@ pub mod oracle_bet {
         );
 
         // Return the assets to participant1 and participant2
-        **oracle_bet_info.to_account_info().try_borrow_mut_lamports()? -= oracle_bet_info.wager * 2;
-        **ctx.accounts.participant1.to_account_info().try_borrow_mut_lamports()? += oracle_bet_info.wager;
-        **ctx.accounts.participant2.to_account_info().try_borrow_mut_lamports()? += oracle_bet_info.wager;
+        **oracle_bet_info
+            .to_account_info()
+            .try_borrow_mut_lamports()? -= oracle_bet_info.wager * 2;
+        **ctx
+            .accounts
+            .participant1
+            .to_account_info()
+            .try_borrow_mut_lamports()? += oracle_bet_info.wager;
+        **ctx
+            .accounts
+            .participant2
+            .to_account_info()
+            .try_borrow_mut_lamports()? += oracle_bet_info.wager;
 
         Ok(())
     }
@@ -117,9 +142,8 @@ pub mod oracle_bet {
 pub struct OracleBetInfo {
     pub oracle: Pubkey,
     pub participant1: Pubkey,
-    pub participant1_has_deposited: bool,
     pub participant2: Pubkey,
-    pub participant2_has_deposited: bool,
+    pub participants_have_deposited: bool,
     pub wager: u64,
     pub deadline: u64,
     pub winner_was_chosen: bool,
@@ -136,16 +160,11 @@ impl OracleBetInfo {
     ) {
         self.oracle = oracle;
         self.participant1 = participant1;
-        self.participant1_has_deposited = false;
         self.participant2 = participant2;
-        self.participant2_has_deposited = false;
+        self.participants_have_deposited = false;
         self.deadline = deadline;
         self.wager = wager;
         self.winner_was_chosen = false;
-    }
-
-    pub fn participants_have_deposited(&self) -> bool {
-        self.participant1_has_deposited && self.participant2_has_deposited
     }
 }
 
@@ -172,9 +191,14 @@ pub struct InitializeCtx<'info> {
 pub struct BetCtx<'info> {
     #[account(
         mut, 
-        constraint =  *participant.key == oracle_bet_info.participant1  ||  *participant.key == oracle_bet_info.participant2 @ CustomError::InvalidParticipant
+        constraint =  *participant1.key == oracle_bet_info.participant1  ||  *participant1.key == oracle_bet_info.participant2 @ CustomError::InvalidParticipant
     )]
-    pub participant: Signer<'info>,
+    pub participant1: Signer<'info>,
+    #[account(
+        mut, 
+        constraint =  *participant2.key == oracle_bet_info.participant1  ||  *participant2.key == oracle_bet_info.participant2 @ CustomError::InvalidParticipant
+    )]
+    pub participant2: Signer<'info>,
     #[account(mut, seeds = [_game_instance_name.as_ref()], bump)]
     pub oracle_bet_info: Account<'info, OracleBetInfo>,
     pub system_program: Program<'info, System>,
