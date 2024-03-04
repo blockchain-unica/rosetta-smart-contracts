@@ -29,8 +29,8 @@ enum Action {
 const SEED_STORAGE_BYTES = "storage_bytes";
 const SEED_STORAGE_STRING = "storage_string";
 
-let feestoStoreBytes = 0;
-let feestoStoreString = 0;
+let feesToStoreBytes = 0;
+let feesToStoreString = 0;
 
 async function main() {
 
@@ -43,7 +43,7 @@ async function main() {
 
     // 1. Store bytes
     console.log("\n--- Store bytes ---");
-    const sequences = genereteByteSequences();
+    const sequences = generateByteSequences();
     for (let i = 0; i < sequences.length; i++) {
         const sequence = sequences[i];
         console.log("    Storing bytes:   ", sequence);
@@ -56,7 +56,7 @@ async function main() {
 
     // 2. Store string
     console.log("\n--- Store string ---");
-    const stringsToStore = genereteStringSequences();
+    const stringsToStore = generateStringSequences();
     for (let i = 0; i < stringsToStore.length; i++) {
         const s = stringsToStore[i];
         console.log("    Storing string:   ", s);
@@ -74,9 +74,9 @@ async function main() {
 
     // Costs
     console.log("\n........");
-    console.log("Fees to store bytes:      ", feestoStoreBytes / LAMPORTS_PER_SOL, "SOL");
-    console.log("Fees to store string:     ", feestoStoreString / LAMPORTS_PER_SOL, "SOL");
-    console.log("Total fees:               ", (feestoStoreBytes + feestoStoreString) / LAMPORTS_PER_SOL, "SOL");
+    console.log("Fees to store bytes:      ", feesToStoreBytes / LAMPORTS_PER_SOL, "SOL");
+    console.log("Fees to store string:     ", feesToStoreString / LAMPORTS_PER_SOL, "SOL");
+    console.log("Total fees:               ", (feesToStoreBytes + feesToStoreString) / LAMPORTS_PER_SOL, "SOL");
 }
 
 main().then(
@@ -113,7 +113,7 @@ async function storeBytes(
     
     const tFees = await getTransactionFees(transaction, connection);
     console.log('    Transaction fees: ', tFees / LAMPORTS_PER_SOL, "SOL\n");
-    feestoStoreBytes += tFees;
+    feesToStoreBytes += tFees;
 }
 
 async function storeString(
@@ -141,7 +141,7 @@ async function storeString(
 
     const tFees = await getTransactionFees(transaction, connection);
     console.log('    Transaction fees: ', tFees / LAMPORTS_PER_SOL, 'SOL\n');
-    feestoStoreString += tFees;
+    feesToStoreString += tFees;
 }
 
 async function getStorageBytesPDA(programId: PublicKey): Promise<PublicKey> {
@@ -160,7 +160,7 @@ async function getStorageStringPDA(programId: PublicKey): Promise<PublicKey> {
     return walletPDA;
 }
 
-function genereteByteSequences() {
+function generateByteSequences() {
     const sequences = [];
     sequences.push(Buffer.from([1]));
     sequences.push(Buffer.from([1, 2]));
@@ -170,7 +170,7 @@ function genereteByteSequences() {
     return sequences;
 }
 
-function genereteStringSequences() {
+function generateStringSequences() {
     const sequences = [];
     sequences.push("a");
     sequences.push("ab");

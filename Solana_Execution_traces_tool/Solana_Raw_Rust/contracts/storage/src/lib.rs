@@ -49,8 +49,11 @@ fn store_bytes(
     let accounts_iter: &mut std::slice::Iter<AccountInfo> = &mut accounts.iter();
 
     let sender_account: &AccountInfo = next_account_info(accounts_iter)?;
+    if !sender_account.is_signer {
+        return Err(ProgramError::MissingRequiredSignature);
+    }
+
     let bytes_pda_account: &AccountInfo = next_account_info(accounts_iter)?;
-    let system_program_account = next_account_info(accounts_iter)?;
 
     let (bytes_pda_pub_key, storage_bump) =
         Pubkey::find_program_address(&[SEED_STORAGE_BYTES.as_bytes()], program_id);
@@ -59,6 +62,12 @@ fn store_bytes(
         msg!("Not the right PDA");
         return Err(ProgramError::InvalidAccountData);
     }
+
+    let system_program_account = next_account_info(accounts_iter)?;
+    if system_program_account.key != &solana_program::system_program::id() {
+        return Err(ProgramError::InvalidAccountData);
+    }
+
 
     if bytes_pda_account.lamports() == 0 {
         let space = bytes_to_store.len();
@@ -117,14 +126,22 @@ fn store_string(
     let accounts_iter: &mut std::slice::Iter<AccountInfo> = &mut accounts.iter();
 
     let sender_account: &AccountInfo = next_account_info(accounts_iter)?;
+    if !sender_account.is_signer {
+        return Err(ProgramError::MissingRequiredSignature);
+    }
+    
     let string_pda_account: &AccountInfo = next_account_info(accounts_iter)?;
-    let system_program_account = next_account_info(accounts_iter)?;
 
     let (string_pda_pub_key, storage_bump) =
         Pubkey::find_program_address(&[SEED_STORAGE_STRING.as_bytes()], program_id);
 
     if string_pda_pub_key != *string_pda_account.key {
         msg!("Not the right PDA");
+        return Err(ProgramError::InvalidAccountData);
+    }
+
+    let system_program_account = next_account_info(accounts_iter)?;
+    if system_program_account.key != &solana_program::system_program::id() {
         return Err(ProgramError::InvalidAccountData);
     }
 

@@ -44,7 +44,7 @@ pub struct InitializeCtx<'info> {
         payer = user, 
         seeds = [b"storage_string", user.key.as_ref()],
         bump,
-        space = 8 + 4 // no additional space needed because we dont store anything yet
+        space = 8 + 4 // no additional space needed because we don't store anything yet
     )]
     pub string_storage_pda: Account<'info, MemoryStringPDA>,
     #[account(
@@ -52,7 +52,7 @@ pub struct InitializeCtx<'info> {
         payer = user, 
         seeds = [b"storage_bytes", user.key.as_ref()],
         bump,
-        space = 8 + 4  // no additional space needed because we dont store anything yet
+        space = 8 + 4  // no additional space needed because we don't store anything yet
     )]
     pub bytes_storage_dpa: Account<'info, MemoryBytesPDA>,
 }
