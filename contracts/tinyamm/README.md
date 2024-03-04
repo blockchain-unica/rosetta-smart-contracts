@@ -35,7 +35,7 @@ maintain the integrity of the exchange.
 ## Implementations
 
 - **Solidity/Ethereum**: 
-- **Anchor/Solana**: 
+- **Anchor/Solana**: a step has been added for initializing the data of the AMM contract (supply, if ever deposited, resources, mints, etc.).
 - **Aiken/Cardano**:
 - **PyTeal/Algorand**:
 - **SmartPy/Tezos**:

@@ -19,7 +19,7 @@ pub mod tiny_amm {
             ctx.program_id,
         );
 
-        msg!("Transfering the token_account0 to the holder_PDA");
+        msg!("Transferring the token_account0 to the holder_PDA");
         let cpi_accounts = SetAuthority {
             current_authority: ctx.accounts.initializer.to_account_info().clone(),
             account_or_mint: ctx.accounts.token_account0.to_account_info().clone(),
@@ -30,7 +30,7 @@ pub mod tiny_amm {
             Some(amm_info_pda),
         )?;
 
-        msg!("Transfering the token_account1 to the holder_PDA");
+        msg!("Transferring the token_account1 to the holder_PDA");
         let cpi_accounts = SetAuthority {
             current_authority: ctx.accounts.initializer.to_account_info().clone(),
             account_or_mint: ctx.accounts.token_account1.to_account_info().clone(),

@@ -3,7 +3,7 @@ use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token::{self, Mint, SetAuthority, Token, TokenAccount, Transfer};
 pub use spl_token::instruction::AuthorityType::AccountOwner;
 
-declare_id!("1W3g3gk49DXGEbPdAnrJjKNVYJ9jiJptuXi9o64LpPM");
+declare_id!("ADY3EuA5hCthUru7JDWrTB1CqqxZxthZGWmvYGUw96rn");
 
 #[program]
 pub mod tiny_amm {
@@ -19,7 +19,7 @@ pub mod tiny_amm {
             ctx.program_id,
         );
 
-        msg!("Transfering the token_account0 to the holder_PDA");
+        msg!("Transferring the token_account0 to the holder_PDA");
         let cpi_accounts = SetAuthority {
             current_authority: ctx.accounts.initializer.to_account_info().clone(),
             account_or_mint: ctx.accounts.token_account0.to_account_info().clone(),
@@ -30,7 +30,7 @@ pub mod tiny_amm {
             Some(amm_info_pda),
         )?;
 
-        msg!("Transfering the token_account1 to the holder_PDA");
+        msg!("Transferring the token_account1 to the holder_PDA");
         let cpi_accounts = SetAuthority {
             current_authority: ctx.accounts.initializer.to_account_info().clone(),
             account_or_mint: ctx.accounts.token_account1.to_account_info().clone(),
