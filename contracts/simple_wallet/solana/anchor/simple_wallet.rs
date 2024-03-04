@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-declare_id!("BKM1M6DvbXRQPGncCftEVsGwVusLt2FaBWuWCAgKs3oh");
+declare_id!("KpUxvh3VECWL7eX6j3hZ8kwD9knm25KfFCk9yUSxX3U");
 
 #[program]
 pub mod simple_wallet {
@@ -33,9 +33,9 @@ pub mod simple_wallet {
         require!(transaction_lamports_amount > 0, CustomError::InvalidAmount);
 
         let transaction_pda = &mut ctx.accounts.transaction_pda;
-        let reciever = &ctx.accounts.reciever;
+        let receiver = &ctx.accounts.receiver;
 
-        transaction_pda.reciever = *reciever.key;
+        transaction_pda.receiver = *receiver.key;
         transaction_pda.amount_in_lamports = transaction_lamports_amount;
         transaction_pda.executed = false;
 
@@ -48,7 +48,7 @@ pub mod simple_wallet {
     ) -> Result<()> {
         let user_wallet_pda = &mut ctx.accounts.user_wallet_pda;
         let transaction_pda = &mut ctx.accounts.transaction_pda;
-        let reciever = &mut ctx.accounts.reciever;
+        let receiver = &mut ctx.accounts.receiver;
 
         require!(
             !transaction_pda.executed,
@@ -59,7 +59,7 @@ pub mod simple_wallet {
         **user_wallet_pda
             .to_account_info()
             .try_borrow_mut_lamports()? -= transaction_pda.amount_in_lamports;
-        **reciever.try_borrow_mut_lamports()? += transaction_pda.amount_in_lamports;
+        **receiver.try_borrow_mut_lamports()? += transaction_pda.amount_in_lamports;
 
         Ok(())
     }
@@ -77,7 +77,7 @@ pub mod simple_wallet {
 #[account]
 #[derive(InitSpace)]
 pub struct UserTransaction {
-    pub reciever: Pubkey,
+    pub receiver: Pubkey,
     pub amount_in_lamports: u64,
     pub executed: bool,
 }
@@ -121,7 +121,7 @@ pub struct CreateTransactionCtx<'info> {
     )]
     pub transaction_pda: Account<'info, UserTransaction>,
     #[account(mut)]
-    pub reciever: SystemAccount<'info>,
+    pub receiver: SystemAccount<'info>,
     pub system_program: Program<'info, System>,
 }
 
@@ -145,16 +145,16 @@ pub struct ExecuteTransactionCtx<'info> {
     pub transaction_pda: Account<'info, UserTransaction>,
     #[account(
         mut,
-        constraint = transaction_pda.reciever == *reciever.key @ CustomError::InvalidReciever
+        constraint = transaction_pda.receiver == *receiver.key @ CustomError::InvalidReceiver
     )]
-    pub reciever: SystemAccount<'info>,
+    pub receiver: SystemAccount<'info>,
     pub system_program: Program<'info, System>,
 }
 
 #[error_code]
 pub enum CustomError {
-    #[msg("Invalid reciever")]
-    InvalidReciever,
+    #[msg("Invalid receiver")]
+    InvalidReceiver,
 
     #[msg("Invalid amount, must be greater than 0")]
     InvalidAmount,

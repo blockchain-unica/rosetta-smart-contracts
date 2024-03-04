@@ -9,16 +9,16 @@ const program = anchor.workspace.SimpleWallet as Program<SimpleWallet>;
 
 describe('SimpleWallet', async () => {
     let owner: web3.Keypair;
-    let reciever: web3.Keypair;
+    let receiver: web3.Keypair;
     let walletPdaPublicKey: web3.PublicKey;
 
     const transactionSeed = 'transaction1';
     const amountToDeposit = 0.2 * web3.LAMPORTS_PER_SOL;
-    const amountToSendToReciever = amountToDeposit / 2;
-    const amountToWithdraw = amountToDeposit - amountToSendToReciever;
+    const amountToSendToReceiver = amountToDeposit / 2;
+    const amountToWithdraw = amountToDeposit - amountToSendToReceiver;
 
     before(async () => {
-        [owner, reciever] = await Promise.all([
+        [owner, receiver] = await Promise.all([
             generateKeyPair(connection, 1),
             generateKeyPair(connection, 1),
         ]);
@@ -31,12 +31,12 @@ describe('SimpleWallet', async () => {
         await printParticipants(connection, [
             ['programId', program.programId],
             ['owner', owner.publicKey],
-            ['reciever', reciever.publicKey],
+            ['receiver', receiver.publicKey],
             ['walletPdaPublicKey', walletPdaPublicKey],
         ]);
     });
 
-    it('The onwer has performed the initialization and has deposited', async () => {
+    it('The owner has performed the initialization and has deposited', async () => {
         console.log('The owner initializes his wallet PDA and deposits', amountToDeposit / web3.LAMPORTS_PER_SOL, 'SOL');
 
         const instruction = await program.methods
@@ -47,26 +47,26 @@ describe('SimpleWallet', async () => {
         await sendAnchorInstructions(connection, [instruction], [owner]);
     });
 
-    it('The onwer has created the transaction PDA', async () => {
+    it('The owner has created the transaction PDA', async () => {
         console.log('The creates the transaction with the following parameters:');
-        console.log('\t- amount to send:', amountToSendToReciever / web3.LAMPORTS_PER_SOL, 'SOL');
-        console.log('\t- reciever:', reciever.publicKey.toBase58());
+        console.log('\t- amount to send:', amountToSendToReceiver / web3.LAMPORTS_PER_SOL, 'SOL');
+        console.log('\t- receiver:', receiver.publicKey.toBase58());
         console.log('\t- transaction seed:', transactionSeed);
 
         const instruction = await program.methods
-            .createTransaction(transactionSeed, new anchor.BN(amountToSendToReciever))
-            .accounts({ owner: owner.publicKey, reciever: reciever.publicKey })
+            .createTransaction(transactionSeed, new anchor.BN(amountToSendToReceiver))
+            .accounts({ owner: owner.publicKey, receiver: receiver.publicKey })
             .instruction();
 
         await sendAnchorInstructions(connection, [instruction], [owner]);
     });
 
-    it('The onwer has executed the transaction', async () => {
-        console.log('The onwer executes the transaction with the seed', transactionSeed);
+    it('The owner has executed the transaction', async () => {
+        console.log('The owner executes the transaction with the seed', transactionSeed);
 
         const instruction = await program.methods
             .executeTransaction(transactionSeed)
-            .accounts({ owner: owner.publicKey, reciever: reciever.publicKey })
+            .accounts({ owner: owner.publicKey, receiver: receiver.publicKey })
             .instruction();
 
         await sendAnchorInstructions(connection, [instruction], [owner]);
