@@ -19,7 +19,7 @@ and tranfers the whole contract balance to the committer;
 ## Implementations
 
 - **Solidity/Ethereum**: 
-- **Anchor/Solana**: 
+- **Anchor/Solana**: a step has been added for initializing the data of the contract (owner, verifier, deadline, etc.).
 - **Aiken/Cardano**: implementation coherent with the specification.
 - **PyTeal/Algorand**:
 - **SmartPy/Tezos**:
