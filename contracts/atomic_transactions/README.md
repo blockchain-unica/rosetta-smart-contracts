@@ -24,7 +24,7 @@ another atomic sequence of transactions).
 ## Implementations
 
 - **Solidity/Ethereum**: implementation coherent with the specification.
-- **Anchor/Solana**: 
+- **Anchor/Solana**: natively supported via a list of contract calls in the transaction.
 - **Aiken/Cardano**:
 - **PyTeal/Algorand**:
 - **SmartPy/Tezos**:
