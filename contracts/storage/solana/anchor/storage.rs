@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-declare_id!("8equx4XB9oc3nWqLVFBRQkDcbacCTuz8K2AYFe1Z1nWx");
+declare_id!("2ZE5N8rTU2S2GUuQGX8ZsBAraByUqD37hYP8pz1hYLLJ");
 
 #[program]
 pub mod storage {
@@ -44,7 +44,7 @@ pub struct InitializeCtx<'info> {
         payer = user, 
         seeds = [b"storage_string", user.key.as_ref()],
         bump,
-        space = 8 + 4 // no additional space needed because we dont store anything yet
+        space = 8 + 4 // no additional space needed because we don't store anything yet
     )]
     pub string_storage_pda: Account<'info, MemoryStringPDA>,
     #[account(
@@ -52,7 +52,7 @@ pub struct InitializeCtx<'info> {
         payer = user, 
         seeds = [b"storage_bytes", user.key.as_ref()],
         bump,
-        space = 8 + 4  // no additional space needed because we dont store anything yet
+        space = 8 + 4  // no additional space needed because we don't store anything yet
     )]
     pub bytes_storage_dpa: Account<'info, MemoryBytesPDA>,
 }
