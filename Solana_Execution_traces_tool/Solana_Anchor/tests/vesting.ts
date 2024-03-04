@@ -93,7 +93,7 @@ describe('Vesting', async () => {
         await initializeVesting(funder, beneficiary.publicKey, startSlot, duration, initialAmountInLamports);
         console.log('');
 
-        console.log('\nWaiting to reach the targhet slot');
+        console.log('\nWaiting to reach the target slot');
         while (await connection.getSlot() < targetSlotToWait) {
             await new Promise(f => setTimeout(f, 1000)); //sleep 1 second
         }
@@ -114,7 +114,7 @@ describe('Vesting', async () => {
         await initializeVesting(funder, beneficiary.publicKey, startSlot, duration, initialAmountInLamports);
         console.log('');
 
-        console.log('\nWaiting to reach the targhet slot');
+        console.log('\nWaiting to reach the target slot');
         while (await connection.getSlot() < targetSlotToWait) {
             await new Promise(f => setTimeout(f, 1000)); //sleep 1 second
         }
