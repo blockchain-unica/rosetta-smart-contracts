@@ -24,7 +24,7 @@ and withdraws the highest bid.
 
 ## Implementations
 
-- **Solidity/Ethereum**: 
+- **Solidity/Ethereum**: implementation coherent with the specification.
 - **Anchor/Solana**: Previous bidders are not stored, the contract sends the currency back to the previous bidder in the same transaction in which the new bid is made. 
 - **Aiken/Cardano**: implementation coherent with the specification.
 - **PyTeal/Algorand**:

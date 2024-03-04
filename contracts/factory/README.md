@@ -26,7 +26,7 @@ Product.
 
 ## Implementations
 
-- **Solidity/Ethereum**: 
+- **Solidity/Ethereum**: implementation coherent with the specification.
 - **Anchor/Solana**: 
 - **Aiken/Cardano**:
 - **PyTeal/Algorand**:

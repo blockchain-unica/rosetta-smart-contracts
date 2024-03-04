@@ -39,7 +39,7 @@ contract balance to the buyer.
 
 ## Implementations
 
-- **Solidity/Ethereum**: 
+- **Solidity/Ethereum**: implementation coherent with the specification.
 - **Anchor/Solana**: a step has been added for initializing the data of the escrow (buyer, seller, amount, etc.).
 - **Aiken/Cardano**: implementation coherent with the specification.
 - **PyTeal/Algorand**:
