@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-declare_id!("9xxNCzXwzaHWwKVvj2jqLdz1kT63BND3oXH8MMaXg33C");
+declare_id!("39Cadm14PBnnAJ1LZA61v6zFXT9PNHrhKe9dDd2yg6un");
 
 #[program]
 pub mod auction {
@@ -35,7 +35,7 @@ pub mod auction {
             return err!(CustomError::InvalidBidAmount);
         }
 
-        msg!("Transfering the amount");
+        msg!("Transferring the amount");
         let transfer_instruction = anchor_lang::solana_program::system_instruction::transfer(
             &bidder.key(),
             &auction_info.key(),

@@ -78,6 +78,12 @@ anchor build
 Deploy program
 
 ```bash
+anchor deploy --program-name new_program
+```
+
+or deploy all programs
+
+```bash
 anchor deploy
 ```
 
