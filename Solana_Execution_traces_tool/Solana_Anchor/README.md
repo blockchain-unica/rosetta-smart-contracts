@@ -72,6 +72,12 @@ test_new_program = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/new_pr
 Build program
 
 ```bash
+anchor build --program-name new_program
+```
+
+or build all programs
+
+```bash
 anchor build
 ```
 
