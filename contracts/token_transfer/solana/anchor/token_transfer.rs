@@ -3,14 +3,14 @@ use anchor_spl::associated_token::AssociatedToken;
 use anchor_spl::token::{self, Mint, SetAuthority, Token, TokenAccount};
 pub use spl_token::instruction::AuthorityType::AccountOwner;
 
-declare_id!("CQ9atVHStwY7GrCdGwfDYCFmKrv2rqmFn2tBRNrwF1Eg");
+declare_id!("CxkwtHKHwiLRHZgPVrjc2QALiiCEK2xTu25rN5wWh9Fc");
 
 #[program]
 pub mod token_transfer {
     use super::*;
 
     pub fn deposit(ctx: Context<DepositCtx>) -> Result<()> {
-        msg!("Transfering the ATA to the holder_PDA");
+        msg!("Transferring the ATA to the holder_PDA");
         let (atas_holder_pda, _nonce) =
             Pubkey::find_program_address(&[b"atas_holder"], ctx.program_id);
         let token_program = &ctx.accounts.token_program;
@@ -46,12 +46,12 @@ pub mod token_transfer {
         let (atas_holder_pda, nonce) =
             Pubkey::find_program_address(&[b"atas_holder"], ctx.program_id);
 
-        // Trasfer
+        // Transfer
         // Why using invoke_signed instead of invoke?
         // Because the temp_ata account is owned by the atas_holder_pda, so the transfer instruction
         // must be signed by the atas_holder_pda
         // In Anchor we don't se the possibility to pass the authority as non AccountInfo
-        msg!("Transfering the tokens to the recipient");
+        msg!("Transferring the tokens to the recipient");
         anchor_lang::solana_program::program::invoke_signed(
             &spl_token::instruction::transfer(
                 &anchor_spl::token::ID,
@@ -70,7 +70,7 @@ pub mod token_transfer {
             &[&[&b"atas_holder"[..], &[nonce]]],
         )?;
 
-        msg!("temp ammount: {}", temp_ata.amount);
+        msg!("temp amount: {}", temp_ata.amount);
         if temp_ata.amount == multiplied_amount_to_withdraw {
             msg!("Closing the temp_ata account");
             anchor_lang::solana_program::program::invoke_signed(

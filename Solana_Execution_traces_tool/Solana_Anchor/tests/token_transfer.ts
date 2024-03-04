@@ -47,7 +47,7 @@ describe('Token Transfer', async () => {
 
     // Setup 
     mintPubkey = await createMint(
-      connection, // conneciton
+      connection, // connection
       mintInitializer, // fee payer
       mintInitializer.publicKey, // mint authority
       mintInitializer.publicKey, // freeze authority (you can use `null` to disable it. when you disable it, you can't turn it on again)
