@@ -19,7 +19,7 @@ and tranfers the whole contract balance to the committer;
 ## Implementations
 
 - **Solidity/Ethereum**: 
-- **Rust/Solana**:
+- **Anchor/Solana**: 
 - **Aiken/Cardano**: implementation coherent with the specification.
 - **PyTeal/Algorand**:
 - **SmartPy/Tezos**:

@@ -27,7 +27,7 @@ Product.
 ## Implementations
 
 - **Solidity/Ethereum**: 
-- **Rust/Solana**:
+- **Anchor/Solana**: 
 - **Aiken/Cardano**:
 - **PyTeal/Algorand**:
 - **SmartPy/Tezos**:

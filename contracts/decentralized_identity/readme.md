@@ -47,7 +47,7 @@ Using validDelegate, this action verifies that the delegation is valid within th
 ## Implementations
 
 - **Solidity/Ethereum**: 
-- **Rust/Solana**:
+- **Anchor/Solana**: 
 - **Aiken/Cardano**:
 - **PyTeal/Algorand**:
 - **SmartPy/Tezos**:

@@ -35,7 +35,7 @@ maintain the integrity of the exchange.
 ## Implementations
 
 - **Solidity/Ethereum**: 
-- **Rust/Solana**:
+- **Anchor/Solana**: 
 - **Aiken/Cardano**:
 - **PyTeal/Algorand**:
 - **SmartPy/Tezos**:

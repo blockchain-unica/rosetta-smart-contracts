@@ -25,7 +25,7 @@ After creation, the following sequence of actions is possible:
 ## Implementations
 
 - **Solidity/Ethereum**: 
-- **Rust/Solana**:
+- **Anchor/Solana**: 
 - **Aiken/Cardano**:
 - **PyTeal/Algorand**:
 - **SmartPy/Tezos**:

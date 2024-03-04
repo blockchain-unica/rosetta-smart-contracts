@@ -38,7 +38,7 @@ balance of the contract, emptying it.
 ## Implementations
 
 - **Solidity/Ethereum**: 
-- **Rust/Solana**:
+- **Anchor/Solana**: 
 - **Aiken/Cardano**: a full withdrawal operation would not preserve the covenant since an output associated with the contract would not be created. Therefore, in the withdrawal, the onwer has to leave some amount of currency in the contract.
 - **PyTeal/Algorand**:
 - **SmartPy/Tezos**:

@@ -21,7 +21,7 @@ donors can withdraw the amounts they have donated.
 ## Implementations
 
 - **Solidity/Ethereum**: 
-- **Rust/Solana**:
+- **Anchor/Solana**: 
 - **Aiken/Cardano**: implementation coherent with the specification.
 - **PyTeal/Algorand**:
 - **SmartPy/Tezos**:

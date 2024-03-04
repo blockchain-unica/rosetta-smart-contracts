@@ -19,7 +19,7 @@ any amount of the token deposited in the contract.
 - **Solidity/Ethereum**: in EVM based systems, the token is implemented by importing an Openzeppelin ERC20 token. 
 This implies that the deposit function of the TokenTransfer can be activated only after calling 
 the ERC20's "approve" function to specify the address of the TokenTransfer.
-- **Rust/Solana**:
+- **Anchor/Solana**: 
 - **Aiken/Cardano**: implementation coherent with the specification.
 - **PyTeal/Algorand**:
 - **SmartPy/Tezos**:

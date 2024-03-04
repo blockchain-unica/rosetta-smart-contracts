@@ -25,7 +25,7 @@ and withdraws the highest bid.
 ## Implementations
 
 - **Solidity/Ethereum**: 
-- **Rust/Solana**:
+- **Anchor/Solana**: 
 - **Aiken/Cardano**: implementation coherent with the specification.
 - **PyTeal/Algorand**:
 - **SmartPy/Tezos**:

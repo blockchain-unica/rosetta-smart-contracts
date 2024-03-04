@@ -13,7 +13,7 @@ PaymentSplitter follows a pull payment model. This means that payments are not a
 ## Implementations
 
 - **Solidity/Ethereum**: 
-- **Rust/Solana**:
+- **Anchor/Solana**: 
 - **Aiken/Cardano**:
 - **PyTeal/Algorand**:
 - **SmartPy/Tezos**:

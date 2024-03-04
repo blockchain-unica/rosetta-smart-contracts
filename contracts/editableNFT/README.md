@@ -27,7 +27,7 @@ Owner2 seals a token by passing the token ID of the token he wants to seal.
 ## Implementations
 
 - **Solidity/Ethereum**: the token is implemented by importing an Openzeppelin ERC721 token.
-- **Rust/Solana**:
+- **Anchor/Solana**: 
 - **Aiken/Cardano**:
 - **PyTeal/Algorand**:
 - **SmartPy/Tezos**:
