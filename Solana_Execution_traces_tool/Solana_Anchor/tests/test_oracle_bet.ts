@@ -56,14 +56,18 @@ describe('Oracle Bet', async () => {
     await sendAnchorInstructions(connection, [initInstruction], [oracle]);
   }
 
-  async function join(partecipant: web3.Keypair): Promise<void> {
-    console.log('\nThe participant ', partecipant.publicKey.toBase58(), ' joins the game ', gameInstanceName);
+  async function join(participant1: web3.Keypair, participant2: web3.Keypair): Promise<void> {
+    console.log('\nThe participant 1', participant1.publicKey.toBase58(), ' joins the game ', gameInstanceName);
+    console.log('The participant 2', participant2.publicKey.toBase58(), ' joins the game ', gameInstanceName);
     const betInstruction = await program.methods
       .bet(gameInstanceName)
-      .accounts({ participant: partecipant.publicKey })
+      .accounts({ 
+        participant1: participant1.publicKey,
+        participant2: participant2.publicKey,
+       })
       .instruction();
 
-    await sendAnchorInstructions(connection, [betInstruction], [partecipant]);
+    await sendAnchorInstructions(connection, [betInstruction], [participant1, participant2]);
   }
 
   async function oracleSetResult(winner: web3.PublicKey): Promise<void> {
@@ -112,15 +116,13 @@ describe('Oracle Bet', async () => {
 
   it('The first trace was completed', async () => {
     await initializeGame();
-    await join(participant1);
-    await join(participant2);
+    await join(participant1, participant2);
     await oracleSetResult(participant1.publicKey);
   });
 
   it('The first trace was completed', async () => {
     await initializeGame();
-    await join(participant1);
-    await join(participant2);
+    await join(participant1, participant2);
     await timeout();
   });
 });

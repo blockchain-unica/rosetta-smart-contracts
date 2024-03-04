@@ -78,7 +78,7 @@ export async function getTransactionFees(transaction: Transaction, connection: C
   if (fees) {
     return fees;
   } else {
-    throw new Error('Error durig estimation of fees');
+    throw new Error('Error during estimation of fees');
   }
 }
 export async function sendAnchorInstructions(connection: Connection, instructions: TransactionInstruction[], signers: Keypair[]): Promise<void> {

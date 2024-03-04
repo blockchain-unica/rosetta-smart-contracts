@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-declare_id!("CJTSVXMLztasBZhEsr6wyin8xyBwAbUYH9Gp65cCiHos");
+declare_id!("2NpQpiMnHxzpYrtixekkjhbbkTREzFMg5mn6U66YAGfT");
 
 #[program]
 pub mod payment_splitter {

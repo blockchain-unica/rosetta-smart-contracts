@@ -20,7 +20,7 @@ length (1 to 5 simple characters, 128 simple characters).
 ## Implementations
 
 - **Solidity/Ethereum**: 
-- **Rust/Solana**: implementation coherent with the specification (in Anchor a step after deployment has been added for initializing storage accounts).
+- **Anchor/Solana**: a step has been added for initializing storage accounts.
 - **Aiken/Cardano**: implementation coherent with the specification.
 - **PyTeal/Algorand**:
 - **SmartPy/Tezos**:

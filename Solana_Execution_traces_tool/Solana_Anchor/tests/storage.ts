@@ -14,7 +14,7 @@ describe('Storage', async () => {
     let memoryStringPdaPublicKey: web3.PublicKey;
     let memoryBytesPDAPublicKey: web3.PublicKey;
 
-    const INITIAL_PDAS_SIZE = 12;
+    const INITIAL_PDA_SIZE = 12;
 
     before(async () => {
         user = await generateKeyPair(connection, 1);
@@ -60,12 +60,12 @@ describe('Storage', async () => {
 
         await sendAnchorInstructions(connection, [instruction], [user]);
 
-        // Check if the accounts data length is INITIAL_PDAS_SIZE
+        // Check if the accounts data length is INITIAL_PDA_SIZE
         const stringAccount = await connection.getAccountInfo(memoryStringPdaPublicKey);
-        assert.equal(stringAccount.data.length, INITIAL_PDAS_SIZE);
+        assert.equal(stringAccount.data.length, INITIAL_PDA_SIZE);
 
         const bytesAccount = await connection.getAccountInfo(memoryBytesPDAPublicKey);
-        assert.equal(bytesAccount.data.length, INITIAL_PDAS_SIZE);
+        assert.equal(bytesAccount.data.length, INITIAL_PDA_SIZE);
 
     });
 
@@ -86,9 +86,9 @@ describe('Storage', async () => {
             const anchorMemoryStringPdaAccount = await program.account.memoryStringPda.fetch(memoryStringPdaPublicKey);
             assert.equal(anchorMemoryStringPdaAccount.myString, stringToStore);
 
-            // Check if the accounts data length is INITIAL_PDAS_SIZE + string length
+            // Check if the accounts data length is INITIAL_PDA_SIZE + string length
             const stringAccount = await connection.getAccountInfo(memoryStringPdaPublicKey);
-            assert.equal(stringAccount.data.length, INITIAL_PDAS_SIZE + stringToStore.length);
+            assert.equal(stringAccount.data.length, INITIAL_PDA_SIZE + stringToStore.length);
         }
     });
 
@@ -110,9 +110,9 @@ describe('Storage', async () => {
             const anchorMemoryBytesPdaAccount = await program.account.memoryBytesPda.fetch(memoryBytesPDAPublicKey);
             assert.equal(anchorMemoryBytesPdaAccount.myBytes.toString(), bytesToStore.toString());
 
-            // Check if the accounts data length is INITIAL_PDAS_SIZE + string length
+            // Check if the accounts data length is INITIAL_PDA_SIZE + string length
             const bytesAccount = await connection.getAccountInfo(memoryBytesPDAPublicKey);
-            assert.equal(bytesAccount.data.length, INITIAL_PDAS_SIZE + bytesToStore.length);
+            assert.equal(bytesAccount.data.length, INITIAL_PDA_SIZE + bytesToStore.length);
         }
     });
 });
