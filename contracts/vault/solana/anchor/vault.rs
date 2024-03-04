@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 use borsh::{BorshDeserialize, BorshSerialize};
 
-declare_id!("Ggkq6FhxcibBbDmnVR1pCrLB9ASkWfbqEQDwZrj59qp7");
+declare_id!("7BEre5a4UcJpNUzmoJvxUcWpaw4LrYE8pVhmLxWDrqsS");
 
 #[program]
 pub mod vault {
@@ -17,7 +17,7 @@ pub mod vault {
         let vault_info = &mut ctx.accounts.vault_info;
         vault_info.owner = *ctx.accounts.owner.key;
         vault_info.recovery = *ctx.accounts.recovery.key;
-        vault_info.receiver = Pubkey::default(); // temporaly
+        vault_info.receiver = Pubkey::default(); // temporal
         vault_info.wait_time = wait_time;
         vault_info.request_time = 0;
         vault_info.amount = 0;
@@ -71,7 +71,7 @@ pub mod vault {
         require!(
             Clock::get()?.slot
                 >= ctx.accounts.vault_info.request_time + ctx.accounts.vault_info.wait_time,
-            CustomError::EndSlotWosntReached
+            CustomError::EndSlotWasNotReached
         );
 
         let vault_info = &mut ctx.accounts.vault_info;
@@ -79,7 +79,7 @@ pub mod vault {
 
         let receiver = &mut ctx.accounts.receiver;
 
-        // Trsfer lamports
+        // Transfer lamports
         **receiver.to_account_info().try_borrow_mut_lamports()? += vault_info.amount;
         **vault_info.to_account_info().try_borrow_mut_lamports()? -= vault_info.amount;
 
@@ -148,7 +148,7 @@ pub struct WithdrawCtx<'info> {
 pub struct FinalizeCtx<'info> {
     #[account(mut)]
     pub owner: Signer<'info>,
-    #[account(mut, constraint = vault_info.receiver == *receiver.key @ CustomError::InvalidReciever)]
+    #[account(mut, constraint = vault_info.receiver == *receiver.key @ CustomError::InvalidReceiver)]
     pub receiver: SystemAccount<'info>,
     #[account(
         mut,
@@ -189,11 +189,11 @@ pub enum CustomError {
     InvalidOwner,
 
     #[msg("Invalid receiver")]
-    InvalidReciever,
+    InvalidReceiver,
 
     #[msg("Invalid recovery")]
     InvalidRecovery,
 
     #[msg("The end slot (request time + wait time) was not reached")]
-    EndSlotWosntReached,
+    EndSlotWasNotReached,
 }

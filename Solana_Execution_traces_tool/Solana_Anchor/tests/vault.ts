@@ -30,7 +30,7 @@ describe('Vault', async () => {
         ]);
     });
 
-    async function initializeVault(actor: web3.Keypair, revoveryPublicKey: web3.PublicKey, waitTime: number, initialAmount: number): Promise<void> {
+    async function initializeVault(actor: web3.Keypair, recoveryPublicKey: web3.PublicKey, waitTime: number, initialAmount: number): Promise<void> {
         console.log('The owner initializes the vault account');
         const instruction = await program.methods
             .initialize(
@@ -39,38 +39,38 @@ describe('Vault', async () => {
             )
             .accounts({
                 owner: owner.publicKey,
-                recovery: revoveryPublicKey
+                recovery: recoveryPublicKey
             })
             .instruction();
 
         await sendAnchorInstructions(connection, [instruction], [actor]);
     }
 
-    async function withdraw(actor: web3.Keypair, recieverPublicKey: web3.PublicKey, amount: number): Promise<void> {
-        console.log('The owner initializes the withdraw reuqest for', amount, 'lamports');
+    async function withdraw(actor: web3.Keypair, receiverPublicKey: web3.PublicKey, amount: number): Promise<void> {
+        console.log('The owner initializes the withdraw request for', amount, 'lamports');
         const instruction = await program.methods
             .withdraw(new anchor.BN(amount))
-            .accounts({ owner: actor.publicKey, receiver: recieverPublicKey })
+            .accounts({ owner: actor.publicKey, receiver: receiverPublicKey })
             .instruction();
 
         await sendAnchorInstructions(connection, [instruction], [actor]);
     }
 
-    async function finalize(actor: web3.Keypair, recieverPublicKey: web3.PublicKey): Promise<void> {
-        console.log('The owner finalizes the withdraw reuqest');
+    async function finalize(actor: web3.Keypair, receiverPublicKey: web3.PublicKey): Promise<void> {
+        console.log('The owner finalizes the withdraw request');
         const instruction = await program.methods
             .finalize()
-            .accounts({ owner: actor.publicKey, receiver: recieverPublicKey })
+            .accounts({ owner: actor.publicKey, receiver: receiverPublicKey })
             .instruction();
 
         await sendAnchorInstructions(connection, [instruction], [actor]);
     }
 
-    async function cancel(actor: web3.Keypair, ownerPublickKey: web3.PublicKey): Promise<void> {
-        console.log('The recovery cancels the withdraw reuqest');
+    async function cancel(actor: web3.Keypair, ownerPublicKey: web3.PublicKey): Promise<void> {
+        console.log('The recovery cancels the withdraw request');
         const instruction = await program.methods
             .cancel()
-            .accounts({ recovery: actor.publicKey, owner: ownerPublickKey })
+            .accounts({ recovery: actor.publicKey, owner: ownerPublicKey })
             .instruction();
 
         await sendAnchorInstructions(connection, [instruction], [actor]);

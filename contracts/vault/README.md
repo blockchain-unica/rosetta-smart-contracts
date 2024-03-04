@@ -20,7 +20,7 @@ During the wait time, the request can be cancelled by using a recovery key.
 
 - **Solidity/Ethereum**: the waiting time is calculated based on the current block number
 However, the block timestamp can be used instead.
-- **Anchor/Solana**: 
+- **Anchor/Solana**: a step has been added for initializing the data of the vault (owner, recovery, wait time, etc.).
 - **Aiken/Cardano**: the withdrawal request time, computed as the timestamp when the transaction is sent to the network by the contract's user, may differ from the one computed by the validator. Therefore, the request time is checked within a one-second tolerance threshold. 
 - **PyTeal/Algorand**:
 - **SmartPy/Tezos**:
