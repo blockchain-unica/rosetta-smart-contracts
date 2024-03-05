@@ -28,3 +28,4 @@
 - Aiken (Cardano)
 - PyTEAL (Algorand)
 - SmartPy (Tezos)
+- Move (Aptos)
