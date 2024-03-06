@@ -26,6 +26,6 @@ returns *true* if the balance of the contract passed as an argument is lower tha
 implementation. It uses low-level instructions for memory access.
 - **Anchor/Solana**: 
 - **Aiken/Cardano**:
-- **PyTeal/Algorand**:
+- **PyTeal/Algorand**: Algorand natively supports upgradability of contracts and requires no proxy.
 - **SmartPy/Tezos**:
-- **Move/Aptos**:
+- **Move/Aptos**: cannot be implemented.

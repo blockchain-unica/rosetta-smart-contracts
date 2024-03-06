@@ -1,4 +1,4 @@
-module deploy_address::data_storage {
+module smart_contracts_comparison::data_storage {
     use std::vector;
     use aptos_framework::signer;
     

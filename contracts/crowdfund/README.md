@@ -23,6 +23,6 @@ donors can withdraw the amounts they have donated.
 - **Solidity/Ethereum**: implementation coherent with the specification.
 - **Anchor/Solana**: a step has been added for initializing the data of the campaign (goal, deadline, etc.).
 - **Aiken/Cardano**: implementation coherent with the specification.
-- **PyTeal/Algorand**:
+- **PyTeal/Algorand**: implementation coherent with the specification.
 - **SmartPy/Tezos**:
-- **Move/Aptos**:
+- **Move/Aptos**: implementation coherent with the specification.

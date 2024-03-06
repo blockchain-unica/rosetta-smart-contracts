@@ -1,4 +1,4 @@
-module deploy_address::htlc {
+module smart_contracts_comparison::htlc {
     use std::vector;
     use aptos_std::aptos_hash;
     use aptos_framework::coin::{Self, Coin};
@@ -13,7 +13,7 @@ module deploy_address::htlc {
         coin: Coin<CoinType>,
     }
 
-    public fun initialize<CoinType>(
+    public fun init<CoinType>(
         owner: &signer,
         verifier: address,
         hash: vector<u8>,

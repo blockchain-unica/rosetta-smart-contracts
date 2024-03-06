@@ -12,7 +12,7 @@ module deploy_address::vesting {
         coins: Coin<CoinType>,
     }
 
-    public fun initialize<CoinType>(owner: &signer, beneficiary: address, start: u64, duration: u64, coins: Coin<CoinType>) {
+    public fun init<CoinType>(owner: &signer, beneficiary: address, start: u64, duration: u64, coins: Coin<CoinType>) {
         let vesting = Vesting<CoinType> {
             owner: signer::address_of(owner),
             beneficiary: beneficiary,

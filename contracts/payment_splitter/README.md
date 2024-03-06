@@ -1,6 +1,6 @@
 # Payment Splitter
 
-## Specification
+## Specification  // alvi: perché è rilevante questo snippet per i confronti sui linguaggi? Mi sembra una cosa puramente software che non mette in luce nessuna feature della piattaforma o del linguaggio
 
 This contract allows to split Ether payments among a group of accounts. The sender does not need to be aware that the Ether will be split in this way, since it is handled transparently by the contract. 
 

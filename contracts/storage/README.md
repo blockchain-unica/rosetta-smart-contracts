@@ -2,7 +2,6 @@
 
 ## Specification
 
-
 The contract Storage allows a user to 
 store inside the blockchain two 
 typologies of dynamic size data: 
@@ -22,6 +21,6 @@ length (1 to 5 simple characters, 128 simple characters).
 - **Solidity/Ethereum**: implementation coherent with the specification.
 - **Anchor/Solana**: a step has been added for initializing storage accounts.
 - **Aiken/Cardano**: implementation coherent with the specification.
-- **PyTeal/Algorand**:
+- **PyTeal/Algorand**: // TODO lore (al momento scrive int e non stringhe)
 - **SmartPy/Tezos**:
-- **Move/Aptos**:
+- **Move/Aptos**: implementation coherent with the specification.

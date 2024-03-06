@@ -29,6 +29,6 @@ Product.
 - **Solidity/Ethereum**: implementation coherent with the specification.
 - **Anchor/Solana**: 
 - **Aiken/Cardano**:
-- **PyTeal/Algorand**:
+- **PyTeal/Algorand**: implementation coherent with the specification.
 - **SmartPy/Tezos**:
-- **Move/Aptos**:
+- **Move/Aptos**: // alvi: chiedere se ha senso farlo in Aptos: esiste una API per pubblicare un contratto, ma non c'è legame tra datatype e contratti come invece c'è in Solidity, quindi non ha senso una factory

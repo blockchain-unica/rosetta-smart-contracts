@@ -1,6 +1,6 @@
 # Vesting
 
-## Specification
+## Specification // alvi: manca l'elenco della funzioni (è menzionata solo la release)
 
 The Vesting contract involves a funder 
 and a beneficiary.
@@ -34,6 +34,6 @@ vested amount
 - **Solidity/Ethereum**: implementation coherent with the specification.
 - **Anchor/Solana**:  a step has been added for initializing the data of the vesting (beneficiary, start, duration, etc.).
 - **Aiken/Cardano**: since beneficiary needs to compute the vesting value offchain, this value will be different (i.e. smaller than) from the one later computed by the validator. Therefore, the beneficiary is allowed to withdraw any value that is smaller than the actual one computed by the validator.
-- **PyTeal/Algorand**:
+- **PyTeal/Algorand**: implementation coherent with the specification.
 - **SmartPy/Tezos**:
-- **Move/Aptos**:
+- **Move/Aptos**: implementation coherent with the specification.

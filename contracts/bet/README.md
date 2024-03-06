@@ -1,9 +1,9 @@
 # Bet
 
-## Specification
+## Specification	// alvi: questa specifica non menziona i nomi delle funzioni richieste; la cosa è un po' inconsistente
 
 The Bet contract involves two players and an oracle. 
-At construction, a deadline is set to the current block height plus 1000, and the address of an oracle is specified.
+At construction, a deadline is set to the current block height plus 1000, and the address of an oracle is specified.	// alvi: la deadline col block height mi sembra poco generica
 
 The players join the contract by depositing 1 token unit each.
 
@@ -15,10 +15,11 @@ then both players can redeem their bets, withdrawing 1 token units each.
 
 ## Implementations
 
-- **Solidity/Ethereum**: since the platform does not support multi-signature verification, the join is split in two actions: 
-the first player acts first, by depositing 1 ETH. After that, the second player joins by depositing 1 ETH.
+- **Solidity/Ethereum**: since the platform does not support multi-signature verification, the join is split in two actions: the first player acts first, by depositing 1 ETH. After that, the second player joins by depositing 1 ETH.
+// alvi: solidity ha 2 versioni della bet; solo la 2 mi sembra aderente, direi di togliere la 1.
+
 - **Anchor/Solana**: a step has been added for initializing the data of the bet contract (buyer, seller, amount, etc.).
 - **Aiken/Cardano**: since we cannot access the current block height where the transaction is being validated, the deadline is represented as a UNIX timestamp, which is checked against the lowest bound of the transaction's validity interval.
-- **PyTeal/Algorand**:
+- **PyTeal/Algorand**: two join functions, one for each player; player1 is also the owner of the contract and its creator.
 - **SmartPy/Tezos**:
-- **Move/Aptos**:  
+- **Move/Aptos**: deadline is a timestamp rather than a block height; the two players can be different from the oracle creatore; wager can be any amount and is in assets.

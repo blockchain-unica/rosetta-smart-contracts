@@ -1,4 +1,4 @@
-module escrow::escrow {
+module smart_contracts_comparison::escrow {
 
     use aptos_framework::signer;
     use aptos_framework::coin::{Self, Coin};

@@ -13,7 +13,7 @@ module smart_contracts_comparison::auction {
     coins: Coin<CoinType>
   }
 
-  public fun start_auction<CoinType>(auctioneer: &signer, base: Coin<CoinType>) {
+  public fun start<CoinType>(auctioneer: &signer, base: Coin<CoinType>) {
     let auctioneer_addr = signer::address_of(auctioneer);
     let auction =
       Auction { 
@@ -35,7 +35,7 @@ module smart_contracts_comparison::auction {
     move_to(acc, Bid { coins });
   }
     
-  public fun finalize_auction<CoinType>(auctioneer: &signer) acquires Auction, Bid {
+  public fun end<CoinType>(auctioneer: &signer) acquires Auction, Bid {
     let auctioneer_addr = signer::address_of(auctioneer);
     let auction = borrow_global_mut<Auction>(auctioneer_addr);
     assert!(auctioneer_addr == auction.auctioneer, 3);

@@ -1,4 +1,4 @@
-module deploy_address::simple_wallet {
+module smart_contracts_comparison::simple_wallet {
     use aptos_framework::coin::{Self, Coin};
     use aptos_framework::signer;
     use aptos_framework::event;

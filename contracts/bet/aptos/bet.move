@@ -1,4 +1,4 @@
-module smart_contracts_comparison::oracle_bet {
+module smart_contracts_comparison::bet {
     
     use aptos_framework::coin::{Coin, Self};
     use std::signer::{address_of};
@@ -16,7 +16,7 @@ module smart_contracts_comparison::oracle_bet {
         value: Coin<CoinType>
     }
 
-    public fun init_oracle<CoinType>(bookmaker: &signer, player1: address, player2: address, oracle: address, stake: u64, deadline: u64) {
+    public fun init<CoinType>(bookmaker: &signer, player1: address, player2: address, oracle: address, stake: u64, deadline: u64) {
         let bet = Oracle<CoinType> {
             player1,
             player2,
@@ -24,7 +24,6 @@ module smart_contracts_comparison::oracle_bet {
             stake,
             deadline
         };
-
         move_to(bookmaker, bet);
     }
 
@@ -33,7 +32,6 @@ module smart_contracts_comparison::oracle_bet {
         assert!(address_of(partecipant) == oracle.player1 || address_of(partecipant) == oracle.player2, 0);
         assert!(coin::value<CoinType>(&bet) == oracle.stake, 0);
         let bet = Bet { value: bet };
-
         move_to(partecipant, bet);
     }
 
@@ -46,10 +44,8 @@ module smart_contracts_comparison::oracle_bet {
             stake: _,
             deadline: _
         } = move_from<Oracle<CoinType>>(bookmaker);
-
         assert!(address_of(oracle) == oracle_address, 0);
         assert!(winner == player1 || winner == player2, 0);
-
         let Bet { value: bet1 } = move_from<Bet<CoinType>>(player1);
         let Bet { value: bet2 } = move_from<Bet<CoinType>>(player2);
         coin::merge(&mut bet1, bet2);
@@ -65,7 +61,6 @@ module smart_contracts_comparison::oracle_bet {
             deadline
         } = move_from<Oracle<CoinType>>(bookmaker);
         assert!(deadline < timestamp::now_seconds(), 0);
- 
         let Bet { value: bet1 } = move_from<Bet<CoinType>>(player1);
         let Bet { value: bet2 } = move_from<Bet<CoinType>>(player2);
         coin::deposit(player1, bet1);

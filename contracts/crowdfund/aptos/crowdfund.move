@@ -1,4 +1,4 @@
-module crowdfund_deployer::crowdfund {
+module smart_contracts_comparison::crowdfund {
     use aptos_framework::coin::{Self, Coin};
     use aptos_framework::signer;
     use aptos_framework::block;
@@ -23,7 +23,6 @@ module crowdfund_deployer::crowdfund {
             funding,
         };
         move_to(crowdFundingOwner, crowdfund);
-
     }
 
     public fun donate<CoinType>(sender: &signer, crowdFundingOwner: address, donation: Coin<CoinType>) acquires Crowdfund {
@@ -34,7 +33,6 @@ module crowdfund_deployer::crowdfund {
         };
         coin::merge(&mut crowdfund.funding, donation);
         move_to(sender, receipt);
-
     }
 
     public fun withdraw<CoinType>(crowdFundingOwner: address) acquires Crowdfund {

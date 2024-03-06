@@ -14,7 +14,7 @@ module deploy_address::vault {
         receiver: address,
     }
 
-    public fun initialize<CoinType>(owner: &signer, recovery: address, wait_time: u64) {
+    public fun init<CoinType>(owner: &signer, recovery: address, wait_time: u64) {
         let vault = Vault {
             owner: signer::address_of(owner),
             recovery: recovery,

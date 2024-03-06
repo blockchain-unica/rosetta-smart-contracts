@@ -21,6 +21,6 @@ and tranfers the whole contract balance to the committer;
 - **Solidity/Ethereum**: implementation coherent with the specification.
 - **Anchor/Solana**: a step has been added for initializing the data of the contract (owner, verifier, deadline, etc.).
 - **Aiken/Cardano**: implementation coherent with the specification.
-- **PyTeal/Algorand**:
+- **PyTeal/Algorand**: TODO lore
 - **SmartPy/Tezos**:
-- **Move/Aptos**:
+- **Move/Aptos**: implementation coherent with the specification.
