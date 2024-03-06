@@ -11,6 +11,12 @@ class SimpleTransferState:
         descr="Receiver of the transfer",
     )
 
+    owner = beaker.GlobalStateValue(
+        stack_type=pt.TealType.bytes,
+        static=True,
+        descr="Owner of the contract",
+    )
+
 app = beaker.Application("SimpleTransfer", state=SimpleTransferState())
 
 @app.create
@@ -20,6 +26,17 @@ def create(
     return Seq(
         # Initialize recipient
         app.state.recipient.set(recipient_.get()),
+        app.state.owner.set(Txn.sender())
+    )
+
+@app.external
+def deposit(
+    payment: pt.abi.PaymentTransaction
+):
+    return seq(
+        Assert(Txn.sender() == app.state.owner,
+            comment="Only owner can deposit"),
+        Assert(Txn.receiver() == Global.current_application_address())
     )
 
 @app.external
@@ -28,27 +45,13 @@ def withdraw(
 ):
     return Seq(
         Assert(Txn.sender() == app.state.recipient,
-               comment="Only the recipient can withdraw"),
+            comment="Only the recipient can withdraw"),
 
         # Withdraw specified amount
         InnerTxnBuilder.Execute({
             TxnField.type_enum: TxnType.Payment,
             TxnField.receiver: app.state.recipient,
             TxnField.amount: amount.get(),
-            TxnField.fee: Int(0),
-        })
-    )
-
-@app.external
-def withdraw_all():
-    return Seq(
-        Assert(Txn.sender() == app.state.recipient,
-               comment="Only the recipient can withdraw"),
-    
-        # Withdraw everything
-        InnerTxnBuilder.Execute({
-            TxnField.type_enum: TxnType.Payment,
-            TxnField.close_remainder_to: app.state.recipient,
             TxnField.fee: Int(0),
         })
     )
