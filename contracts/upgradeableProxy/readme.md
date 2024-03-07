@@ -25,7 +25,7 @@ returns *true* if the balance of the contract passed as an argument is lower tha
 - **Solidity/Ethereum**: the implementation is adapted from the ERC1967 Openzeppelin
 implementation. It uses low-level instructions for memory access.
 - **Anchor/Solana**: Solana natively supports upgradability of contracts and requires no proxy.
-- **Aiken/Cardano**:
+- **Aiken/Cardano**: cannot be implemented.
 - **PyTeal/Algorand**: Algorand natively supports upgradability of contracts and requires no proxy.
 - **SmartPy/Tezos**:
 - **Move/Aptos**: cannot be implemented.
