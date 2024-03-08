@@ -33,7 +33,7 @@ vested amount
 
 - **Solidity/Ethereum**: implementation coherent with the specification.
 - **Anchor/Solana**:  a step has been added for initializing the data of the vesting (beneficiary, start, duration, etc.).
-- **Aiken/Cardano**: since beneficiary needs to compute the vesting value offchain, this value will be different (i.e. smaller than) from the one later computed by the validator. Therefore, the beneficiary is allowed to withdraw any value that is smaller than the actual one computed by the validator.
+- **Aiken/Cardano**: implementation coherent with the specification.
 - **PyTeal/Algorand**: implementation coherent with the specification.
 - **SmartPy/Tezos**:
 - **Move/Aptos**: implementation coherent with the specification.

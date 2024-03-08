@@ -77,20 +77,19 @@ validator {
 		when ctx.purpose is {
 			Spend(_) -> {
 				let Release(declared_amount) = redeemer // https://aiken-lang.org/language-tour/custom-types#destructuring
-				let release_amount = linear_vesting(datum.amount, tx_earliest_time) - released // This is the amount beneficiary *should* take
-								
+				let release_amount = linear_vesting(datum.amount, tx_earliest_time) - released // This is the amount beneficiary should take
+
 				expect True = and {
 					utils.must_be_signed_by(tx, datum.beneficiary)?,
 	
-					// We accept a declared value that is not *greater than* the correct one [TODO: a tiny window offset, if we don't like this solution]
-					(declared_amount <= release_amount)?, 
+					(declared_amount == release_amount)?, 
 					
 					// Beneficiary is receiving the correct amount (this is comprehensive of tx's fee):
 					(utils.get_ada_from_outputs(beneficiary_outputs) == declared_amount + utils.get_ada_from_inputs(beneficiary_inputs) - value.lovelace_of(tx.fee))?,
 				}
 
 				if(declared_amount == contract_amount) {
-					// If the beneficiary is reclaiming the full amount, there's not need to return something back to the contract and check its new datum...
+					// If the beneficiary is reclaiming the full amount, there's not need to return something back to the contract and check its new datum
 					True
 				}
 				else {
