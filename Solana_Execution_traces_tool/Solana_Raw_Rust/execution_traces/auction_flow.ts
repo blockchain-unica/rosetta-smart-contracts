@@ -90,15 +90,15 @@ async function main() {
     console.log("\n--- Start auction. Actor: the seller ---");
     const auctionName = "auction1";
     const nSlotsToWait = 20;
-    console.log('    Dutation:', nSlotsToWait, 'slots');
-    const end_time = await connection.getSlot() + nSlotsToWait;
+    console.log('    Duration:', nSlotsToWait, 'slots');
+    const endTime = await connection.getSlot() + nSlotsToWait;
     const starting_bid = 0.1 * LAMPORTS_PER_SOL;
     await start(
         connection,
         programId,
         kpSeller,
         auctionName,
-        end_time,
+        endTime,
         starting_bid);
 
     // 2. Bid
@@ -162,7 +162,7 @@ async function start(
     programId: PublicKey,
     kpSeller: Keypair,
     auctionName: string,
-    end_time: number,
+    endTime: number,
     starting_bid: number
 ): Promise<void> {
 
@@ -174,11 +174,9 @@ async function start(
         auction_name: auctionName,
         seller: kpSeller.publicKey.toBuffer(),
         highest_bidder: kpSeller.publicKey.toBuffer(),
-        end_time,
+        end_time: endTime,
         highest_bid: starting_bid,
     });
-
-    const serializedAuctionState = borsh.serialize(AuctionState.schema, auctionState);
 
     const transaction = new Transaction().add(
         new TransactionInstruction({
@@ -188,7 +186,7 @@ async function start(
                 { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
             ],
             programId,
-            data: Buffer.from(new Uint8Array([Action.Start, ...serializedAuctionState])),
+            data: Buffer.from(new Uint8Array([Action.Start, ...borsh.serialize(AuctionState.schema, auctionState)])),
         })
     );
 
@@ -213,7 +211,6 @@ async function bid(
 
     const auctionPDA = await getAuctionPDA(programId, sellerPubKey, auctionName);
 
-    // Get currentHighestBidderPubKey from auction state
     const stateAccountInfo = await connection.getAccountInfo(auctionPDA);
     if (stateAccountInfo === null) {
         throw new Error('Error: cannot find the state account');
@@ -270,9 +267,9 @@ async function end(
 }
 
 async function getAuctionPDA(programId: PublicKey, ownerPubKey: PublicKey, auctionName: string): Promise<PublicKey> {
-    const [walletPDA] = await PublicKey.findProgramAddress(
+    const [pda] = await PublicKey.findProgramAddress(
         [Buffer.from(SEED_FOR_AUCTION + auctionName), ownerPubKey.toBuffer()],
         programId
     );
-    return walletPDA;
+    return pda;
 }

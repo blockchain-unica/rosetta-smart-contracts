@@ -9,9 +9,14 @@ use solana_program::{
     pubkey::Pubkey,
     rent::Rent,
     sysvar::Sysvar,
+    system_instruction,
+    system_program,
+    program::invoke_signed,
 };
 
 entrypoint!(process_instruction);
+
+const SEED_FOR_VESTING: &str = "vesting";
 
 #[derive(BorshSerialize, BorshDeserialize, Debug)]
 struct VestingInfo {
@@ -20,6 +25,10 @@ struct VestingInfo {
     pub beneficiary: Pubkey,
     pub start: u64,
     pub duration: u64,
+}
+
+impl VestingInfo {
+    pub const LEN: usize = 8 + 32 + 32 + 8 + 8;
 }
 
 pub fn process_instruction(
@@ -52,27 +61,37 @@ fn initialize(
     let accounts_iter = &mut accounts.iter();
     let funder_account = next_account_info(accounts_iter)?;
     let beneficiary_account = next_account_info(accounts_iter)?;
-    let vesting_account = next_account_info(accounts_iter)?;
+    let vesting_account_pda = next_account_info(accounts_iter)?;
+    let system_program_account = next_account_info(accounts_iter)?;
+
+
+    if system_program_account.key != &system_program::id() {
+        return Err(ProgramError::InvalidAccountData);
+    }
 
     if !funder_account.is_signer {
         msg!("The funder account account should be signer");
         return Err(ProgramError::MissingRequiredSignature);
     }
 
-    if vesting_account.owner.ne(&program_id){
-        msg!("The vesting account should be owned by the program");
-        return Err(ProgramError::IllegalOwner);
+    let (expected_pda, bump) = Pubkey::find_program_address(
+        &[
+            SEED_FOR_VESTING.as_bytes(),
+            funder_account.key.as_ref(),
+            beneficiary_account.key.as_ref(),
+        ],
+        program_id,
+    );
+
+    if expected_pda != *vesting_account_pda.key {
+        msg!("Not the right PDA");
+        return Err(ProgramError::InvalidAccountData);
     }
 
-    let rent_exemption = Rent::get()?.minimum_balance(vesting_account.data_len());
-    if **vesting_account.lamports.borrow() < rent_exemption {
-        msg!("The vesting account should be rent exempt");
-        return Err(ProgramError::InsufficientFunds);
-    }
-
-    let u8_array: [u8; 16] = instruction_data.try_into().unwrap();
+    let u8_array: [u8; 24] = instruction_data.try_into().unwrap();
     let start = u64::from_le_bytes(u8_array[0..8].try_into().unwrap());
     let duration = u64::from_le_bytes(u8_array[8..16].try_into().unwrap());
+    let amount = u64::from_le_bytes(u8_array[16..24].try_into().unwrap());
 
     if start <= Clock::get()?.slot {
         msg!("The start slot should be in the future");
@@ -84,6 +103,48 @@ fn initialize(
         return Err(ProgramError::InvalidInstructionData);
     }
 
+    let size = VestingInfo::LEN;
+    let rent_lamports = Rent::get()?.minimum_balance(size);
+    invoke_signed(
+        &system_instruction::create_account(
+            funder_account.key,
+            vesting_account_pda.key,
+            rent_lamports,
+            size.try_into().unwrap(),
+            program_id,
+        ),
+        &[
+            funder_account.clone(),
+            vesting_account_pda.clone(),
+            system_program_account.clone(),
+        ],
+        &[&[
+            SEED_FOR_VESTING.as_bytes(),
+            funder_account.key.as_ref(),
+            beneficiary_account.key.as_ref(),
+            &[bump],
+        ]],
+    )?;
+
+    invoke_signed(
+        &system_instruction::transfer(
+            funder_account.key,
+            vesting_account_pda.key,
+            amount,
+        ),
+        &[
+            funder_account.clone(),
+            vesting_account_pda.clone(),
+            system_program_account.clone(),
+        ],
+        &[&[
+            SEED_FOR_VESTING.as_bytes(),
+            funder_account.key.as_ref(),
+            beneficiary_account.key.as_ref(),
+            &[bump],
+        ]],
+    )?;
+
     let vesting_info = VestingInfo {
         released: 0,
         funder: *funder_account.key,
@@ -92,7 +153,7 @@ fn initialize(
         duration,
     };
 
-    vesting_info.serialize(&mut &mut vesting_account.try_borrow_mut_data()?[..])?;
+    vesting_info.serialize(&mut &mut vesting_account_pda.try_borrow_mut_data()?[..])?;
 
     Ok(())
 }
@@ -100,7 +161,7 @@ fn initialize(
 fn release(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
     let accounts_iter = &mut accounts.iter();
     let beneficiary_account = next_account_info(accounts_iter)?;
-    let vesting_account = next_account_info(accounts_iter)?;
+    let vesting_account_pda = next_account_info(accounts_iter)?;
     let funder_account = next_account_info(accounts_iter)?;
 
     if !beneficiary_account.is_signer {
@@ -108,20 +169,34 @@ fn release(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
         return Err(ProgramError::MissingRequiredSignature);
     }
 
-    if vesting_account.owner.ne(&program_id) {
+    if vesting_account_pda.owner.ne(&program_id) {
         msg!("The vesting account should be owned by the program");
         return Err(ProgramError::IllegalOwner);
     }
 
-    let mut vesting_info = VestingInfo::try_from_slice(*vesting_account.data.borrow())?;
+    let (expected_pda, bump) = Pubkey::find_program_address(
+        &[
+            SEED_FOR_VESTING.as_bytes(),
+            funder_account.key.as_ref(),
+            beneficiary_account.key.as_ref(),
+        ],
+        program_id,
+    );
+
+    if expected_pda != *vesting_account_pda.key {
+        msg!("Not the right PDA");
+        return Err(ProgramError::InvalidAccountData);
+    }
+
+    let mut vesting_info = VestingInfo::try_from_slice(*vesting_account_pda.data.borrow())?;
 
     if *beneficiary_account.key != vesting_info.beneficiary {
         msg!("The signer is not the beneficiary");
         return Err(ProgramError::InvalidAccountData);
     }
 
-    let rent_exemption = Rent::get()?.minimum_balance(vesting_account.data_len());
-    let balance = **vesting_account.lamports.borrow() - rent_exemption;
+    let rent_exemption = Rent::get()?.minimum_balance(vesting_account_pda.data_len());
+    let balance = **vesting_account_pda.lamports.borrow() - rent_exemption;
 
     let amount = releasable(
         vesting_info.released,
@@ -130,23 +205,23 @@ fn release(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
         vesting_info.duration,
     )?;
 
-    let rent_exemption = Rent::get()?.minimum_balance(vesting_account.data_len());
-    if **vesting_account.lamports.borrow() < rent_exemption + amount {
+    let rent_exemption = Rent::get()?.minimum_balance(vesting_account_pda.data_len());
+    if **vesting_account_pda.lamports.borrow() < rent_exemption + amount {
         msg!("Not enough lamports in the vesting account to release");
         return Err(ProgramError::InsufficientFunds);
     }
 
     **beneficiary_account.try_borrow_mut_lamports()? += amount;
-    **vesting_account.try_borrow_mut_lamports()? -= amount;
+    **vesting_account_pda.try_borrow_mut_lamports()? -= amount;
 
     // If all the lamports are withdrawn, close the account and send back the rent fees to the founder
-    if **vesting_account.lamports.borrow() <= rent_exemption {
-        **funder_account.try_borrow_mut_lamports()? += **vesting_account.lamports.borrow();
-        **vesting_account.try_borrow_mut_lamports()? = 0;
+    if **vesting_account_pda.lamports.borrow() <= rent_exemption {
+        **funder_account.try_borrow_mut_lamports()? += **vesting_account_pda.lamports.borrow();
+        **vesting_account_pda.try_borrow_mut_lamports()? = 0;
     }
 
     vesting_info.released += amount;
-    vesting_info.serialize(&mut &mut vesting_account.try_borrow_mut_data()?[..])?;
+    vesting_info.serialize(&mut &mut vesting_account_pda.try_borrow_mut_data()?[..])?;
 
     Ok(())
 }

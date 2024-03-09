@@ -105,6 +105,10 @@ fn initialize<'a>(
         return Err(ProgramError::MissingRequiredSignature);
     }
 
+    if system_account.key != &system_program::id() {
+        return Err(ProgramError::InvalidAccountData);
+    }
+
     let current_slot: u64 = Clock::get()?.slot;
     if current_slot >= deadline {
         msg!("The deadline should be in the future");

@@ -65,6 +65,8 @@ class VestingInfo {
     ]);
 }
 
+const SEED_FOR_VESTING = "vesting";
+
 let feesForFounder = 0;
 let feesForBeneficiary = 0;
 
@@ -124,22 +126,16 @@ async function main() {
             break
     }
 
-    // 1. Initialize (the founder initializes and deposits an amout of SOL)
+    // 1. Initialize (the founder initializes and deposits an amount of SOL)
     console.log("\n--- Initialize. Actor: the founder ---");
     const amount = 0.2 * LAMPORTS_PER_SOL; // 0.2 SOL
-    console.log('    Amount:', amount / LAMPORTS_PER_SOL, 'SOL');
-    let vestingInfo = new VestingInfo({
-        released: 0,
-        funder: kpFunder.publicKey.toBuffer(),
-        beneficiary: kpBeneficiary.publicKey.toBuffer(),
-        start: startSlot,
-        duration,
-    });
-    const vestingInfoAccountPublicKey = await initialize(
+    await initialize(
         connection,
         programId,
         kpFunder,
-        vestingInfo,
+        kpBeneficiary.publicKey,
+        startSlot,
+        duration,
         amount
     );
 
@@ -156,7 +152,7 @@ async function main() {
         connection,
         programId,
         kpBeneficiary,
-        vestingInfoAccountPublicKey,
+        kpFunder.publicKey,
     );
 
     // Costs
@@ -181,46 +177,29 @@ async function initialize(
     connection: Connection,
     programId: PublicKey,
     kpFunder: Keypair,
-    vestingInfo: VestingInfo,
+    beneficiaryPublicKey: PublicKey,
+    start: number,
+    duration: number,
     amount: number,
-): Promise<PublicKey> {
+): Promise<void> {
+    const vestingInfoAccountPublicKey = await getVestingPDA(programId, kpFunder.publicKey, beneficiaryPublicKey);
 
-    let serializedVestingInfo = borsh.serialize(VestingInfo.schema, vestingInfo);
-
-    const SEED = "abcdef" + Math.random().toString();
-    const vestingInfoAccountPublicKey = await PublicKey.createWithSeed(kpFunder.publicKey, SEED, programId);
-
-    // Instruction to create the Writing Account
-    const rentExemptionAmount = await connection.getMinimumBalanceForRentExemption(serializedVestingInfo.length);
-    const createVestingInfoAccountInstruction = SystemProgram.createAccountWithSeed({
-        fromPubkey: kpFunder.publicKey,
-        basePubkey: kpFunder.publicKey,
-        seed: SEED,
-        newAccountPubkey: vestingInfoAccountPublicKey,
-        lamports: rentExemptionAmount + amount,
-        space: serializedVestingInfo.length,
-        programId: programId,
-    });
-
-    // Instruction to the program
-    interface Settings { action: number, start: number, duration: number }
-    const layout = BufferLayout.struct<Settings>([BufferLayout.u8("action"), BufferLayout.nu64("start"), BufferLayout.nu64("duration")]);
+    interface Settings { action: number, start: number, duration: number, amount: number}
+    const layout = BufferLayout.struct<Settings>([BufferLayout.u8("action"), BufferLayout.nu64("start"), BufferLayout.nu64("duration"), BufferLayout.nu64("amount")]);
     const dataToSend = Buffer.alloc(layout.span);
-    layout.encode({ action: Action.Initialize, start: vestingInfo.start, duration: vestingInfo.duration }, dataToSend);
-
-    const initializeInstruction = new TransactionInstruction({
-        keys: [
-            { pubkey: kpFunder.publicKey, isSigner: true, isWritable: false },
-            { pubkey: new PublicKey(vestingInfo.beneficiary), isSigner: false, isWritable: false },
-            { pubkey: vestingInfoAccountPublicKey, isSigner: false, isWritable: true },
-        ],
-        programId,
-        data: dataToSend,
-    })
+    layout.encode({ action: Action.Initialize, start: start, duration: duration, amount }, dataToSend);
 
     const transactionDeposit = new Transaction().add(
-        createVestingInfoAccountInstruction,
-        initializeInstruction
+        new TransactionInstruction({
+            keys: [
+                { pubkey: kpFunder.publicKey, isSigner: true, isWritable: false },
+                { pubkey: beneficiaryPublicKey, isSigner: false, isWritable: false },
+                { pubkey: vestingInfoAccountPublicKey, isSigner: false, isWritable: true },
+                { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+            ],
+            programId,
+            data: dataToSend,
+        })
     );
 
     await sendAndConfirmTransaction(connection, transactionDeposit, [kpFunder]);
@@ -228,16 +207,15 @@ async function initialize(
     const tFees = await getTransactionFees(transactionDeposit, connection);
     feesForFounder += tFees;
     console.log('    Transaction fees: ', tFees / LAMPORTS_PER_SOL, 'SOL');
-
-    return vestingInfoAccountPublicKey;
 }
 
 async function release(
     connection: Connection,
     programId: PublicKey,
     kpBeneficiary: Keypair,
-    vestingInfoAccountPublicKey: PublicKey,
+    funderPublicKey: PublicKey,
 ): Promise<void> {
+    const vestingInfoAccountPublicKey = await getVestingPDA(programId, funderPublicKey, kpBeneficiary.publicKey);
 
     // Deserialize the data from the vestingInfoAccountPublicKey to get the funder's public key
     const accountInfo = await connection.getAccountInfo(vestingInfoAccountPublicKey);
@@ -263,4 +241,12 @@ async function release(
     const tFees = await getTransactionFees(transaction, connection);
     feesForBeneficiary += tFees;
     console.log('    Transaction fees: ', tFees / LAMPORTS_PER_SOL, 'SOL');
+}
+
+async function getVestingPDA(programId: PublicKey, funderPubKey: PublicKey, beneficiaryPubKey: PublicKey): Promise<PublicKey> {
+    const [pda] = await PublicKey.findProgramAddress(
+        [Buffer.from(SEED_FOR_VESTING), funderPubKey.toBuffer(), beneficiaryPubKey.toBuffer()],
+        programId
+    );
+    return pda;
 }

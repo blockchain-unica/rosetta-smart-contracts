@@ -57,7 +57,7 @@ pub fn process_instruction(
 fn start(program_id: &Pubkey, accounts: &[AccountInfo], instruction_data: &[u8]) -> ProgramResult {
     let accounts_iter: &mut std::slice::Iter<AccountInfo> = &mut accounts.iter();
     let seller_account: &AccountInfo = next_account_info(accounts_iter)?;
-    let auction_account: &AccountInfo = next_account_info(accounts_iter)?;
+    let auction_account_pda: &AccountInfo = next_account_info(accounts_iter)?;
     let system_program_account = next_account_info(accounts_iter)?;
 
     if system_program_account.key != &system_program::id() {
@@ -79,35 +79,10 @@ fn start(program_id: &Pubkey, accounts: &[AccountInfo], instruction_data: &[u8])
         program_id,
     );
 
-    if auction_pda != *auction_account.key {
+    if auction_pda != *auction_account_pda.key {
         msg!("Not the sender's auction PDA");
         return Err(ProgramError::InvalidAccountData);
     }
-
-    // Create the auction account
-    let size = auction_state.try_to_vec()?.len();
-    let rent_lamports = Rent::get()?.minimum_balance(size);
-    invoke_signed(
-        &system_instruction::create_account(
-            seller_account.key,
-            auction_account.key,
-            rent_lamports,
-            size.try_into().unwrap(),
-            program_id,
-        ),
-        &[
-            seller_account.clone(),
-            auction_account.clone(),
-            system_program_account.clone(),
-        ],
-        &[&[
-            format!("{}{}", START_SEED_FOR_AUCTION, auction_state.auction_name).as_bytes(),
-            seller_account.key.as_ref(),
-            &[auction_bump],
-        ]],
-    )?;
-
-    auction_state.seller = *seller_account.key;
 
     if auction_state.end_time <= Clock::get()?.slot {
         msg!("The end slot should be in the future");
@@ -119,7 +94,31 @@ fn start(program_id: &Pubkey, accounts: &[AccountInfo], instruction_data: &[u8])
         return Err(ProgramError::InvalidInstructionData);
     }
 
-    auction_state.serialize(&mut &mut auction_account.try_borrow_mut_data()?[..])?;
+    let size = auction_state.try_to_vec()?.len();
+    let rent_lamports = Rent::get()?.minimum_balance(size);
+    invoke_signed(
+        &system_instruction::create_account(
+            seller_account.key,
+            auction_account_pda.key,
+            rent_lamports,
+            size.try_into().unwrap(),
+            program_id,
+        ),
+        &[
+            seller_account.clone(),
+            auction_account_pda.clone(),
+            system_program_account.clone(),
+        ],
+        &[&[
+            format!("{}{}", START_SEED_FOR_AUCTION, auction_state.auction_name).as_bytes(),
+            seller_account.key.as_ref(),
+            &[auction_bump],
+        ]],
+    )?;
+
+    auction_state.seller = *seller_account.key;
+
+    auction_state.serialize(&mut &mut auction_account_pda.try_borrow_mut_data()?[..])?;
 
     Ok(())
 }

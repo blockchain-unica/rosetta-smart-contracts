@@ -20,7 +20,6 @@ import {
 import * as BufferLayout from '@solana/buffer-layout';
 
 import path from 'path';
-import * as borsh from 'borsh';
 
 const PROGRAM_KEYPAIR_PATH = path.resolve(__dirname, '../contracts/dist/oracle_bet/oracle_bet-keypair.json');
 
