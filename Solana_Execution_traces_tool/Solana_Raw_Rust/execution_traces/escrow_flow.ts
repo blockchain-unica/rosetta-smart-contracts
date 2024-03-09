@@ -102,7 +102,7 @@ async function main() {
         requiredAmount
     );
 
-    // 1. Deposit money (the buyer deposits the amout equal to price)
+    // 1. Deposit money (the buyer deposits the amount equal to price)
     console.log("\n--- Deposit. Actor: the buyer ---");
     const amountToDeposit = requiredAmount;
     console.log("    Amount: ", amountToDeposit / LAMPORTS_PER_SOL, "SOL");

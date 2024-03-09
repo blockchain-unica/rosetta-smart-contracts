@@ -117,7 +117,7 @@ fn reveal(program_id: &Pubkey, accounts: &[AccountInfo], instruction_data: &[u8]
         String::from_utf8(instruction_data[..instruction_data.len()].to_vec()).unwrap();
     let h: [u8; 32] = keccak::hash(&secret_string.into_bytes()).to_bytes();
     if h != htlc_info.hashed_secret {
-        msg!("Invaild secret");
+        msg!("Invalid secret");
         return Err(ProgramError::InvalidInstructionData);
     }
 

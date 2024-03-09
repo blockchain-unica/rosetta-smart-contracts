@@ -60,17 +60,17 @@ class Campaign {
 
 class DonationInfo {
     donor: Buffer = Buffer.alloc(32);
-    reciever_campain: Buffer = Buffer.alloc(32);
+    receiver_campaign: Buffer = Buffer.alloc(32);
     amount_donated: number = 0;
 
     constructor(fields: {
         donor: Buffer,
-        reciever_campain: Buffer,
+        receiver_campaign: Buffer,
         amount_donated: number,
     } | undefined = undefined) {
         if (fields) {
             this.donor = fields.donor;
-            this.reciever_campain = fields.reciever_campain;
+            this.receiver_campaign = fields.receiver_campaign;
             this.amount_donated = fields.amount_donated;
         }
     }
@@ -79,7 +79,7 @@ class DonationInfo {
         [DonationInfo, {
             kind: 'struct', fields: [
                 ['donor', [32]],
-                ['reciever_campain', [32]],
+                ['receiver_campaign', [32]],
                 ['amount_donated', 'u64'],
             ]
         }],
@@ -104,39 +104,39 @@ async function main() {
         ["donor", kpDonor.publicKey],
     ]);
 
-    // 1. Create campain
-    console.log("\n--- Create campain. Actor: the creator ---");
+    // 1. Create campaign
+    console.log("\n--- Create campaign. Actor: the creator ---");
     const nSlotsToWait = 10;
-    console.log('    Dutation:', nSlotsToWait, 'slots');
+    console.log('    Duration:', nSlotsToWait, 'slots');
 
-    const campain = new Campaign({
+    const campaign = new Campaign({
         receiver: kpCreator.publicKey.toBuffer(),
         end_donate_slot: await connection.getSlot() + nSlotsToWait,
         goal: 0.1 * LAMPORTS_PER_SOL, // 0.1 SOL
     });
 
-    const campainAccountPubKey = await createCampaign(
+    const campaignAccountPubKey = await createCampaign(
         connection,
         programId,
         kpCreator,
-        campain
+        campaign
     );
 
     // 2. Donate
-    console.log("\n--- Donate to campain. Actor: the donor ---");
-    const donatedAmount = campain.goal;
+    console.log("\n--- Donate to campaign. Actor: the donor ---");
+    const donatedAmount = campaign.goal;
     console.log("    Amount:", donatedAmount / LAMPORTS_PER_SOL, "SOL");
     await donate(
         connection,
         programId,
         kpDonor,
-        campainAccountPubKey,
+        campaignAccountPubKey,
         donatedAmount
     );
 
-    // Wait for the campain to end
-    console.log("\nWaiting", nSlotsToWait, "slots for the campain to end...");
-    while (await connection.getSlot() < campain.end_donate_slot) {
+    // Wait for the campaign to end
+    console.log("\nWaiting", nSlotsToWait, "slots for the campaign to end...");
+    while (await connection.getSlot() < campaign.end_donate_slot) {
         await new Promise(f => setTimeout(f, 1000));//sleep 1 second
     }
 
@@ -150,7 +150,7 @@ async function main() {
                 connection,
                 programId,
                 kpCreator,
-                campainAccountPubKey,
+                campaignAccountPubKey,
             );
             break;
 
@@ -160,7 +160,7 @@ async function main() {
                 connection,
                 programId,
                 kpDonor,
-                campainAccountPubKey,
+                campaignAccountPubKey,
             );
             break;
     }
@@ -184,38 +184,38 @@ async function createCampaign(
     connection: Connection,
     programId: PublicKey,
     kpCreator: Keypair,
-    campain: Campaign,
+    campaign: Campaign,
 ): Promise<PublicKey> {
 
-    const data = borsh.serialize(Campaign.schema, campain);
+    const data = borsh.serialize(Campaign.schema, campaign);
 
     const SEED = "abcdef" + Math.random().toString();
-    const campainAccountPubKey = await PublicKey.createWithSeed(kpCreator.publicKey, SEED, programId);
+    const campaignAccountPubKey = await PublicKey.createWithSeed(kpCreator.publicKey, SEED, programId);
 
-    // Instruction to create the Campain Account
-    const createCampainAccountInstruction = SystemProgram.createAccountWithSeed({
+    // Instruction to create the campaign Account
+    const createCampaignAccountInstruction = SystemProgram.createAccountWithSeed({
         fromPubkey: kpCreator.publicKey,
         basePubkey: kpCreator.publicKey,
         seed: SEED,
-        newAccountPubkey: campainAccountPubKey,
+        newAccountPubkey: campaignAccountPubKey,
         lamports: await connection.getMinimumBalanceForRentExemption(data.length),
         space: data.length,
         programId: programId,
     });
 
     // Instruction to the program
-    const createCampainInstuction = new TransactionInstruction({
+    const createCampaignInstruction = new TransactionInstruction({
         keys: [
             { pubkey: kpCreator.publicKey, isSigner: true, isWritable: false },
-            { pubkey: campainAccountPubKey, isSigner: false, isWritable: true },
+            { pubkey: campaignAccountPubKey, isSigner: false, isWritable: true },
         ],
         programId,
         data: Buffer.from(new Uint8Array([Action.CreateCampaign, ...data])),
     })
 
     const transaction = new Transaction().add(
-        createCampainAccountInstruction,
-        createCampainInstuction
+        createCampaignAccountInstruction,
+        createCampaignInstruction
     );
 
     await sendAndConfirmTransaction(connection, transaction, [kpCreator]);
@@ -224,20 +224,20 @@ async function createCampaign(
     feesForCreator += tFees;
     console.log('    Transaction fees: ', tFees / LAMPORTS_PER_SOL, 'SOL');
 
-    return campainAccountPubKey;
+    return campaignAccountPubKey;
 }
 
 async function donate(
     connection: Connection,
     programId: PublicKey,
     kpDonor: Keypair,
-    campainAccountPubKey: PublicKey,
+    campaignAccountPubKey: PublicKey,
     donatedAmount: number,
 ): Promise<void> {
 
     const donationInfo = new DonationInfo({
         donor: kpDonor.publicKey.toBuffer(),
-        reciever_campain: campainAccountPubKey.toBuffer(),
+        receiver_campaign: campaignAccountPubKey.toBuffer(),
         amount_donated: donatedAmount,
     });
 
@@ -261,7 +261,7 @@ async function donate(
     const donationInstruction = new TransactionInstruction({
         keys: [
             { pubkey: kpDonor.publicKey, isSigner: true, isWritable: false },
-            { pubkey: campainAccountPubKey, isSigner: false, isWritable: true },
+            { pubkey: campaignAccountPubKey, isSigner: false, isWritable: true },
             { pubkey: donationAccountPubKey, isSigner: false, isWritable: true },
         ],
         programId,
@@ -284,14 +284,14 @@ async function withdraw(
     connection: Connection,
     programId: PublicKey,
     kpCreator: Keypair,
-    campainAccountPubKey: PublicKey,
+    campaignAccountPubKey: PublicKey,
 ): Promise<void> {
 
     const transaction = new Transaction().add(
         new TransactionInstruction({
             keys: [
                 { pubkey: kpCreator.publicKey, isSigner: true, isWritable: false },
-                { pubkey: campainAccountPubKey, isSigner: false, isWritable: true },
+                { pubkey: campaignAccountPubKey, isSigner: false, isWritable: true },
             ],
             programId,
             data: Buffer.from(new Uint8Array([Action.Withdraw])),
@@ -309,7 +309,7 @@ async function reclaim(
     connection: Connection,
     programId: PublicKey,
     kpDonor: Keypair,
-    campainAccountPubKey: PublicKey,
+    campaignAccountPubKey: PublicKey,
 ): Promise<void> {
 
     const donationAccountPubKey = await PublicKey.createWithSeed(kpDonor.publicKey, SEED_FOR_DONATION_ACCOUNTS, programId);
@@ -318,7 +318,7 @@ async function reclaim(
         new TransactionInstruction({
             keys: [
                 { pubkey: kpDonor.publicKey, isSigner: true, isWritable: false },
-                { pubkey: campainAccountPubKey, isSigner: false, isWritable: true },
+                { pubkey: campaignAccountPubKey, isSigner: false, isWritable: true },
                 { pubkey: donationAccountPubKey, isSigner: false, isWritable: true },
             ],
             programId,

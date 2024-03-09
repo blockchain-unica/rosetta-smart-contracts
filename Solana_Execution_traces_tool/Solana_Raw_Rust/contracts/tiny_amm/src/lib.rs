@@ -608,7 +608,7 @@ pub fn check_pda<'a>(
     let (pub_key, bump_seed) = Pubkey::find_program_address(&seeds, program_id);
 
     if pub_key != *account_to_check.key {
-        msg!("PDA doesen't match with the one provided");
+        msg!("PDA doesn't match with the one provided");
         return Err(ProgramError::InvalidAccountData);
     }
 

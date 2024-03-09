@@ -115,7 +115,7 @@ fn withdraw(
 
     let rent_exemption = Rent::get()?.minimum_balance(writing_account.data_len());
     if **writing_account.lamports.borrow() - rent_exemption < withdraw_amount {
-        msg!("Insufficent balance in the writing account for withdraw");
+        msg!("Insufficient balance in the writing account for withdraw");
         return Err(ProgramError::InsufficientFunds);
     }
 

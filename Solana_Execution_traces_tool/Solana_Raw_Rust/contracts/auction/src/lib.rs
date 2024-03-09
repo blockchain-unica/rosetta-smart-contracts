@@ -11,6 +11,7 @@ use solana_program::{
     rent::Rent,
     system_instruction,
     sysvar::Sysvar,
+    system_program,
 };
 
 entrypoint!(process_instruction);
@@ -45,7 +46,7 @@ pub fn process_instruction(
             accounts,
             &instruction_data[1..instruction_data.len()],
         ),
-        2 => end(accounts),
+        2 => end(program_id, accounts),
         _ => {
             msg!("Didn't found the entrypoint required");
             Err(ProgramError::InvalidInstructionData)
@@ -58,6 +59,10 @@ fn start(program_id: &Pubkey, accounts: &[AccountInfo], instruction_data: &[u8])
     let seller_account: &AccountInfo = next_account_info(accounts_iter)?;
     let auction_account: &AccountInfo = next_account_info(accounts_iter)?;
     let system_program_account = next_account_info(accounts_iter)?;
+
+    if system_program_account.key != &system_program::id() {
+        return Err(ProgramError::InvalidAccountData);
+    }
 
     if !seller_account.is_signer {
         msg!("The seller should be signer");
@@ -110,7 +115,7 @@ fn start(program_id: &Pubkey, accounts: &[AccountInfo], instruction_data: &[u8])
     }
 
     if auction_state.highest_bid <= 0 {
-        msg!("Thenitial bid should be positive");
+        msg!("The initial bid should be positive");
         return Err(ProgramError::InvalidInstructionData);
     }
 
@@ -132,7 +137,24 @@ fn bid(program_id: &Pubkey, accounts: &[AccountInfo], instruction_data: &[u8]) -
         return Err(ProgramError::MissingRequiredSignature);
     }
 
+    if system_program_account.key != &system_program::id() {
+        return Err(ProgramError::InvalidAccountData);
+    }
+
     let mut auction_state = AuctionState::try_from_slice(*auction_account_pda.data.borrow())?;
+
+    let (auction_pda, _auction_bump) = Pubkey::find_program_address(
+        &[
+            format!("{}{}", START_SEED_FOR_AUCTION, auction_state.auction_name).as_bytes(),
+            seller_account.key.as_ref(),
+        ],
+        program_id,
+    );
+
+    if auction_pda != *auction_account_pda.key {
+        msg!("Not the sender's auction PDA");
+        return Err(ProgramError::InvalidAccountData);
+    }
 
     let amount_to_deposit: u64 = instruction_data
         .iter()
@@ -190,7 +212,7 @@ fn bid(program_id: &Pubkey, accounts: &[AccountInfo], instruction_data: &[u8]) -
     Ok(())
 }
 
-fn end(accounts: &[AccountInfo]) -> ProgramResult {
+fn end(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
     let accounts_iter: &mut std::slice::Iter<AccountInfo> = &mut accounts.iter();
     let seller_account: &AccountInfo = next_account_info(accounts_iter)?;
     let auction_account_pda: &AccountInfo = next_account_info(accounts_iter)?;
@@ -198,6 +220,21 @@ fn end(accounts: &[AccountInfo]) -> ProgramResult {
     if !seller_account.is_signer {
         msg!("The seller should be signer");
         return Err(ProgramError::MissingRequiredSignature);
+    }
+
+    let auction_state = AuctionState::try_from_slice(*auction_account_pda.data.borrow())?;
+
+    let (auction_pda, _auction_bump) = Pubkey::find_program_address(
+        &[
+            format!("{}{}", START_SEED_FOR_AUCTION, auction_state.auction_name).as_bytes(),
+            seller_account.key.as_ref(),
+        ],
+        program_id,
+    );
+
+    if auction_pda != *auction_account_pda.key {
+        msg!("Not the sender's auction PDA");
+        return Err(ProgramError::InvalidAccountData);
     }
 
     let auction_state = AuctionState::try_from_slice(*auction_account_pda.data.borrow())?;

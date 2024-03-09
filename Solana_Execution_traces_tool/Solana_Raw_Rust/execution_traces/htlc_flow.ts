@@ -69,7 +69,7 @@ class HTLCInfo {
 let feesForOwner = 0;
 let feesForVerifier = 0;
 
-// The amount of lamports that reppresent the minimum cost of the service of the contract
+// The amount of lamports that represent the minimum cost of the service of the contract
 const minimumAmount = 0.1 * LAMPORTS_PER_SOL;
 
 async function main() {

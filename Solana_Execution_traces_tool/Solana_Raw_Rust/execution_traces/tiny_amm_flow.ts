@@ -142,7 +142,7 @@ async function setup(
     users: PublicKey[],
 ): Promise<void> {
 
-    // Create a feePayer and airdop SOL to it
+    // Create a feePayer and airdrop SOL to it
     const feePayer = await getSystemKeyPair();
 
     mint0Pubkey = await createMint(

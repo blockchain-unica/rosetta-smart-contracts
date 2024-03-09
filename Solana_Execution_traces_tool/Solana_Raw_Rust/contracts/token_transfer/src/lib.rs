@@ -17,7 +17,7 @@ entrypoint!(process_instruction);
 struct DepositInfo {
     pub sender: Pubkey,
     pub temp_token_account: Pubkey,
-    pub reciever_token_account: Pubkey,
+    pub receiver_token_account: Pubkey,
     pub amount: u64,
 }
 
@@ -83,14 +83,14 @@ fn deposit(
         .rev()
         .fold(0, |acc, &x| (acc << 8) + x as u64);
 
-    // The reciever's token account to deposit to
-    let reciever_token_account: &AccountInfo = next_account_info(accounts_iter)?;
+    // The receiver's token account to deposit to
+    let receiver_token_account: &AccountInfo = next_account_info(accounts_iter)?;
 
     // Now we have all the information we need to build the DepositInfo struct instance
     let deposit_info: DepositInfo = DepositInfo {
         sender: *sender.key,
         temp_token_account: *temp_token_account.key,
-        reciever_token_account: *reciever_token_account.key,
+        receiver_token_account: *receiver_token_account.key,
         amount: amount_to_deposit,
     };
 
@@ -168,7 +168,7 @@ fn withdraw(
         &spl_token::instruction::transfer(
             token_program.key,
             &deposit_info.temp_token_account,
-            &deposit_info.reciever_token_account,
+            &deposit_info.receiver_token_account,
             &pda, //owner
             &[&pda],
             amount_to_withdraw * 1000000000,

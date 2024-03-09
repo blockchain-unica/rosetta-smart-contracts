@@ -103,10 +103,10 @@ async function main() {
         ["recovery", kpRecovery.publicKey], 
     ]);
 
-    // 0. Initialize the valult for the owner (IDLE) 
+    // 0. Initialize the vault for the owner (IDLE) 
     console.log("\n--- Initialize. Actor: the owner ---");
     const waitTime = 2;
-    console.log('    Dutation:', waitTime, 'slots');
+    console.log('    Duration:', waitTime, 'slots');
     const initialAmount = 0.2 * LAMPORTS_PER_SOL;
     console.log('    Initial amount:', initialAmount/LAMPORTS_PER_SOL, 'SOL');
     const stateAccountPublicKey = await initialize(
@@ -146,7 +146,7 @@ async function main() {
             break;
 
         case Action.Cancel:// 3. Cancel REQ -> IDLE
-            console.log("\n--- Cancel. Actor: the Reovery ---");
+            console.log("\n--- Cancel. Actor: the Recovery ---");
             await cancel(
                 connection,
                 programId,
@@ -264,14 +264,14 @@ async function finalize(
         throw new Error("Error: cannot find the state account");
     }
     const vaultInfo = borsh.deserialize(VaultInfo.schema, VaultInfo, stateAccountInfo.data,);
-    const recepientPubKey = new PublicKey(vaultInfo.receiver);
+    const recipientPubKey = new PublicKey(vaultInfo.receiver);
 
     // Instruction to the program
     let initializeVaultInstruction = new TransactionInstruction({
         keys: [
             { pubkey: kpOwner.publicKey, isSigner: true, isWritable: false },
             { pubkey: stateAccountPublicKey, isSigner: false, isWritable: true },
-            { pubkey: recepientPubKey, isSigner: false, isWritable: true },
+            { pubkey: recipientPubKey, isSigner: false, isWritable: true },
         ],
         programId,
         data: Buffer.from(new Uint8Array([Action.Finalize])),

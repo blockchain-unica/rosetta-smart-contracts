@@ -73,7 +73,7 @@ async function main() {
         ["recipient", kpRecipient.publicKey],
     ]);
 
-    // 1. Deposit money (the user deposits the amout equal to price)
+    // 1. Deposit money (the user deposits the amount equal to price)
     console.log("\n--- Deposit. Actor: the owner ---");
     const amount = 0.2 * LAMPORTS_PER_SOL;
     console.log("    Amount", amount / LAMPORTS_PER_SOL, "SOL");

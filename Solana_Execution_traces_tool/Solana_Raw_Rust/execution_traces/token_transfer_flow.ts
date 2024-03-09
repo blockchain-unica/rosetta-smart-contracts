@@ -36,19 +36,19 @@ import * as borsh from 'borsh';
 class DepositInfo {
     sender: Buffer = Buffer.alloc(32);
     temp_token_account: Buffer = Buffer.alloc(32);
-    reciever_token_account: Buffer = Buffer.alloc(32);
+    receiver_token_account: Buffer = Buffer.alloc(32);
     amount: number = 0;
 
     constructor(fields: {
         sender: Buffer,
         temp_token_account: Buffer,
-        reciever_token_account: Buffer,
+        receiver_token_account: Buffer,
         amount: number,
     } | undefined = undefined) {
         if (fields) {
             this.sender = fields.sender;
             this.temp_token_account = fields.temp_token_account;
-            this.reciever_token_account = fields.reciever_token_account;
+            this.receiver_token_account = fields.receiver_token_account;
             this.amount = fields.amount;
         }
     }
@@ -58,7 +58,7 @@ class DepositInfo {
             kind: 'struct', fields: [
                 ['sender', [32]],
                 ['temp_token_account', [32]],
-                ['reciever_token_account', [32]],
+                ['receiver_token_account', [32]],
                 ['amount', 'u64'],
             ]
         }],
@@ -316,7 +316,7 @@ async function withdraw(
         keys: [
             { pubkey: recipientKeypair.publicKey, isSigner: true, isWritable: false },
             { pubkey: new PublicKey(stateInfo.sender), isSigner: false, isWritable: true },
-            { pubkey: new PublicKey(stateInfo.reciever_token_account), isSigner: false, isWritable: true },
+            { pubkey: new PublicKey(stateInfo.receiver_token_account), isSigner: false, isWritable: true },
             { pubkey: new PublicKey(stateInfo.temp_token_account), isSigner: false, isWritable: true },
             { pubkey: stateAccountPubkey, isSigner: false, isWritable: true },
             { pubkey: TOKEN_PROGRAM_ID, isSigner: false, isWritable: false },

@@ -144,7 +144,7 @@ async function main() {
     );
 
     if (scenario != 1) {
-        console.log("\nWaiting to reach the targhet slot");
+        console.log("\nWaiting to reach the target slot");
         while (await connection.getSlot() < targetSlotToWait) {
             await new Promise(f => setTimeout(f, 1000));//sleep 1 second
         }
@@ -192,7 +192,7 @@ async function initialize(
 
     // Instruction to create the Writing Account
     const rentExemptionAmount = await connection.getMinimumBalanceForRentExemption(serializedVestingInfo.length);
-    const createvestingInfoAccountInstruction = SystemProgram.createAccountWithSeed({
+    const createVestingInfoAccountInstruction = SystemProgram.createAccountWithSeed({
         fromPubkey: kpFunder.publicKey,
         basePubkey: kpFunder.publicKey,
         seed: SEED,
@@ -219,7 +219,7 @@ async function initialize(
     })
 
     const transactionDeposit = new Transaction().add(
-        createvestingInfoAccountInstruction,
+        createVestingInfoAccountInstruction,
         initializeInstruction
     );
 

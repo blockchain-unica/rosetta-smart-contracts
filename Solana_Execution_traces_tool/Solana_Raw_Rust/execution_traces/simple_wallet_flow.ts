@@ -80,7 +80,7 @@ async function main() {
 
     // 1. Deposit money
     const amountToDeposit = 0.2 * LAMPORTS_PER_SOL;
-    console.log("\n--- Deposit", amountToDeposit / LAMPORTS_PER_SOL, " SOL. Actor: the onwer ---");
+    console.log("\n--- Deposit", amountToDeposit / LAMPORTS_PER_SOL, " SOL. Actor: the owner ---");
     await deposit(
         connection,
         programId,

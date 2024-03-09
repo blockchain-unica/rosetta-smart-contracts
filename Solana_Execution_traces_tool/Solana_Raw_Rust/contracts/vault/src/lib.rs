@@ -98,10 +98,10 @@ fn initialize(
     let vault_info = VaultInfo {
         owner: *owner_account.key,
         recovery: *recovery_account.key,
-        receiver: Pubkey::default(), // temporaly
+        receiver: Pubkey::default(), // temporal
         wait_time,
         request_time: 0,
-        amount: 0, // at the begining the withdraw amount is not setted
+        amount: 0, // at the beginning the withdraw amount is not setted
         state: State::Idle,
     };
 
@@ -135,7 +135,7 @@ fn withdraw(
 
     let rent_exemption = Rent::get()?.minimum_balance(state_account.data_len());
     if **state_account.lamports.borrow() - rent_exemption < withdraw_amount {
-        msg!("Insufficent balance in the state account to witdraw the defined amount");
+        msg!("Insufficient balance in the state account to withdraw the defined amount");
         return Err(ProgramError::AccountNotRentExempt);
     }
 
@@ -190,7 +190,7 @@ fn finalize(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
 
     let rent_exemption = Rent::get()?.minimum_balance(state_account.data_len());
     if **state_account.lamports.borrow() - rent_exemption < vault_info.amount {
-        msg!("Insufficent balance in the state account to witdraw the defined amount");
+        msg!("Insufficient balance in the state account to withdraw the defined amount");
         return Err(ProgramError::InsufficientFunds);
     }
 

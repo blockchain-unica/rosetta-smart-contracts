@@ -204,7 +204,7 @@ pub fn check_pda<'a>(
     let (pub_key, bump_seed) = Pubkey::find_program_address(&seeds, program_id);
 
     if pub_key != *account_to_check.key {
-        msg!("PDA doesen't match with the one provided");
+        msg!("PDA doesn't match with the one provided");
         return Err(ProgramError::InvalidAccountData);
     }
 
@@ -215,7 +215,7 @@ pub fn create_pda_account<'a>(
     payer: &'a AccountInfo<'a>,
     new_account: &'a AccountInfo<'a>,
     system_program_account: &'a AccountInfo<'a>,
-    adictional_lamports: u64,
+    additional_lamports: u64,
     program_id: &Pubkey,
     signers_seeds: &[&[&[u8]]],
     data_len: usize,
@@ -230,7 +230,7 @@ pub fn create_pda_account<'a>(
     let instruction = system_instruction::create_account(
         payer.key,
         new_account.key,
-        rent.minimum_balance(data_len) + adictional_lamports as u64,
+        rent.minimum_balance(data_len) + additional_lamports as u64,
         data_len as u64,
         program_id,
     );

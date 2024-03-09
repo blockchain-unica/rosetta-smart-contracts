@@ -23,7 +23,7 @@ struct Campaign {
 #[derive(BorshSerialize, BorshDeserialize, Debug)]
 struct DonationInfo {
     pub donor: Pubkey,
-    pub reciever_campain: Pubkey,
+    pub receiver_campaign: Pubkey,
     pub amount_donated: u64,
 }
 
@@ -62,42 +62,42 @@ fn create_campaign(
 ) -> ProgramResult {
     let accounts_iter = &mut accounts.iter();
     let creator_account = next_account_info(accounts_iter)?;
-    let campain_account = next_account_info(accounts_iter)?;
+    let campaign_account = next_account_info(accounts_iter)?;
 
     if !creator_account.is_signer {
         msg!("The creator account should be signer");
         return Err(ProgramError::MissingRequiredSignature);
     }
 
-    if campain_account.owner.ne(&program_id){
-        msg!("The campain account isn't owned by program");
+    if campaign_account.owner.ne(&program_id){
+        msg!("The campaign account isn't owned by program");
         return Err(ProgramError::IllegalOwner);
     }
 
-    let campain = Campaign::try_from_slice(&instruction_data)?;
+    let campaign = Campaign::try_from_slice(&instruction_data)?;
 
-    if campain.receiver != *creator_account.key {
-        msg!("The creator of campain should be the receiver");
+    if campaign.receiver != *creator_account.key {
+        msg!("The creator of campaign should be the receiver");
         return Err(ProgramError::InvalidAccountData);
     }
 
-    if campain.end_donate_slot <= Clock::get()?.slot {
+    if campaign.end_donate_slot <= Clock::get()?.slot {
         msg!("The end donate slot should be in the future");
         return Err(ProgramError::InvalidInstructionData);
     }
 
-    if campain.goal <= 0 {
+    if campaign.goal <= 0 {
         msg!("The goal amount should be positive");
         return Err(ProgramError::InvalidInstructionData);
     }
 
-    let rent_exemption = Rent::get()?.minimum_balance(campain_account.data_len());
-    if **campain_account.lamports.borrow() < rent_exemption {
+    let rent_exemption = Rent::get()?.minimum_balance(campaign_account.data_len());
+    if **campaign_account.lamports.borrow() < rent_exemption {
         msg!("The state account should be rent exempt");
         return Err(ProgramError::AccountNotRentExempt);
     }
 
-    campain.serialize(&mut &mut campain_account.try_borrow_mut_data()?[..])?;
+    campaign.serialize(&mut &mut campaign_account.try_borrow_mut_data()?[..])?;
 
     Ok(())
 }
@@ -105,7 +105,7 @@ fn create_campaign(
 fn donate(program_id: &Pubkey, accounts: &[AccountInfo], instruction_data: &[u8]) -> ProgramResult {
     let accounts_iter = &mut accounts.iter();
     let donor_account = next_account_info(accounts_iter)?;
-    let campain_account = next_account_info(accounts_iter)?;
+    let campaign_account = next_account_info(accounts_iter)?;
     let donation_account = next_account_info(accounts_iter)?;
 
     if !donor_account.is_signer {
@@ -113,8 +113,8 @@ fn donate(program_id: &Pubkey, accounts: &[AccountInfo], instruction_data: &[u8]
         return Err(ProgramError::MissingRequiredSignature);
     }
 
-    if campain_account.owner.ne(&program_id){
-        msg!("The campain account isn't owned by program");
+    if campaign_account.owner.ne(&program_id){
+        msg!("The campaign account isn't owned by program");
         return Err(ProgramError::IllegalOwner);
     }
 
@@ -123,10 +123,10 @@ fn donate(program_id: &Pubkey, accounts: &[AccountInfo], instruction_data: &[u8]
         return Err(ProgramError::IllegalOwner);
     }
 
-    let campain = Campaign::try_from_slice(*campain_account.data.borrow())?;
+    let campaign = Campaign::try_from_slice(*campaign_account.data.borrow())?;
 
-    if Clock::get()?.slot > campain.end_donate_slot {
-        msg!("The campain is over");
+    if Clock::get()?.slot > campaign.end_donate_slot {
+        msg!("The campaign is over");
         return Err(ProgramError::InvalidInstructionData);
     }
 
@@ -136,8 +136,8 @@ fn donate(program_id: &Pubkey, accounts: &[AccountInfo], instruction_data: &[u8]
         return Err(ProgramError::InvalidAccountData);
     }
 
-    if donation_info.reciever_campain != *campain_account.key {
-        msg!("The donation should be for the campain that was provided");
+    if donation_info.receiver_campaign != *campaign_account.key {
+        msg!("The donation should be for the campaign that was provided");
         return Err(ProgramError::InvalidInstructionData);
     }
 
@@ -149,7 +149,7 @@ fn donate(program_id: &Pubkey, accounts: &[AccountInfo], instruction_data: &[u8]
 
     donation_info.serialize(&mut &mut donation_account.try_borrow_mut_data()?[..])?;
 
-    **campain_account.try_borrow_mut_lamports()? += donation_info.amount_donated;
+    **campaign_account.try_borrow_mut_lamports()? += donation_info.amount_donated;
     **donation_account.try_borrow_mut_lamports()? -= donation_info.amount_donated;
 
     Ok(())
@@ -158,39 +158,39 @@ fn donate(program_id: &Pubkey, accounts: &[AccountInfo], instruction_data: &[u8]
 fn withdraw(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
     let accounts_iter = &mut accounts.iter();
     let creator_account = next_account_info(accounts_iter)?;
-    let campain_account = next_account_info(accounts_iter)?;
+    let campaign_account = next_account_info(accounts_iter)?;
 
     if !creator_account.is_signer {
         msg!("The creator account should be signer");
         return Err(ProgramError::MissingRequiredSignature);
     }
 
-    if campain_account.owner.ne(&program_id){
-        msg!("The campain account isn't owned by program");
+    if campaign_account.owner.ne(&program_id){
+        msg!("The campaign account isn't owned by program");
         return Err(ProgramError::IllegalOwner);
     }
 
-    let campain = Campaign::try_from_slice(*campain_account.data.borrow())?;
+    let campaign = Campaign::try_from_slice(*campaign_account.data.borrow())?;
 
-    if campain.receiver != *creator_account.key {
+    if campaign.receiver != *creator_account.key {
         msg!("Only the creator can withdraw");
         return Err(ProgramError::InvalidAccountData);
     }
 
-    if Clock::get()?.slot < campain.end_donate_slot {
-        msg!("The campain is not over yet");
+    if Clock::get()?.slot < campaign.end_donate_slot {
+        msg!("The campaign is not over yet");
         return Err(ProgramError::InvalidInstructionData);
     }
 
-    let rent_exemption_campain_account = Rent::get()?.minimum_balance(campain_account.data_len());
-    if **campain_account.try_borrow_lamports()? < campain.goal + rent_exemption_campain_account {
+    let rent_exemption_campaign_account = Rent::get()?.minimum_balance(campaign_account.data_len());
+    if **campaign_account.try_borrow_lamports()? < campaign.goal + rent_exemption_campaign_account {
         msg!("The goal was not reached");
         return Err(ProgramError::InvalidInstructionData);
     }
 
-    let reached_amount = **campain_account.try_borrow_lamports()?;
+    let reached_amount = **campaign_account.try_borrow_lamports()?;
 
-    **campain_account.try_borrow_mut_lamports()? -= reached_amount;
+    **campaign_account.try_borrow_mut_lamports()? -= reached_amount;
     **creator_account.try_borrow_mut_lamports()? += reached_amount;
 
     Ok(())
@@ -199,7 +199,7 @@ fn withdraw(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
 fn reclaim(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
     let accounts_iter = &mut accounts.iter();
     let donor_account = next_account_info(accounts_iter)?;
-    let campain_account = next_account_info(accounts_iter)?;
+    let campaign_account = next_account_info(accounts_iter)?;
     let donation_account = next_account_info(accounts_iter)?;
 
     if !donor_account.is_signer {
@@ -207,8 +207,8 @@ fn reclaim(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
         return Err(ProgramError::MissingRequiredSignature);
     }
 
-    if campain_account.owner.ne(&program_id){
-        msg!("The campain account isn't owned by program");
+    if campaign_account.owner.ne(&program_id){
+        msg!("The campaign account isn't owned by program");
         return Err(ProgramError::IllegalOwner);
     }
 
@@ -217,7 +217,7 @@ fn reclaim(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
         return Err(ProgramError::IllegalOwner);
     }
 
-    let campain = Campaign::try_from_slice(*campain_account.data.borrow())?;
+    let campaign = Campaign::try_from_slice(*campaign_account.data.borrow())?;
 
     let donation_info = DonationInfo::try_from_slice(*donation_account.data.borrow())?;
 
@@ -226,27 +226,27 @@ fn reclaim(program_id: &Pubkey, accounts: &[AccountInfo]) -> ProgramResult {
         return Err(ProgramError::InvalidAccountData);
     }
 
-    if Clock::get()?.slot < campain.end_donate_slot {
-        msg!("The campain is not over yet");
+    if Clock::get()?.slot < campaign.end_donate_slot {
+        msg!("The campaign is not over yet");
         return Err(ProgramError::InvalidInstructionData);
     }
 
-    if donation_info.reciever_campain != *campain_account.key {
-        msg!("The donation is not for the provided campain");
+    if donation_info.receiver_campaign != *campaign_account.key {
+        msg!("The donation is not for the provided campaign");
         return Err(ProgramError::InvalidAccountData);
     }
 
-    // Since the campain at this pooint is over we can
+    // Since the campaign at this point is over we can
     // return the rent founds to the donor (even if the goal was reached).
     // So we are not revering the transaction, even if the goal was reached, 
     // to send back the rent founds of the donation account to the donor.
     **donor_account.try_borrow_mut_lamports()? += **donation_account.try_borrow_lamports()?;
     **donation_account.try_borrow_mut_lamports()? = 0;
 
-    let rent_exemption_campain_account = Rent::get()?.minimum_balance(campain_account.data_len());
-    if **campain_account.try_borrow_lamports()? < (campain.goal + rent_exemption_campain_account) { 
+    let rent_exemption_campaign_account = Rent::get()?.minimum_balance(campaign_account.data_len());
+    if **campaign_account.try_borrow_lamports()? < (campaign.goal + rent_exemption_campaign_account) { 
         // If the goal was not reached, return the donation to the donor
-        **campain_account.try_borrow_mut_lamports()? -= donation_info.amount_donated;
+        **campaign_account.try_borrow_mut_lamports()? -= donation_info.amount_donated;
         **donor_account.try_borrow_mut_lamports()? += donation_info.amount_donated;
     }
 
