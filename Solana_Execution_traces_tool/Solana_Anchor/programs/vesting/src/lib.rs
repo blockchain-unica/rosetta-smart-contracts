@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-declare_id!("FvMZMkWVuSqmRkH3T31PQXd9cmzNNQUCTDzMcAmQQFW8");
+declare_id!("7Entw8xHcUfoMiKFaxpxN3FA7nFZ1ybabtgXNSsCTxkp");
 
 #[program]
 pub mod vesting {

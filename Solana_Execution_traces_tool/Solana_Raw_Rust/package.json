@@ -4,70 +4,67 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    
-    "add": "./add_use_case.sh",
-    
-    "build:simple_transfer": "cargo build-bpf --manifest-path=./contracts/simple_transfer/Cargo.toml --bpf-out-dir=contracts/dist/simple_transfer",
+    "build:simple_transfer": "cargo build-sbf --manifest-path=./contracts/simple_transfer/Cargo.toml --sbf-out-dir=contracts/dist/simple_transfer",
     "deploy:simple_transfer": "solana program deploy contracts/dist/simple_transfer/simple_transfer.so",
     "costs:simple_transfer": "ts-node execution_traces/simple_transfer_flow.ts",
     "clean:simple_transfer": "cargo clean --manifest-path=./contracts/simple_transfer/Cargo.toml && rm -rf ./contracts/dist/simple_transfer",
     
-    "build:htlc": "cargo build-bpf --manifest-path=./contracts/htlc/Cargo.toml --bpf-out-dir=contracts/dist/htlc",
+    "build:htlc": "cargo build-sbf --manifest-path=./contracts/htlc/Cargo.toml --sbf-out-dir=contracts/dist/htlc",
     "deploy:htlc": "solana program deploy contracts/dist/htlc/htlc.so",
     "costs:htlc": "ts-node execution_traces/htlc_flow.ts",
     "clean:htlc": "cargo clean --manifest-path=./contracts/htlc/Cargo.toml && rm -rf ./contracts/dist/htlc",
     
-    "build:token_transfer": "cargo build-bpf --manifest-path=./contracts/token_transfer/Cargo.toml --bpf-out-dir=contracts/dist/token_transfer",
+    "build:token_transfer": "cargo build-sbf --manifest-path=./contracts/token_transfer/Cargo.toml --sbf-out-dir=contracts/dist/token_transfer",
     "deploy:token_transfer": "solana program deploy contracts/dist/token_transfer/token_transfer.so",
     "costs:token_transfer": "ts-node execution_traces/token_transfer_flow.ts",
     "clean:token_transfer": "cargo clean --manifest-path=./contracts/token_transfer/Cargo.toml && rm -rf ./contracts/dist/token_transfer",
     
-    "build:simple_wallet": "cargo build-bpf --manifest-path=./contracts/simple_wallet/Cargo.toml --bpf-out-dir=contracts/dist/simple_wallet",
+    "build:simple_wallet": "cargo build-sbf --manifest-path=./contracts/simple_wallet/Cargo.toml --sbf-out-dir=contracts/dist/simple_wallet",
     "deploy:simple_wallet": "solana program deploy contracts/dist/simple_wallet/simple_wallet.so",
     "costs:simple_wallet": "ts-node execution_traces/simple_wallet_flow.ts",
     "clean:simple_wallet": "cargo clean --manifest-path=./contracts/simple_wallet/Cargo.toml && rm -rf ./contracts/dist/simple_wallet",
     
-    "build:vault": "cargo build-bpf --manifest-path=./contracts/vault/Cargo.toml --bpf-out-dir=contracts/dist/vault",
+    "build:vault": "cargo build-sbf --manifest-path=./contracts/vault/Cargo.toml --sbf-out-dir=contracts/dist/vault",
     "deploy:vault": "solana program deploy contracts/dist/vault/vault.so",
     "costs:vault": "ts-node execution_traces/vault_flow.ts",
     "clean:vault": "cargo clean --manifest-path=./contracts/vault/Cargo.toml && rm -rf ./contracts/dist/vault",
     
-    "build:storage": "cargo build-bpf --manifest-path=./contracts/storage/Cargo.toml --bpf-out-dir=contracts/dist/storage",
+    "build:storage": "cargo build-sbf --manifest-path=./contracts/storage/Cargo.toml --sbf-out-dir=contracts/dist/storage",
     "deploy:storage": "solana program deploy contracts/dist/storage/storage.so",
     "costs:storage": "ts-node execution_traces/storage_flow.ts",
     "clean:storage": "cargo clean --manifest-path=./contracts/storage/Cargo.toml && rm -rf ./contracts/dist/storage",
     
-    "build:escrow": "cargo build-bpf --manifest-path=./contracts/escrow/Cargo.toml --bpf-out-dir=contracts/dist/escrow",
+    "build:escrow": "cargo build-sbf --manifest-path=./contracts/escrow/Cargo.toml --sbf-out-dir=contracts/dist/escrow",
     "deploy:escrow": "solana program deploy contracts/dist/escrow/escrow.so",
     "costs:escrow": "ts-node execution_traces/escrow_flow.ts",
     "clean:escrow": "cargo clean --manifest-path=./contracts/escrow/Cargo.toml && rm -rf ./contracts/dist/escrow",
     
-    "build:crowdfund": "cargo build-bpf --manifest-path=./contracts/crowdfund/Cargo.toml --bpf-out-dir=contracts/dist/crowdfund",
+    "build:crowdfund": "cargo build-sbf --manifest-path=./contracts/crowdfund/Cargo.toml --sbf-out-dir=contracts/dist/crowdfund",
     "deploy:crowdfund": "solana program deploy contracts/dist/crowdfund/crowdfund.so",
     "costs:crowdfund": "ts-node execution_traces/crowdfund_flow.ts",
     "clean:crowdfund": "cargo clean --manifest-path=./contracts/crowdfund/Cargo.toml && rm -rf ./contracts/dist/crowdfund",
     
-    "build:vesting": "cargo build-bpf --manifest-path=./contracts/vesting/Cargo.toml --bpf-out-dir=contracts/dist/vesting",
+    "build:vesting": "cargo build-sbf --manifest-path=./contracts/vesting/Cargo.toml --sbf-out-dir=contracts/dist/vesting",
     "deploy:vesting": "solana program deploy contracts/dist/vesting/vesting.so",
     "costs:vesting": "ts-node execution_traces/vesting_flow.ts",
     "clean:vesting": "cargo clean --manifest-path=./contracts/vesting/Cargo.toml && rm -rf ./contracts/dist/vesting",
     
-    "build:auction": "cargo build-bpf --manifest-path=./contracts/auction/Cargo.toml --bpf-out-dir=contracts/dist/auction",
+    "build:auction": "cargo build-sbf --manifest-path=./contracts/auction/Cargo.toml --sbf-out-dir=contracts/dist/auction",
     "deploy:auction": "solana program deploy contracts/dist/auction/auction.so",
     "costs:auction": "ts-node execution_traces/auction_flow.ts",
     "clean:auction": "cargo clean --manifest-path=./contracts/auction/Cargo.toml && rm -rf ./contracts/dist/auction",
     
-    "build:tiny_amm": "cargo build-bpf --manifest-path=./contracts/tiny_amm/Cargo.toml --bpf-out-dir=contracts/dist/tiny_amm",
+    "build:tiny_amm": "cargo build-sbf --manifest-path=./contracts/tiny_amm/Cargo.toml --sbf-out-dir=contracts/dist/tiny_amm",
     "deploy:tiny_amm": "solana program deploy contracts/dist/tiny_amm/tiny_amm.so",
     "costs:tiny_amm": "ts-node execution_traces/tiny_amm_flow.ts",
     "clean:tiny_amm": "cargo clean --manifest-path=./contracts/tiny_amm/Cargo.toml && rm -rf ./contracts/dist/tiny_amm",
 
-    "build:payment_splitter": "cargo build-bpf --manifest-path=./contracts/payment_splitter/Cargo.toml --bpf-out-dir=contracts/dist/payment_splitter",
+    "build:payment_splitter": "cargo build-sbf --manifest-path=./contracts/payment_splitter/Cargo.toml --sbf-out-dir=contracts/dist/payment_splitter",
     "deploy:payment_splitter": "solana program deploy contracts/dist/payment_splitter/payment_splitter.so",
     "costs:payment_splitter": "ts-node execution_traces/payment_splitter_flow.ts",
     "clean:payment_splitter": "cargo clean --manifest-path=./contracts/payment_splitter/Cargo.toml && rm -rf ./contracts/dist/payment_splitter",
   
-    "build:oracle_bet": "cargo build-bpf --manifest-path=./contracts/oracle_bet/Cargo.toml --bpf-out-dir=contracts/dist/oracle_bet",
+    "build:oracle_bet": "cargo build-sbf --manifest-path=./contracts/oracle_bet/Cargo.toml --sbf-out-dir=contracts/dist/oracle_bet",
     "deploy:oracle_bet": "solana program deploy contracts/dist/oracle_bet/oracle_bet.so",
     "costs:oracle_bet": "ts-node execution_traces/oracle_bet_flow.ts",
     "clean:oracle_bet": "cargo clean --manifest-path=./contracts/oracle_bet/Cargo.toml && rm -rf ./contracts/dist/oracle_bet"

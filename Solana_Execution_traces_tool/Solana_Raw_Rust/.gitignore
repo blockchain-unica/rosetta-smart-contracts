@@ -2,6 +2,8 @@
 
 Costs.md
 
+contracts/*/target
+
 # dependencies
 /node_modules
 /.pnp

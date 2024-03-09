@@ -1,6 +1,7 @@
 [features]
 seeds = true
 skip-lint = false
+
 [programs.localnet]
 auction = "39Cadm14PBnnAJ1LZA61v6zFXT9PNHrhKe9dDd2yg6un"
 crowdfund = "8Bk7qQpQxqBz5XVX3LqV3vbpnNuZLhCnKq316UHThMHV"
@@ -14,13 +15,28 @@ storage = "2ZE5N8rTU2S2GUuQGX8ZsBAraByUqD37hYP8pz1hYLLJ"
 tiny_amm = "ADY3EuA5hCthUru7JDWrTB1CqqxZxthZGWmvYGUw96rn"
 token_transfer = "CxkwtHKHwiLRHZgPVrjc2QALiiCEK2xTu25rN5wWh9Fc"
 vault = "7BEre5a4UcJpNUzmoJvxUcWpaw4LrYE8pVhmLxWDrqsS"
-vesting = "FvMZMkWVuSqmRkH3T31PQXd9cmzNNQUCTDzMcAmQQFW8"
+vesting = "7Entw8xHcUfoMiKFaxpxN3FA7nFZ1ybabtgXNSsCTxkp"
+
+[programs.devnet]
+auction = "39Cadm14PBnnAJ1LZA61v6zFXT9PNHrhKe9dDd2yg6un"
+crowdfund = "8Bk7qQpQxqBz5XVX3LqV3vbpnNuZLhCnKq316UHThMHV"
+escrow = "E7zX6apL8gud4oaHNU7gnD5akFnsZDsgcdNupadQvXXb"
+htlc = "8kEhcRuAY94LejWbHkNtyS854NULabvDqL65qGoiF7VV"
+oracle_bet = "Af66eBB9urMrYPgLR3RKBhyrQd5HWj3cYXC1nNUe2ma5"
+payment_splitter = "2NpQpiMnHxzpYrtixekkjhbbkTREzFMg5mn6U66YAGfT"
+simple_transfer = "GTqxqnSdEu5SjyhGjfAUvozmojYSxdE3uSPr6u9HYkqJ"
+simple_wallet = "KpUxvh3VECWL7eX6j3hZ8kwD9knm25KfFCk9yUSxX3U"
+storage = "2ZE5N8rTU2S2GUuQGX8ZsBAraByUqD37hYP8pz1hYLLJ"
+tiny_amm = "ADY3EuA5hCthUru7JDWrTB1CqqxZxthZGWmvYGUw96rn"
+token_transfer = "CxkwtHKHwiLRHZgPVrjc2QALiiCEK2xTu25rN5wWh9Fc"
+vault = "7BEre5a4UcJpNUzmoJvxUcWpaw4LrYE8pVhmLxWDrqsS"
+vesting = "7Entw8xHcUfoMiKFaxpxN3FA7nFZ1ybabtgXNSsCTxkp"
 
 [registry]
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "Localnet"
+cluster = "devnet"
 wallet = "/Users/vtkachenko/.config/solana/id.json"
 
 [scripts]

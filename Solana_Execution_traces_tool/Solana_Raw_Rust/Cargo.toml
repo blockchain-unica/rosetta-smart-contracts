@@ -1,9 +1,0 @@
-[workspace]
-
-members = [
-    "contracts/*",
-]
-
-exclude = [
-    "contracts/dist/"
-]
