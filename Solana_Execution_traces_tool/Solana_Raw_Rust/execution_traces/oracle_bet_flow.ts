@@ -57,7 +57,7 @@ async function main() {
     console.log("All participants join and the oracle choses the winner");
 
     console.log("\n--- Initialize. ---");
-    const contractStoragePubKey = await initialize(
+    await initialize(
         connection,
         programId,
         kpOracle,
@@ -73,7 +73,7 @@ async function main() {
         programId,
         kpParticipant1,
         kpParticipant2,
-        contractStoragePubKey,
+        kpOracle.publicKey,
     );
 
     const winnerPubKey = kpParticipant1.publicKey;
@@ -82,7 +82,6 @@ async function main() {
         connection,
         programId,
         kpOracle,
-        contractStoragePubKey,
         winnerPubKey,
     );
 
@@ -97,7 +96,7 @@ async function main() {
     console.log("All participants join and the oracle does not set the winner");
 
     console.log("\n--- Initialize. ---");
-    const contractStoragePubKey2 = await initialize(
+    await initialize(
         connection,
         programId,
         kpOracle,
@@ -113,7 +112,7 @@ async function main() {
         programId,
         kpParticipant1,
         kpParticipant2,
-        contractStoragePubKey2,
+        kpOracle.publicKey,
     );
 
     console.log('\n--- Oracle does not set the result. ---');
@@ -132,7 +131,6 @@ async function main() {
         kpOracle,
         kpParticipant1.publicKey,
         kpParticipant2.publicKey,
-        contractStoragePubKey2,
     );
 }
 
@@ -152,11 +150,11 @@ async function initialize(
     participant2PubKey: PublicKey,
     deadline: number,
     wagerInLamports: number,
-): Promise<PublicKey> {
+): Promise<void> {
 
     console.log('The oracle starts the game setting a deadline to', deadline, ' and a wager of', wagerInLamports, 'lamports');
 
-    const contractStoragePubKey = await getPDA(programId, kpOracle.publicKey);
+    const contractStoragePubKey = getPDA(programId, kpOracle.publicKey);
 
     interface Settings { action: number, deadline: number, wagerInLamports: number }
     const layout = BufferLayout.struct<Settings>([BufferLayout.u8("action"), BufferLayout.nu64("deadline"), BufferLayout.nu64("wagerInLamports")]);
@@ -182,8 +180,6 @@ async function initialize(
     totalFees += tFees;
     console.log('    Transaction hash: ', signature);
     console.log('    Transaction fees: ', tFees / LAMPORTS_PER_SOL, 'SOL');
-
-    return contractStoragePubKey;
 }
 
 async function join(
@@ -191,8 +187,11 @@ async function join(
     programId: PublicKey,
     kpParticipant1: Keypair,
     kpParticipant2: Keypair,
-    contractStoragePubKey: PublicKey,
+    oraclePublicKey: PublicKey,
 ) {
+
+    const contractStoragePubKey = getPDA(programId, oraclePublicKey);
+
     const joinInstruction = new TransactionInstruction({
         programId: programId,
         keys: [
@@ -220,9 +219,11 @@ async function win(
     connection: Connection,
     programId: PublicKey,
     kpOracle: Keypair,
-    contractStoragePubKey: PublicKey,
     winner: PublicKey,
 ) {
+
+    const contractStoragePubKey = getPDA(programId, kpOracle.publicKey);
+
     const setResultInstruction = new TransactionInstruction({
         programId: programId,
         keys: [
@@ -249,8 +250,10 @@ async function timeout(
     kpOracle: Keypair,
     participant1PubKey: PublicKey,
     participant2PubKey: PublicKey,
-    contractStoragePubKey: PublicKey,
 ) {
+
+    const contractStoragePubKey = getPDA(programId, kpOracle.publicKey);
+    
     const transaction = new Transaction().add(
          new TransactionInstruction({
         programId: programId,
@@ -271,8 +274,8 @@ async function timeout(
     console.log('    Transaction fees: ', tFees / LAMPORTS_PER_SOL, 'SOL');
 }
 
-async function getPDA(programId: PublicKey, oraclePubkey: PublicKey): Promise<PublicKey> {
-    const [pda] = await PublicKey.findProgramAddress(
+function getPDA(programId: PublicKey, oraclePubkey: PublicKey): PublicKey {
+    const [pda] = PublicKey.findProgramAddressSync(
         [Buffer.from(SEED_FOR_PDA), oraclePubkey.toBuffer()],
         programId
     );

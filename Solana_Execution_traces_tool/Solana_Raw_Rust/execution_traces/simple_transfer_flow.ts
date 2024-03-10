@@ -135,7 +135,7 @@ async function deposit(
     });
 
     const data = borsh.serialize(DonationDetails.schema, donation);
-    const data_to_send = Buffer.from(new Uint8Array([Action.Deposit, ...data]));
+    const dataToSend = Buffer.from(new Uint8Array([Action.Deposit, ...data]));
 
     const SEED = "abcdef" + Math.random().toString();
     const writingAccountPublicKey = await PublicKey.createWithSeed(
@@ -163,7 +163,7 @@ async function deposit(
             { pubkey: kpSender.publicKey, isSigner: true, isWritable: false },
         ],
         programId,
-        data: data_to_send,
+        data: dataToSend,
     })
 
     const transactionDeposit = new Transaction().add(

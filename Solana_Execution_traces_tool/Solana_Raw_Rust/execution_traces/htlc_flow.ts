@@ -41,14 +41,12 @@ class HTLCInfo {
         owner: Buffer,
         verifier: Buffer,
         hashed_secret: Buffer,
-        delay: number,
         reveal_timeout: number,
     } | undefined = undefined) {
         if (fields) {
             this.owner = fields.owner;
             this.verifier = fields.verifier;
             this.hashed_secret = fields.hashed_secret;
-            this.delay = fields.delay;
             this.reveal_timeout = fields.reveal_timeout;
         }
     }
@@ -59,7 +57,6 @@ class HTLCInfo {
                 ['owner', [32]],
                 ['verifier', [32]],
                 ['hashed_secret', [32]],
-                ['delay', 'u64'],
                 ['reveal_timeout', 'u64'],
             ]
         }],
@@ -81,7 +78,7 @@ async function main() {
     const kpVerifier = await generateKeyPair(connection, 1);
 
     await printParticipants(connection, programId, [
-        ["owner", kpOwner.publicKey], 
+        ["owner", kpOwner.publicKey],
         ["verifier", kpVerifier.publicKey],
     ]);
 
@@ -93,7 +90,7 @@ async function main() {
     let hashed_secret = await keccak256FromString(secret);
     let delaySlots = 100;
 
-    let writingAccountPublicKey = await initialize(
+    await initialize(
         connection,
         programId,
         kpOwner,
@@ -114,7 +111,7 @@ async function main() {
         connection,
         programId,
         kpOwner,
-        writingAccountPublicKey,
+        kpVerifier.publicKey,
         secret);
 
     let feesForOwnerTrace1 = feesForOwner;
@@ -127,7 +124,7 @@ async function main() {
     /******************* Trace 2 *********************/
     console.log("\n---       Trace 2       ---");
     console.log("The owner submits the secret, setting a deadline of 100 rounds");
-    writingAccountPublicKey = await initialize(
+    await initialize(
         connection,
         programId,
         kpOwner,
@@ -147,8 +144,8 @@ async function main() {
     await timeout(
         connection,
         programId,
-        kpVerifier,
-        writingAccountPublicKey);
+        kpOwner,
+        kpVerifier.publicKey);
 
     let feesForOwnerTrace2 = feesForOwner;
     let feesForVerifierTrace2 = feesForVerifier;
@@ -160,11 +157,11 @@ async function main() {
     console.log("\n........");
     console.log("\nTrace 1");
     console.log("Fees for owner:          ", feesForOwnerTrace1 / LAMPORTS_PER_SOL, "SOL");
-    console.log("Fees for recipient:      ", feesForVerifierTrace1 / LAMPORTS_PER_SOL, "SOL");
+    console.log("Fees for verifier:      ", feesForVerifierTrace1 / LAMPORTS_PER_SOL, "SOL");
     console.log("Total fees for Trace 1:  ", (feesForOwnerTrace1 + feesForVerifierTrace1) / LAMPORTS_PER_SOL, "SOL");
     console.log("\nTrace 2");
     console.log("Fees for owner:          ", feesForOwnerTrace2 / LAMPORTS_PER_SOL, "SOL");
-    console.log("Fees for recipient:      ", feesForVerifierTrace2 / LAMPORTS_PER_SOL, "SOL");
+    console.log("Fees for verifier:      ", feesForVerifierTrace2 / LAMPORTS_PER_SOL, "SOL");
     console.log("Total fees for Trace 2:  ", (feesForOwnerTrace2 + feesForVerifierTrace2) / LAMPORTS_PER_SOL, "SOL");
 
 }
@@ -180,78 +177,64 @@ main().then(
 async function initialize(
     connection: Connection,
     programId: PublicKey,
-    kpSender: Keypair,
-    kpRecipient: PublicKey,
+    kpOwner: Keypair,
+    verifierPublickey: PublicKey,
     hashedBuffer: Buffer,
     delay: number,
-): Promise<PublicKey> {
+): Promise<void> {
+    const currentSlot = await connection.getSlot();
+
     let htlcInfo = new HTLCInfo({
-        owner: kpSender.publicKey.toBuffer(),
-        verifier: kpRecipient.toBuffer(),
+        owner: kpOwner.publicKey.toBuffer(),
+        verifier: verifierPublickey.toBuffer(),
         hashed_secret: Buffer.from(new Uint8Array(hashedBuffer)),
-        delay,
-        reveal_timeout: 0,
+        reveal_timeout: delay + currentSlot
     });
 
     let data = borsh.serialize(HTLCInfo.schema, htlcInfo);
-    let data_to_send = Buffer.from(new Uint8Array([Action.Initialize, ...data]));
+    let dataToSend = Buffer.from(new Uint8Array([Action.Initialize, ...data]));
 
-    const SEED = "abcdef" + Math.random().toString();
-    const writingAccountPublicKey = await PublicKey.createWithSeed(
-        kpSender.publicKey,
-        SEED,
-        programId,
-    );
+    const htlcInfoPublickey = getHTLCInfoPDA(programId, kpOwner.publicKey, verifierPublickey);
 
-    // Instruction to create the Writing Account account
-    const rentExemptionAmount = await connection.getMinimumBalanceForRentExemption(data.length);
-    const createWritingAccountInstruction = SystemProgram.createAccountWithSeed({
-        fromPubkey: kpSender.publicKey,
-        basePubkey: kpSender.publicKey,
-        seed: SEED,
-        newAccountPubkey: writingAccountPublicKey,
-        lamports: rentExemptionAmount + minimumAmount,
-        space: data.length,
-        programId: programId,
-    });
+    const initTransaction = new Transaction().add(
+        new TransactionInstruction({
+            keys: [
+                { pubkey: kpOwner.publicKey, isSigner: true, isWritable: false },
+                { pubkey: verifierPublickey, isSigner: false, isWritable: false},
+                { pubkey: htlcInfoPublickey, isSigner: false, isWritable: true },
+                { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+            ],
+            programId,
+            data: dataToSend,
+        }));
 
-    let initInstruction = new TransactionInstruction({
-        keys: [
-            { pubkey: kpSender.publicKey, isSigner: true, isWritable: false },
-            { pubkey: writingAccountPublicKey, isSigner: false, isWritable: true },
-        ],
-        programId,
-        data: data_to_send,
-    })
-
-    // Instruction to the program
-    const initTransaction = new Transaction().add(createWritingAccountInstruction).add(initInstruction);
-    await sendAndConfirmTransaction(connection, initTransaction, [kpSender]);
+    await sendAndConfirmTransaction(connection, initTransaction, [kpOwner]);
 
     let tFees = await getTransactionFees(initTransaction, connection);
     feesForOwner += tFees;
     console.log('   Transaction fees: ', tFees / LAMPORTS_PER_SOL, 'SOL');
-
-    return writingAccountPublicKey;
 }
 
 async function reveal(
     connection: Connection,
     programId: PublicKey,
-    kpSender: Keypair,
-    writingAccountPublicKey: PublicKey,
+    kpOwner: Keypair,
+    verifierPublickey: PublicKey,
     secret: string) {
+
+    const htlcInfoPublickey = getHTLCInfoPDA(programId, kpOwner.publicKey, verifierPublickey);
 
     const revealTransaction = new Transaction().add(
         new TransactionInstruction({
             keys: [
-                { pubkey: kpSender.publicKey, isSigner: true, isWritable: false },
-                { pubkey: writingAccountPublicKey, isSigner: false, isWritable: true },
+                { pubkey: kpOwner.publicKey, isSigner: true, isWritable: false },
+                { pubkey: htlcInfoPublickey, isSigner: false, isWritable: true },
+                { pubkey: verifierPublickey, isSigner: false, isWritable: false },
             ],
             programId,
             data: Buffer.from(new Uint8Array([Action.Reveal, ...Buffer.from(secret)]))
         }));
-    await sendAndConfirmTransaction(connection, revealTransaction, [kpSender]);
+    await sendAndConfirmTransaction(connection, revealTransaction, [kpOwner]);
 
     let tFees = await getTransactionFees(revealTransaction, connection);
     feesForOwner += tFees;
@@ -261,24 +244,34 @@ async function reveal(
 async function timeout(
     connection: Connection,
     programId: PublicKey,
-    kpVerifier: Keypair,
-    writingAccountPublicKey: PublicKey) {
+    kpOwner: Keypair,
+    verifierPublicKey: PublicKey,) {
 
-    let data_to_send = Buffer.from(new Uint8Array([Action.Timeout]));
+    let dataToSend = Buffer.from(new Uint8Array([Action.Timeout]));
+
+    const htlcInfoPublickey = getHTLCInfoPDA(programId, kpOwner.publicKey, verifierPublicKey);
 
     const revealTransaction = new Transaction().add(
         new TransactionInstruction({
             keys: [
-                { pubkey: writingAccountPublicKey, isSigner: false, isWritable: true },
-                { pubkey: kpVerifier.publicKey, isSigner: true, isWritable: false },
-                { pubkey: kpVerifier.publicKey, isSigner: false, isWritable: true },
+                { pubkey: htlcInfoPublickey, isSigner: false, isWritable: true },
+                { pubkey: kpOwner.publicKey, isSigner: true, isWritable: false },
+                { pubkey: verifierPublicKey, isSigner: false, isWritable: true },
             ],
             programId,
-            data: data_to_send,
+            data: dataToSend,
         }));
-    await sendAndConfirmTransaction(connection, revealTransaction, [kpVerifier]);
+    await sendAndConfirmTransaction(connection, revealTransaction, [kpOwner]);
 
     let tFees = await getTransactionFees(revealTransaction, connection);
     feesForVerifier += tFees;
     console.log('   Transaction fees: ', tFees / LAMPORTS_PER_SOL, 'SOL');
+}
+
+function getHTLCInfoPDA(programId: PublicKey, ownerPubKey: PublicKey, verifierPubKey: PublicKey): PublicKey {
+    const [pda] = PublicKey.findProgramAddressSync(
+        [ownerPubKey.toBuffer(), verifierPubKey.toBuffer()],
+        programId
+    );
+    return pda;
 }

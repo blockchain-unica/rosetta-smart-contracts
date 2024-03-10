@@ -182,7 +182,7 @@ async function initialize(
     duration: number,
     amount: number,
 ): Promise<void> {
-    const vestingInfoAccountPublicKey = await getVestingPDA(programId, kpFunder.publicKey, beneficiaryPublicKey);
+    const vestingInfoAccountPublicKey = getVestingPDA(programId, kpFunder.publicKey, beneficiaryPublicKey);
 
     interface Settings { action: number, start: number, duration: number, amount: number}
     const layout = BufferLayout.struct<Settings>([BufferLayout.u8("action"), BufferLayout.nu64("start"), BufferLayout.nu64("duration"), BufferLayout.nu64("amount")]);
@@ -215,7 +215,7 @@ async function release(
     kpBeneficiary: Keypair,
     funderPublicKey: PublicKey,
 ): Promise<void> {
-    const vestingInfoAccountPublicKey = await getVestingPDA(programId, funderPublicKey, kpBeneficiary.publicKey);
+    const vestingInfoAccountPublicKey = getVestingPDA(programId, funderPublicKey, kpBeneficiary.publicKey);
 
     // Deserialize the data from the vestingInfoAccountPublicKey to get the funder's public key
     const accountInfo = await connection.getAccountInfo(vestingInfoAccountPublicKey);
@@ -243,8 +243,8 @@ async function release(
     console.log('    Transaction fees: ', tFees / LAMPORTS_PER_SOL, 'SOL');
 }
 
-async function getVestingPDA(programId: PublicKey, funderPubKey: PublicKey, beneficiaryPubKey: PublicKey): Promise<PublicKey> {
-    const [pda] = await PublicKey.findProgramAddress(
+function getVestingPDA(programId: PublicKey, funderPubKey: PublicKey, beneficiaryPubKey: PublicKey): PublicKey {
+    const [pda] = PublicKey.findProgramAddressSync(
         [Buffer.from(SEED_FOR_VESTING), funderPubKey.toBuffer(), beneficiaryPubKey.toBuffer()],
         programId
     );

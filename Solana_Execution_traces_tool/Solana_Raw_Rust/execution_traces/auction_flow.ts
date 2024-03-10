@@ -168,7 +168,7 @@ async function start(
 
     console.log('    Starting amount: ', starting_bid / LAMPORTS_PER_SOL, 'SOL');
 
-    const auctionPDA = await getAuctionPDA(programId, kpSeller.publicKey, auctionName);
+    const auctionPDA = getAuctionPDA(programId, kpSeller.publicKey, auctionName);
 
     const auctionState = new AuctionState({
         auction_name: auctionName,
@@ -209,7 +209,7 @@ async function bid(
 
     console.log('    Amount: ', amountToDeposit / LAMPORTS_PER_SOL, 'SOL');
 
-    const auctionPDA = await getAuctionPDA(programId, sellerPubKey, auctionName);
+    const auctionPDA = getAuctionPDA(programId, sellerPubKey, auctionName);
 
     const stateAccountInfo = await connection.getAccountInfo(auctionPDA);
     if (stateAccountInfo === null) {
@@ -246,7 +246,7 @@ async function end(
     kpSeller: Keypair,
     auctionName: string,
 ): Promise<void> {
-    const auctionPDA = await getAuctionPDA(programId, kpSeller.publicKey, auctionName);
+    const auctionPDA = getAuctionPDA(programId, kpSeller.publicKey, auctionName);
 
     const transaction = new Transaction().add(
         new TransactionInstruction({
@@ -266,10 +266,10 @@ async function end(
     console.log('    Transaction fees: ', tFees / LAMPORTS_PER_SOL, 'SOL');
 }
 
-async function getAuctionPDA(programId: PublicKey, ownerPubKey: PublicKey, auctionName: string): Promise<PublicKey> {
-    const [pda] = await PublicKey.findProgramAddress(
+function getAuctionPDA(programId: PublicKey, ownerPubKey: PublicKey, auctionName: string): PublicKey {
+    const [pda] = PublicKey.findProgramAddressSync(
         [Buffer.from(SEED_FOR_AUCTION + auctionName), ownerPubKey.toBuffer()],
         programId
-    );
+      );
     return pda;
 }
