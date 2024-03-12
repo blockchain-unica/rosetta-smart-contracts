@@ -1,22 +1,31 @@
 # Bet
 
-## Specification	// alvi: questa specifica non menziona i nomi delle funzioni richieste; la cosa è un po' inconsistente
-
+## Specification
 The Bet contract involves two players and an oracle. 
-At construction, a deadline is set to the current block height plus 1000, and the address of an oracle is specified.	// alvi: la deadline col block height mi sembra poco generica
+At construction, the contract creation must specify:
+**deadline** is set to the current block height plus 1000, 
+**oracle** the address of an oracle is specified.	
+// alvi: la deadline col block height mi sembra poco generica
 
-The players join the contract by depositing 1 token unit each.
-
-At this point, the oracle is expected to determine the winner between the two players.
+After creation, the following actions are possible: 
+**join**: the two players join the contract by depositing 1 token unit each.
+**win**: after the join, the oracle is expected to determine the winner between the two players.
 The winner can redeem the whole pot of 2 token units.
-
-If the oracle does not choose the winner by the deadline,
+**timeout** If the oracle does not choose the winner by the deadline,
 then both players can redeem their bets, withdrawing 1 token units each.
+
+
+## Features 
+**multi-signature** the two players join the contract with the same transaction.
+**time lock**  (?) TODO
+**native transfer** (?) TODO 
 
 ## Implementations
 
 - **Solidity/Ethereum**: since the platform does not support multi-signature verification, the join is split in two actions: the first player acts first, by depositing 1 ETH. After that, the second player joins by depositing 1 ETH.
 // alvi: solidity ha 2 versioni della bet; solo la 2 mi sembra aderente, direi di togliere la 1.
+// Andrea: sì concordo... Comunque secondo me meglio non perderle (questa e altri eventuali casi simili) 
+// e al limite, se ne vale la pena, riadattarle alla specifica 
 
 - **Anchor/Solana**: a step has been added for initializing the data of the bet contract (buyer, seller, amount, etc.).
 - **Aiken/Cardano**: since we cannot access the current block height where the transaction is being validated, the deadline is represented as a UNIX timestamp, which is checked against the lowest bound of the transaction's validity interval.
