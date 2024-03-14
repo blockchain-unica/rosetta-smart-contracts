@@ -18,9 +18,9 @@ then both players can redeem their bets, withdrawing 1 token units each.
 
 
 ## Features 
-**multi-signature** the two players join the contract with the same transaction.
-**gossip**  the contract access the block height when timeout is called
-**native asset transfer** the contract transfers native currency to a user's address 
+- **Multi-signature**: the two players join together and deposit tokens with the same transaction.
+- **Gossip**:  the contract access the block height when timeout is called
+- **Native asset transfer**: the contract transfers native currency to a user's address 
 
 ## Implementations
 - **Solidity/Ethereum**: since the platform does not support multi-signature verification, the join is split in two actions: the first player acts first, by depositing 1 ETH. After that, the second player joins by depositing 1 ETH.
