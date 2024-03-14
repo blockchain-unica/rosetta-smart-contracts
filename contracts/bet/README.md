@@ -3,17 +3,17 @@
 ## Specification
 The Bet contract involves two players and an oracle. 
 At construction, the contract creation must specify:
-**deadline** is set to the current block height plus 1000, 
-**oracle** the address of an oracle is specified.	
+- **deadline** is set to the current block height plus 1000, 
+- **oracle** the address of an oracle is specified.	
 // alvi: la deadline col block height mi sembra poco generica
 // Andrea: si potrebbe usare un timestamp ma così non si mostra 
 // il problema di Cardano che non può accedere all'altezza dei blocchi
 
 After creation, the following actions are possible: 
-**join**: the two players join the contract by depositing 1 token unit each.
-**win**: after the join, the oracle is expected to determine the winner between the two players.
+- **join**: the two players join the contract by depositing 1 token unit each.
+- **win**: after the join, the oracle is expected to determine the winner between the two players.
 The winner can redeem the whole pot of 2 token units.
-**timeout** If the oracle does not choose the winner by the deadline,
+- **timeout** If the oracle does not choose the winner by the deadline,
 then both players can redeem their bets, withdrawing 1 token units each.
 
 
