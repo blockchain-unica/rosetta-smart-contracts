@@ -29,6 +29,12 @@ allows one action:
 beneficiary the amount of the remaining 
 vested amount 
 
+## Expected Features
+
+- Asset transfer
+- Abort conditions
+- (External) contract call
+
 ## Implementations
 
 - **Solidity/Ethereum**: implementation coherent with the specification.

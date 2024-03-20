@@ -16,6 +16,12 @@ sequence of bytes (1 to 5 bytes, 128 bytes);
 to store a string of arbitrary 
 length (1 to 5 simple characters, 128 simple characters).
 
+
+## Expected Features
+
+- Dynamic data structures
+- Bitstring operations
+
 ## Implementations
 
 - **Solidity/Ethereum**: implementation coherent with the specification.

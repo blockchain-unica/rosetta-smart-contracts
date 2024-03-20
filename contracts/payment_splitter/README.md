@@ -10,6 +10,14 @@ The distribution of shares is set at the time of contract deployment and can't b
 
 PaymentSplitter follows a pull payment model. This means that payments are not automatically forwarded to the accounts but kept in this contract, and the actual transfer is triggered as a separate step by calling the release() function.
 
+
+## Expected Features
+
+- Asset transfer
+- Abort conditions
+- (External) contract call
+- Dynamic data structures
+
 ## Implementations
 
 - **Solidity/Ethereum**: 

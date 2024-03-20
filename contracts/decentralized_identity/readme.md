@@ -44,6 +44,15 @@ and the validity, namely the number of blocks for which the delegation is valid.
 - **Delegate validity check**. Actor: Owner2
 Using validDelegate, this action verifies that the delegation is valid within the validity term and not valid beyond the validity term.
 
+
+## Expected Features
+
+- Abort conditions
+- Hash
+- Versig on arbitrary messages
+- Dynamic data structures
+
+
 ## Implementations
 
 - **Solidity/Ethereum**: 

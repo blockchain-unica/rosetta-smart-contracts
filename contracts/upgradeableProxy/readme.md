@@ -19,6 +19,12 @@ the logic inside the Logic contract. In particular, the function *check* of the 
 returns *true* if the balance of the contract passed as an argument is lower than 100.
 - **TheProxy.upgradeTo** allows the user to pass the address of the new implementation of Logic.
 
+## Expected Features
+- Abort conditions
+- (External) contract call
+- Check if sender is contract
+- Context-preserving call
+- Dynamic data structures
 
 ## Implementations
 

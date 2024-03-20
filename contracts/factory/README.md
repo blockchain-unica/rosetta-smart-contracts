@@ -24,6 +24,14 @@ Product contract.
 of the Factory contract that generated the 
 Product.
 
+
+## Expected Features
+
+- Abort conditions
+- (External) contract call
+- In-contract deploy
+- Check if sender is contract
+- 
 ## Implementations
 
 - **Solidity/Ethereum**: implementation coherent with the specification.

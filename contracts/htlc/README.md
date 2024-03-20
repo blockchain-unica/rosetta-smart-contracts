@@ -16,6 +16,15 @@ After contract creation, the HTLC allows two actions:
 and tranfers the whole contract balance to the committer;
 - **timeout**, which can be called only after the deadline, and tranfers the whole contract balance to the receiver.
 
+## Expected Features
+
+- Asset transfer
+- Time constraints
+- Abort conditions
+- (External) contract call
+- Hash
+
+
 ## Implementations
 
 - **Solidity/Ethereum**: implementation coherent with the specification.

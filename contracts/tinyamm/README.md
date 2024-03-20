@@ -32,6 +32,11 @@ address. The token balances in the liquidity pool, represented by `r0` and
 that the contract holds the correct balances of `t0` and `t1` tokens to
 maintain the integrity of the exchange.
 
+## Expected Features
+- Asset transfer
+- Abort conditions
+- (External) contract call
+
 ## Implementations
 
 - **Solidity/Ethereum**: 

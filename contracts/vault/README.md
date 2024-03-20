@@ -14,6 +14,12 @@ When users want to withdraw from a vault, they must first issue a request.
 The withdrawal is finalized only after the wait time has passed since the request.
 During the wait time, the request can be cancelled by using a recovery key.
 
+## Expected Features
+
+- Asset transfer
+- Abort conditions
+- (External) contract call
+
 ## Implementations
 
 - **Solidity/Ethereum**: the waiting time is calculated based on the current block number. However, the block timestamp can be used instead.

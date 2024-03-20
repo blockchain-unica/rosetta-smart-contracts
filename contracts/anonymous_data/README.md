@@ -22,6 +22,13 @@ After creation, the following sequence of actions is possible:
 - **Create ID**. Actor: Owner1.
 -  ...
 
+## Expected Features
+
+- Abort conditions
+- Hash
+- Dynamic data structures
+
+
 ## Implementations
 
 - **Solidity/Ethereum**: 

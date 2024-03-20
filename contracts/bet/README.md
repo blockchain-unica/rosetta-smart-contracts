@@ -17,12 +17,15 @@ The winner can redeem the whole pot of 2 token units.
 then both players can redeem their bets, withdrawing 1 token units each.
 
 
-## Features 
-- **Multi-signature**: the two players join together and deposit tokens with the same transaction.
-- **Gossip**:  the contract access the block height when timeout is called
-- **Native asset transfer**: the contract transfers native currency to a user's address 
+## Expected Features
+
+- Asset transfer
+- Multisig
+- Time constraints
+
 
 ## Implementations
+
 - **Solidity/Ethereum**: since the platform does not support multi-signature verification, the join is split in two actions: the first player acts first, by depositing 1 ETH. After that, the second player joins by depositing 1 ETH.
 - **Anchor/Solana**: a step has been added for initializing the data of the bet contract (buyer, seller, amount, etc.).
 - **Aiken/Cardano**: since we cannot access the current block height where the transaction is being validated, the deadline is represented as a UNIX timestamp, which is checked against the lowest bound of the transaction's validity interval.

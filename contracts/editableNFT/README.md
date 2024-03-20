@@ -24,6 +24,14 @@ to transfer the ownership of the token with ID 1 to Owner2.
 This action is intended to allow the current owner to seal a specific token.
 Owner2 seals a token by passing the token ID of the token he wants to seal.
 
+
+## Expected Features
+
+- Custom NFT
+- Abort conditions
+- Dynamic data structures
+
+
 ## Implementations
 
 - **Solidity/Ethereum**: the token is implemented by importing an Openzeppelin ERC721 token.

@@ -22,6 +22,14 @@ if this is not the currently highest one.
 - **end**: after the deadline, the seller ends the auction
 and withdraws the highest bid.
 
+## Expected Features
+
+- Asset transfer
+- Time constraints
+- Abort conditions
+- (External) contract call
+
+
 ## Implementations
 
 - **Solidity/Ethereum**: implementation coherent with the specification.

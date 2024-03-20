@@ -37,6 +37,14 @@ in this case, the contract issues a
 refund,transferring back the whole 
 contract balance to the buyer.
 
+## Expected Features
+
+- Asset transfer
+- Abort conditions
+- (External) contract call
+
+
+
 ## Implementations
 
 - **Solidity/Ethereum**: implementation coherent with the specification.

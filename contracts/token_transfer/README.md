@@ -14,6 +14,11 @@ in the contract;
 - **withdraw**, which allows the receiver to withdraw 
 any amount of the token deposited in the contract.
 
+## Expected Features
+
+- Asset transfer
+- Abort conditions
+
 ## Implementations
 
 - **Solidity/Ethereum**: the token is implemented by importing an Openzeppelin ERC20 token. 

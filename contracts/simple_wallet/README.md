@@ -35,6 +35,15 @@ ID exists and has not yet been executed;
 - **withdraw**,  with which the owner can withdraw the 
 balance of the contract, emptying it.
 
+## Expected Features
+
+- Asset transfer
+- Abort conditions
+- (External) contract call
+- Dynamic data structures
+
+
+
 ## Implementations
 
 - **Solidity/Ethereum**: implementation coherent with the specification.
