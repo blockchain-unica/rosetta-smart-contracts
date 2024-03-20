@@ -21,11 +21,26 @@ to delete the sequence of transactions and remove the seal
 (the owner can then use the contract for 
 another atomic sequence of transactions).
 
+## Expected Features
+
+- Abort conditions
+- Transaction batches
+- Hash
+- Versig on arbitrary messages
+
 ## Implementations
 
-- **Solidity/Ethereum**: implementation coherent with the specification.
+- **Solidity/Ethereum**: implementation coherent with the specification. Uses all features.
 - **Anchor/Solana**: natively supported via a list of contract calls in the transaction.
 - **Aiken/Cardano**:
 - **PyTeal/Algorand**:
 - **SmartPy/Tezos**:
+
+// qui sotto una ipotesi di formato più strutturato per ogni piattaforma.
+// Pro: le feature usate nella tal piattaforma sono in forma di elenco (un sottoinsieme di quelle in cima a questo file)
+// Contro: per spiegare come mai si sono usate certe e non altre bisogna cmq ricorrere ad una riga di commento che spieghi in inglese discorsivo le scelte e le motivazioni fatte.
+// Allora a questo punto, perché non lasciare solamente una riga di commento libero ma che spiega tutto per bene?
+
 - **Move/Aptos**:
+        *Features*: Transaction batches, Versig on arbitrary messages.
+		*Comment*: atomic transactions are natively supported by the Aptos framework API.
