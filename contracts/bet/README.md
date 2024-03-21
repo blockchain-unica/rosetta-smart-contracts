@@ -3,11 +3,8 @@
 ## Specification
 The Bet contract involves two players and an oracle. 
 At construction, the contract creation must specify:
-- **deadline** is set to the current block height plus 1000, 
-- **oracle** the address of an oracle is specified.	
-// alvi: la deadline col block height mi sembra poco generica
-// Andrea: si potrebbe usare un timestamp ma così non si mostra 
-// il problema di Cardano che non può accedere all'altezza dei blocchi
+- **deadline**: a time limit is specified  (e.g. block height plus 1000), 
+- **oracle**: the address of an oracle (a user account) is specified.	
 
 After creation, the following actions are possible: 
 - **join**: the two players join the contract by depositing 1 token unit each.
