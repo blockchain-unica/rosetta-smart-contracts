@@ -51,5 +51,5 @@ contract balance to the buyer.
 - **Anchor/Solana**: a step has been added for initializing the data of the escrow (buyer, seller, amount, etc.).
 - **Aiken/Cardano**: implementation coherent with the specification.
 - **PyTeal/Algorand**: implementation coherent with the specification.
-- **SmartPy/Tezos**:
+- **SmartPy/Tezos**: implementation coherent with the specification.
 - **Move/Aptos**: implementation coherent with the specification.

@@ -27,5 +27,5 @@ the ERC20's "approve" function to specify the address of the TokenTransfer.
 - **Anchor/Solana**: implementation coherent with the specification.
 - **Aiken/Cardano**: implementation coherent with the specification.
 - **PyTeal/Algorand**: // TODO lore
-- **SmartPy/Tezos**:
+- **SmartPy/Tezos**: implementation coherent with the specification.
 - **Move/Aptos**: implementation coherent with the specification.

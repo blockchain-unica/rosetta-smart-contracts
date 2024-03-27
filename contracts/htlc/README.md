@@ -31,5 +31,5 @@ and tranfers the whole contract balance to the committer;
 - **Anchor/Solana**: a step has been added for initializing the data of the contract (owner, verifier, deadline, etc.).
 - **Aiken/Cardano**: implementation coherent with the specification.
 - **PyTeal/Algorand**: TODO lore
-- **SmartPy/Tezos**:
+- **SmartPy/Tezos**: implementation coherent with the specification.
 - **Move/Aptos**: implementation coherent with the specification.

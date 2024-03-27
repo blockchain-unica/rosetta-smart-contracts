@@ -4,13 +4,14 @@ import smartpy as sp
 @sp.module
 def main():
     class Auction(sp.Contract):
-        def __init__(self, startingBid, time, admin):
+        def __init__(self, startingBid, time, admin, object):
             self.data.admin = admin
             self.data.bidders = {}
             self.data.top = sp.record(address=None, amount=sp.mutez(0))
             self.data.startBid = startingBid
             self.data.duration = time
             self.data.isStart = False
+            self.data.object = object
 
         @sp.entrypoint
         def start(self):
@@ -74,6 +75,6 @@ def auctionTest():
     # create time
     time = sp.timestamp_from_utc_now()  # calculate execution time
     # new object Auction
-    auction = main.Auction(sp.mutez(5), time, admin.address)
+    auction = main.Auction(sp.mutez(5), time, admin.address, "reason")
     # start scenario
     sc += auction

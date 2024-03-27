@@ -26,5 +26,5 @@ During the wait time, the request can be cancelled by using a recovery key.
 - **Anchor/Solana**: a step has been added for initializing the data of the vault (owner, recovery, wait time, etc.).
 - **Aiken/Cardano**: the withdrawal request time, computed as the timestamp when the transaction is sent to the network by the contract's user, may differ from the one computed by the validator. Therefore, the  request time is checked within a one-second tolerance threshold. 
 - **PyTeal/Algorand**: implementation coherent with the specification.
-- **SmartPy/Tezos**:
+- **SmartPy/Tezos**: implementation coherent with the specification.
 - **Move/Aptos**: implementation coherent with the specification.
