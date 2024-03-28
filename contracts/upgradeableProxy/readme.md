@@ -33,5 +33,5 @@ implementation. It uses low-level instructions for memory access.
 - **Anchor/Solana**: Solana natively supports upgradability of contracts and requires no proxy.
 - **Aiken/Cardano**: cannot be implemented.
 - **PyTeal/Algorand**: Algorand natively supports upgradability of contracts and requires no proxy.
-- **SmartPy/Tezos**:
+- **SmartPy/Tezos**: Add an onchain_view to return contract balance.
 - **Move/Aptos**: cannot be implemented.
