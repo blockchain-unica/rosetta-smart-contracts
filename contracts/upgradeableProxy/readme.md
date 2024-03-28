@@ -32,9 +32,10 @@ with the address of the Caller contract as an argument.  
 ## Implementations
 
 - **Solidity/Ethereum**: the implementation is adapted from the ERC1967 Openzeppelin
-implementation. It uses low-level instructions for memory access.
+implementation. It uses low-level instructions for memory accessing and forwarding the message to the Logic.
 - **Anchor/Solana**: Solana natively supports upgradability of contracts and requires no proxy.
 - **Aiken/Cardano**: cannot be implemented.
 - **PyTeal/Algorand**: Algorand natively supports upgradability of contracts and requires no proxy.
-- **SmartPy/Tezos**: Add an onchain_view to return contract balance.
+- **SmartPy/Tezos**: A contract function cannot read the balance of a given address directly, and the workaround consists of implementing a getter (*onchain view*) in the contract Caller to be read from the Logic contract. 
+SmartPy has no anonymous functions and no delegate calls and the workaround consists of the Proxy emulating the expected behavior by using a function that has the same name as the target function in Logic.
 - **Move/Aptos**: cannot be implemented.
