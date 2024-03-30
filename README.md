@@ -1,4 +1,6 @@
-# A comparison of smart contracts languages in different blockchain platforms
+# Rosetta Smart Contracts
+
+A chrestomathy of smart contracts, including implementations of use cases in different smart contract languages.
 
 ## Use cases
 1. [Bet](contracts/bet)
@@ -21,7 +23,7 @@
 1. [Anonymous Data](contracts/anonymous_data)
 1. [Atomic Transactions](contracts/atomic_transactions)
 
-## Included languages
+## Included smart contract languages
 - Solidity (Ethereum)
 - Rust (Solana)
 - Anchor (Solana)
