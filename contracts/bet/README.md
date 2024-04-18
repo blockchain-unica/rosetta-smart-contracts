@@ -24,7 +24,7 @@ then both players can redeem their bets, withdrawing 1 token units each.
 ## Implementations
 
 - **Solidity/Ethereum**: since the platform does not support multi-signature verification, the join is split in two actions: the first player acts first, by depositing 1 ETH. After that, the second player joins by depositing 1 ETH.
-- **Anchor/Solana**: a step has been added for initializing the data of the bet contract (buyer, seller, amount, etc.).
+- **Anchor/Solana**: implementation coherent with the specification.
 - **Aiken/Cardano**: since we cannot access the current block height where the transaction is being validated, the deadline is represented as a UNIX timestamp, which is checked against the lowest bound of the transaction's validity interval.
 - **PyTeal/Algorand**: two join functions, one for each player; player1 is also the owner of the contract and its creator.
 - **SmartPy/Tezos**: two join functions, one for each player; player1 **could** be also the owner of the contract and its creator.
