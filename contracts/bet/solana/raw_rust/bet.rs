@@ -29,8 +29,6 @@ impl OracleBetInfo {
     pub const LEN: usize = 32 + 32 + 32 + 8 + 8;
 }
 
-const SEED_FOR_PDA: &str = "oracle_bet";
-
 pub enum OracleBetInstruction {
     Join { delay: u64, wager: u64 },
     Win,
@@ -95,7 +93,7 @@ fn join<'a>(
     }
 
     let (expected_pda, pda_bump) = Pubkey::find_program_address(
-        &[SEED_FOR_PDA.as_bytes(), oracle_account.key.as_ref()],
+        &[participant1_account.key.as_ref(), participant2_account.key.as_ref()],
         program_id,
     );
 
@@ -121,8 +119,8 @@ fn join<'a>(
             system_account.clone(),
         ],
         &[&[
-            SEED_FOR_PDA.as_bytes(),
-            oracle_account.key.as_ref(),
+            participant1_account.key.as_ref(),
+            participant2_account.key.as_ref(),
             &[pda_bump],
         ]],
     )?;
@@ -174,6 +172,8 @@ fn win<'a>(program_id: &Pubkey, accounts: &'a [AccountInfo<'a>]) -> ProgramResul
 
     let oracle_account: &AccountInfo = next_account_info(accounts_iter)?;
     let winner_account: &AccountInfo = next_account_info(accounts_iter)?;
+    let participant1_account: &AccountInfo = next_account_info(accounts_iter)?;
+    let participant2_account: &AccountInfo = next_account_info(accounts_iter)?;
     let oracle_bet_pda: &AccountInfo = next_account_info(accounts_iter)?;
 
     if !oracle_account.is_signer {
@@ -181,7 +181,7 @@ fn win<'a>(program_id: &Pubkey, accounts: &'a [AccountInfo<'a>]) -> ProgramResul
     }
 
     let (expected_pda, _pda_bump) = Pubkey::find_program_address(
-        &[SEED_FOR_PDA.as_bytes(), oracle_account.key.as_ref()],
+        &[participant1_account.key.as_ref(), participant2_account.key.as_ref()],
         program_id,
     );
 
@@ -217,7 +217,6 @@ fn timeout<'a>(program_id: &Pubkey, accounts: &'a [AccountInfo<'a>]) -> ProgramR
     let actor_account: &AccountInfo = next_account_info(accounts_iter)?;
     let participant1_account: &AccountInfo = next_account_info(accounts_iter)?;
     let participant2_account: &AccountInfo = next_account_info(accounts_iter)?;
-    let oracle_account: &AccountInfo = next_account_info(accounts_iter)?;
     let oracle_bet_pda: &AccountInfo = next_account_info(accounts_iter)?;
 
     if !actor_account.is_signer {
@@ -225,7 +224,7 @@ fn timeout<'a>(program_id: &Pubkey, accounts: &'a [AccountInfo<'a>]) -> ProgramR
     }
 
     let (expected_pda, _pda_bump) = Pubkey::find_program_address(
-        &[SEED_FOR_PDA.as_bytes(), oracle_account.key.as_ref()],
+        &[participant1_account.key.as_ref(), participant2_account.key.as_ref()],
         program_id,
     );
 

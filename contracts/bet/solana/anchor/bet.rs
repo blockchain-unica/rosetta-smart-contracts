@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-declare_id!("E74Qw8gRmjZcThZMZPgk9aCF3nP5nC2o5fWj6dxSMW6A");
+declare_id!("8SqaUJsbWV1FHAanDG3MEfeq4EtCx2izrKdHDc5u6mjP");
 
 #[program]
 pub mod oracle_bet {
@@ -8,7 +8,6 @@ pub mod oracle_bet {
 
     pub fn bet(
         ctx: Context<BetCtx>,
-        _game_instance_name: String,
         delay: u64,
         wager: u64,
     ) -> Result<()> {
@@ -51,8 +50,10 @@ pub mod oracle_bet {
         Ok(())
     }
 
-    pub fn win(ctx: Context<OracleSetResultCtx>, _game_instance_name: String) -> Result<()> {
+    pub fn win(ctx: Context<OracleSetResultCtx>) -> Result<()> {
         let oracle_bet_info = &mut ctx.accounts.oracle_bet_info;
+
+        msg!("Winner: {:?}", ctx.accounts.winner.key);
 
         **ctx
             .accounts
@@ -67,7 +68,7 @@ pub mod oracle_bet {
         Ok(())
     }
 
-    pub fn timeout(ctx: Context<TimeoutCtx>, _game_instance_name: String) -> Result<()> {
+    pub fn timeout(ctx: Context<TimeoutCtx>) -> Result<()> {
         let oracle_bet_info = &mut ctx.accounts.oracle_bet_info;
         let participant1 = ctx.accounts.participant1.to_account_info();
         let participant2 = ctx.accounts.participant2.to_account_info();
@@ -82,7 +83,8 @@ pub mod oracle_bet {
             .to_account_info()
             .try_borrow_mut_lamports()? -= oracle_bet_info.wager;
 
-        **participant1.to_account_info().try_borrow_mut_lamports()? += oracle_bet_info.to_account_info().lamports();
+        **participant1.to_account_info().try_borrow_mut_lamports()? +=
+            oracle_bet_info.to_account_info().lamports();
         **oracle_bet_info
             .to_account_info()
             .try_borrow_mut_lamports()? = 0;
@@ -119,7 +121,6 @@ impl OracleBetInfo {
 }
 
 #[derive(Accounts)]
-#[instruction(_game_instance_name: String)]
 pub struct BetCtx<'info> {
     #[account(mut)]
     pub participant1: Signer<'info>,
@@ -129,7 +130,7 @@ pub struct BetCtx<'info> {
     #[account(
         init, 
         payer = participant1, 
-        seeds = [_game_instance_name.as_ref()],
+        seeds = [participant1.key().as_ref(), participant2.key().as_ref()], 
         bump,
         space = 8 + OracleBetInfo::INIT_SPACE
     )]
@@ -138,7 +139,6 @@ pub struct BetCtx<'info> {
 }
 
 #[derive(Accounts)]
-#[instruction(_game_instance_name: String)]
 pub struct OracleSetResultCtx<'info> {
     #[account(mut)]
     pub oracle: Signer<'info>,
@@ -146,16 +146,18 @@ pub struct OracleSetResultCtx<'info> {
     pub winner: SystemAccount<'info>,
     #[account(
         mut, 
-        seeds = [_game_instance_name.as_ref()], 
         has_one = oracle @ CustomError::InvalidOracle,
+        has_one = participant1 @ CustomError::InvalidParticipant, has_one = participant2 @ CustomError::InvalidParticipant,
+        seeds = [participant1.key().as_ref(), participant2.key().as_ref()], 
         bump,
     )]
     pub oracle_bet_info: Account<'info, OracleBetInfo>,
+    pub participant1: SystemAccount<'info>,
+    pub participant2: SystemAccount<'info>,
     pub system_program: Program<'info, System>,
 }
 
 #[derive(Accounts)]
-#[instruction(_game_instance_name: String)]
 pub struct TimeoutCtx<'info> {
     #[account(mut, constraint =  *participant1.key == oracle_bet_info.participant1  @ CustomError::InvalidParticipant)]
     pub participant1: SystemAccount<'info>,
@@ -163,9 +165,8 @@ pub struct TimeoutCtx<'info> {
     pub participant2: SystemAccount<'info>,
     #[account(
         mut,
-        seeds = [_game_instance_name.as_ref()],
+        seeds = [participant1.key().as_ref(), participant2.key().as_ref()], 
         bump,
-        close = participant1
     )]
     pub oracle_bet_info: Account<'info, OracleBetInfo>,
     pub system_program: Program<'info, System>,
