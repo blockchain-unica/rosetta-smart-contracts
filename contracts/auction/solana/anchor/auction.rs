@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-declare_id!("39Cadm14PBnnAJ1LZA61v6zFXT9PNHrhKe9dDd2yg6un");
+declare_id!("5ynM9QXdASgrGFaXA5Kq54Ly4SFqQhNK9MZrJJUxcUTK");
 
 #[program]
 pub mod auction {
@@ -8,21 +8,20 @@ pub mod auction {
 
     pub fn start(
         ctx: Context<StartCtx>,
-        auction_name: String,
+        auctioned_object: String,
         duration_slots: u64,
         starting_bid: u64,
     ) -> Result<()> {
-        msg!("Auction name: {}", auction_name);
         let auction_info = &mut ctx.accounts.auction_info;
         auction_info.seller = *ctx.accounts.seller.key;
-        auction_info.highest_bidder = *ctx.accounts.seller.key; // The seller is the first bidder
+        auction_info.highest_bidder = *ctx.accounts.seller.key; // The seller is the first bidder at the beginning
         auction_info.end_time = Clock::get()?.slot + duration_slots;
         auction_info.highest_bid = starting_bid;
+        auction_info.object = auctioned_object;
         Ok(())
     }
 
-    pub fn bid(ctx: Context<BidCtx>, auction_name: String, amount_to_deposit: u64) -> Result<()> {
-        msg!("Auction name: {}", auction_name);
+    pub fn bid(ctx: Context<BidCtx>, auctioned_object: String, amount_to_deposit: u64) -> Result<()> {
         let auction_info = &mut ctx.accounts.auction_info;
         let bidder = &ctx.accounts.bidder;
         let current_highest_bidder = &ctx.accounts.current_highest_bidder;
@@ -35,7 +34,6 @@ pub mod auction {
             return err!(CustomError::InvalidBidAmount);
         }
 
-        msg!("Transferring the amount");
         let transfer_instruction = anchor_lang::solana_program::system_instruction::transfer(
             &bidder.key(),
             &auction_info.key(),
@@ -50,7 +48,6 @@ pub mod auction {
 
         // Return founds to the previous bidder if it's not the first attempt (the first bidder is the seller)
         if auction_info.highest_bidder != auction_info.seller {
-            msg!("Returning the amount to the previous bidder");
             **current_highest_bidder
                 .to_account_info()
                 .try_borrow_mut_lamports()? += auction_info.highest_bid;
@@ -63,14 +60,16 @@ pub mod auction {
         Ok(())
     }
 
-    pub fn end(ctx: Context<EndCtx>, auction_name: String) -> Result<()> {
-        msg!("Auction name: {}", auction_name);
+    pub fn end(ctx: Context<EndCtx>, auctioned_object: String) -> Result<()> {
+        msg!("Auction name: {}", auctioned_object);
         let auction_info = &mut ctx.accounts.auction_info;
         let seller = &ctx.accounts.seller;
 
         if Clock::get()?.slot <= auction_info.end_time {
             return err!(CustomError::AuctionNotEnded);
         }
+
+        // send the auction_info.object to the highest bidder
 
         **seller.to_account_info().try_borrow_mut_lamports()? +=
             **auction_info.to_account_info().try_borrow_mut_lamports()?;
@@ -87,17 +86,19 @@ pub struct AuctionInfo {
     pub highest_bidder: Pubkey, // 32 bytes
     pub end_time: u64,          // 8 bytes
     pub highest_bid: u64,       // 8 bytes
+    #[max_len(30)]
+    pub object: String,         
 }
 
 #[derive(Accounts)]
-#[instruction(auction_name: String)]
+#[instruction(auctioned_object: String)]
 pub struct StartCtx<'info> {
     #[account(mut)]
     pub seller: Signer<'info>,
     #[account(
         init, 
         payer = seller, 
-        seeds = [auction_name.as_ref()],
+        seeds = [auctioned_object.as_ref()],
         bump,
         space = 8 + AuctionInfo::INIT_SPACE
     )]
@@ -106,13 +107,13 @@ pub struct StartCtx<'info> {
 }
 
 #[derive(Accounts)]
-#[instruction(auction_name: String)]
+#[instruction(auctioned_object: String)]
 pub struct BidCtx<'info> {
     #[account(mut)]
     pub bidder: Signer<'info>,
     #[account(
         mut,
-        seeds = [auction_name.as_ref()],
+        seeds = [auctioned_object.as_ref()],
         bump,
         constraint = auction_info.highest_bidder == *current_highest_bidder.key
     )]
@@ -123,13 +124,13 @@ pub struct BidCtx<'info> {
 }
 
 #[derive(Accounts)]
-#[instruction(auction_name: String)]
+#[instruction(auctioned_object: String)]
 pub struct EndCtx<'info> {
     #[account(mut)]
     pub seller: Signer<'info>,
     #[account(
         mut,
-        seeds = [auction_name.as_ref()],
+        seeds = [auctioned_object.as_ref()],
         bump,
         constraint = auction_info.seller == *seller.key @ CustomError::InvalidSeller
     )]
