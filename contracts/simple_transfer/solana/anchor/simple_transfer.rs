@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-declare_id!("GTqxqnSdEu5SjyhGjfAUvozmojYSxdE3uSPr6u9HYkqJ");
+declare_id!("GXGCxuXmztgTRPAfuYF72eU6eTkdEKG8Amu81NCSSkPX");
 
 #[program]
 pub mod simple_transfer {
@@ -15,6 +15,7 @@ pub mod simple_transfer {
             amount_to_deposit,
         );
 
+        msg!("Transferring {} lamports from {} to the balance holder PDA", amount_to_deposit, ctx.accounts.sender.key());
         anchor_lang::solana_program::program::invoke(
             &transfer_instruction,
             &[
@@ -35,8 +36,6 @@ pub mod simple_transfer {
     pub fn withdraw(ctx: Context<WithdrawCtx>, amount_to_withdraw: u64) -> Result<()> {
         require!(amount_to_withdraw > 0, CustomError::InvalidAmount);
 
-        // Anchor manages that the balance holder account will not go under the rent exemption
-
         let from = ctx.accounts.balance_holder_pda.to_account_info();
         let to = ctx.accounts.recipient.to_account_info();
 
@@ -45,9 +44,9 @@ pub mod simple_transfer {
 
         ctx.accounts.balance_holder_pda.amount -= amount_to_withdraw;
 
-        msg!("All the lamports have been withdrawn, closing the lamports holder account account");
         let remain_lamports = **from.try_borrow_mut_lamports()?;
         if ctx.accounts.balance_holder_pda.amount == 0 {
+            msg!("All the lamports have been withdrawn, closing the lamports holder account account");
             **from.try_borrow_mut_lamports()? = 0;
             **ctx
                 .accounts
@@ -63,9 +62,9 @@ pub mod simple_transfer {
 #[derive(Accounts)]
 pub struct DepositCtx<'info> {
     #[account(
-        init_if_needed, 
+        init, 
         payer = sender, 
-        seeds = [recipient.key().as_ref()],
+        seeds = [recipient.key().as_ref(), sender.key().as_ref()],
         bump,
         space = 8 + BalanceHolderPDA::INIT_SPACE
     )]
@@ -84,7 +83,7 @@ pub struct WithdrawCtx<'info> {
     pub sender: SystemAccount<'info>, // The sender is needed to close the account if the remaining lamports are 0
     #[account(
         mut, 
-        seeds = [recipient.key().as_ref()],
+        seeds = [recipient.key().as_ref(), sender.key().as_ref()],
         bump,
         constraint = balance_holder_pda.recipient == recipient.key() @ CustomError::InvalidRecipient
     )]

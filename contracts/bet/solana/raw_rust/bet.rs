@@ -93,7 +93,10 @@ fn join<'a>(
     }
 
     let (expected_pda, pda_bump) = Pubkey::find_program_address(
-        &[participant1_account.key.as_ref(), participant2_account.key.as_ref()],
+        &[
+            participant1_account.key.as_ref(),
+            participant2_account.key.as_ref(),
+        ],
         program_id,
     );
 
@@ -104,7 +107,6 @@ fn join<'a>(
 
     let rent_lamports = Rent::get()?.minimum_balance(OracleBetInfo::LEN);
 
-    msg!("Creating account {} with rent {}", expected_pda, rent_lamports);
     invoke_signed(
         &system_instruction::create_account(
             participant1_account.key,
@@ -124,7 +126,6 @@ fn join<'a>(
             &[pda_bump],
         ]],
     )?;
-    msg!("Account created");
 
     let deadline = Clock::get()?.slot + delay;
     let oracle_bet_info = OracleBetInfo {
@@ -181,7 +182,10 @@ fn win<'a>(program_id: &Pubkey, accounts: &'a [AccountInfo<'a>]) -> ProgramResul
     }
 
     let (expected_pda, _pda_bump) = Pubkey::find_program_address(
-        &[participant1_account.key.as_ref(), participant2_account.key.as_ref()],
+        &[
+            participant1_account.key.as_ref(),
+            participant2_account.key.as_ref(),
+        ],
         program_id,
     );
 
@@ -224,7 +228,10 @@ fn timeout<'a>(program_id: &Pubkey, accounts: &'a [AccountInfo<'a>]) -> ProgramR
     }
 
     let (expected_pda, _pda_bump) = Pubkey::find_program_address(
-        &[participant1_account.key.as_ref(), participant2_account.key.as_ref()],
+        &[
+            participant1_account.key.as_ref(),
+            participant2_account.key.as_ref(),
+        ],
         program_id,
     );
 

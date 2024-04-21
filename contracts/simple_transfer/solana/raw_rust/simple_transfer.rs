@@ -4,9 +4,11 @@ use solana_program::{
     entrypoint,
     entrypoint::ProgramResult,
     msg,
+    program::{invoke, invoke_signed},
     program_error::ProgramError,
     pubkey::Pubkey,
     rent::Rent,
+    system_instruction, system_program,
     sysvar::Sysvar,
 };
 
@@ -45,39 +47,79 @@ struct DonationDetails {
     pub amount: u64,
 }
 
+impl DonationDetails {
+    pub const LEN: usize = 32 + 32 + 8;
+}
+
 fn deposit(
     program_id: &Pubkey,
     accounts: &[AccountInfo],
     instruction_data: &[u8],
 ) -> ProgramResult {
     let accounts_iter: &mut std::slice::Iter<AccountInfo> = &mut accounts.iter();
-    let writing_account: &AccountInfo = next_account_info(accounts_iter)?;
     let sender: &AccountInfo = next_account_info(accounts_iter)?;
+    let recipient: &AccountInfo = next_account_info(accounts_iter)?;
+    let balance_holder_pda_account: &AccountInfo = next_account_info(accounts_iter)?;
+    let system_account: &AccountInfo = next_account_info(accounts_iter)?;
 
-    if writing_account.owner.ne(&program_id){
-        msg!("The writing account isn't owned by the program");
-        return Err(ProgramError::IllegalOwner);
+    assert!(system_program::check_id(system_account.key));
+
+    let (expected_pda, pda_bump) =
+        Pubkey::find_program_address(&[sender.key.as_ref(), recipient.key.as_ref()], program_id);
+
+    if expected_pda != *balance_holder_pda_account.key {
+        msg!("Invalid PDA");
+        return Err(ProgramError::InvalidAccountData);
     }
+
+    let rent_lamports = Rent::get()?.minimum_balance(DonationDetails::LEN);
+
+    invoke_signed(
+        &system_instruction::create_account(
+            sender.key,
+            balance_holder_pda_account.key,
+            rent_lamports,
+            DonationDetails::LEN as u64,
+            program_id,
+        ),
+        &[
+            sender.clone(),
+            balance_holder_pda_account.clone(),
+            system_account.clone(),
+        ],
+        &[&[sender.key.as_ref(), recipient.key.as_ref(), &[pda_bump]]],
+    )?;
+
+    let amount = instruction_data
+        .iter()
+        .rev()
+        .fold(0, |acc, &x| (acc << 8) + x as u64);
+
+    invoke(
+        &system_instruction::transfer(sender.key, balance_holder_pda_account.key, amount),
+        &[
+            sender.clone(),
+            balance_holder_pda_account.clone(),
+            system_account.clone(),
+        ],
+    )?;
 
     if !sender.is_signer {
         msg!("The sender should be signer");
         return Err(ProgramError::MissingRequiredSignature);
     }
 
-    let mut donation: DonationDetails = DonationDetails::try_from_slice(&instruction_data)?;
+    let donation = DonationDetails {
+        sender: *sender.key,
+        recipient: *recipient.key,
+        amount,
+    };
 
     if donation.sender != *sender.key {
         return Err(ProgramError::InvalidInstructionData);
     }
 
-    let rent_exemption: u64 = Rent::get()?.minimum_balance(writing_account.data_len());
-    if **writing_account.lamports.borrow() < rent_exemption {
-        msg!("The writing account should be rent exempted");
-        return Err(ProgramError::AccountNotRentExempt);
-    }
-
-    donation.amount = **writing_account.lamports.borrow();
-    donation.serialize(&mut &mut writing_account.try_borrow_mut_data()?[..])?;
+    donation.serialize(&mut &mut balance_holder_pda_account.try_borrow_mut_data()?[..])?;
 
     Ok(())
 }
@@ -90,18 +132,23 @@ fn withdraw(
     let accounts_iter: &mut std::slice::Iter<AccountInfo> = &mut accounts.iter();
     let sender: &AccountInfo = next_account_info(accounts_iter)?;
     let recipient: &AccountInfo = next_account_info(accounts_iter)?;
-    let writing_account: &AccountInfo = next_account_info(accounts_iter)?;
+    let balance_holder_pda_account: &AccountInfo = next_account_info(accounts_iter)?;
 
-    if writing_account.owner.ne(&program_id){
-        msg!("The writing account isn't owned by the program");
-        return Err(ProgramError::IllegalOwner);
-    }
     if !recipient.is_signer {
         msg!("The recipient account should be the signer");
         return Err(ProgramError::MissingRequiredSignature);
     }
+
+    let (expected_pda, _pda_bump) =
+        Pubkey::find_program_address(&[sender.key.as_ref(), recipient.key.as_ref()], program_id);
+
+    if expected_pda != *balance_holder_pda_account.key {
+        msg!("Invalid PDA");
+        return Err(ProgramError::InvalidAccountData);
+    }
+
     let mut donation: DonationDetails =
-        DonationDetails::try_from_slice(*writing_account.data.borrow())?;
+        DonationDetails::try_from_slice(*balance_holder_pda_account.data.borrow())?;
 
     if donation.recipient != *recipient.key {
         msg!("Only the recipient can withdraw");
@@ -113,23 +160,22 @@ fn withdraw(
         .rev()
         .fold(0, |acc, &x| (acc << 8) + x as u64);
 
-    let rent_exemption = Rent::get()?.minimum_balance(writing_account.data_len());
-    if **writing_account.lamports.borrow() - rent_exemption < withdraw_amount {
-        msg!("Insufficent balance in the writing account for withdraw");
+    let rent_exemption = Rent::get()?.minimum_balance(balance_holder_pda_account.data_len());
+    if **balance_holder_pda_account.lamports.borrow() - rent_exemption < withdraw_amount {
+        msg!("Insufficient balance in the writing account for withdraw");
         return Err(ProgramError::InsufficientFunds);
     }
 
-    **writing_account.try_borrow_mut_lamports()? -= withdraw_amount;
+    **balance_holder_pda_account.try_borrow_mut_lamports()? -= withdraw_amount;
     **recipient.try_borrow_mut_lamports()? += withdraw_amount;
 
-    if **writing_account.lamports.borrow() <= rent_exemption {
-        // Return rent founds to the sender of the deposit
-        let amount_to_return: u64 = **writing_account.lamports.borrow();
+    if **balance_holder_pda_account.lamports.borrow() <= rent_exemption {
+        let amount_to_return: u64 = **balance_holder_pda_account.lamports.borrow();
         **sender.try_borrow_mut_lamports()? += amount_to_return;
-        **writing_account.try_borrow_mut_lamports()? -= amount_to_return;
+        **balance_holder_pda_account.try_borrow_mut_lamports()? -= amount_to_return;
     } else {
         donation.amount -= withdraw_amount;
-        donation.serialize(&mut &mut writing_account.data.borrow_mut()[..])?;
+        donation.serialize(&mut &mut balance_holder_pda_account.data.borrow_mut()[..])?;
     }
 
     Ok(())
