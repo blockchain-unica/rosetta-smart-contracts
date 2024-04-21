@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-declare_id!("2NpQpiMnHxzpYrtixekkjhbbkTREzFMg5mn6U66YAGfT");
+declare_id!("2gB4J9acf9vdBoFcUY8mL2dRgHbLHvuu57WZbMuaRehs");
 
 #[program]
 pub mod payment_splitter {
@@ -9,15 +9,8 @@ pub mod payment_splitter {
     pub fn initialize(
         ctx: Context<InitializeCtx>,
         lamports_to_transfer: u64,
-        required_space: u64,
         shares_amounts: Vec<u64>,
     ) -> Result<()> {
-        msg!(
-            "Initializing PaymentSplitter with {} lamports and the space of {} bytes",
-            lamports_to_transfer,
-            required_space
-        );
-
         let initializer = &mut ctx.accounts.initializer;
         let ps_info = &mut ctx.accounts.ps_info;
 
@@ -45,17 +38,14 @@ pub mod payment_splitter {
         ps_info.released_amounts = vec![0; payees.len()];
 
         for payee in payees.iter() {
-            // Check if the payee already has shares
             for already_present_payee in ps_info.payees.iter() {
                 if already_present_payee == payee.key {
                     return err!(CustomError::AccountAlreadyHasShares);
                 }
             }
 
-            // Add the new payee
             ps_info.payees.push(*payee.key);
 
-            // Add the new payee's share amount
             let payee_index = ps_info.payees.len() - 1;
             let payee_share_amount = shares_amounts[payee_index];
             require!(
@@ -146,10 +136,15 @@ impl PaymentSplitterInfo {
 
         return payment;
     }
+
+    pub const fn space(num_voters: u64) -> usize {
+        (8 + 8 + (4 + (num_voters * 32)) + (4 + (num_voters * 8)) + (4 + (num_voters * 8)) )
+            as usize
+    }
 }
 
 #[derive(Accounts)]
-#[instruction(initial_lamports: u64, required_space: u64)]
+#[instruction(lamports_to_transfer: u64, shares_amounts: Vec<u64>,)]
 pub struct InitializeCtx<'info> {
     #[account(mut)]
     pub initializer: Signer<'info>,
@@ -158,7 +153,7 @@ pub struct InitializeCtx<'info> {
         payer = initializer, 
         seeds = ["payment_splitter".as_ref(), initializer.key().as_ref()],
         bump,
-        space = required_space as usize,
+        space = PaymentSplitterInfo::space(shares_amounts.len() as u64),
     )]
     pub ps_info: Account<'info, PaymentSplitterInfo>,
     pub system_program: Program<'info, System>,
