@@ -6,6 +6,6 @@ The full specification and possible deviations from it are described in the [spe
 
 ## Anchor Overview
 
-If you are not familiar with Anchor, you can find a brief overview in the [Anchor overview](../../../../AnchorOverview.md) document where we explain the implementation of the [Simple Transfer](../../../simple_transfer) use case focusing basically on Anchor features. A more in-depth understanding of Anchor is advised by reading the [Anchor documentation](https://www.anchor-lang.com).
+If you are not familiar with Anchor, you can find a brief overview in the [Simple Transfer in Anchor](../../../simple_transfer/solana/anchor/README.md) document where we explain the implementation of the Simple Transfer use case focusing basically on Anchor features. A more in-depth understanding of Anchor is advised by reading the [Anchor documentation](https://www.anchor-lang.com).
 
-## ToBeDone
+### Main Logic
