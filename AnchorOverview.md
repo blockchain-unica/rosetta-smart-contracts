@@ -1,6 +1,6 @@
 # Anchor overview
 
-We provide a brief overview of the [Anchor](https://www.anchor-lang.com) framework (version 0.28.0) to simplify the understanding the implementation of Anchor-based use case for the Solana blockchain.
+We provide a brief overview of the [Anchor](https://www.anchor-lang.com) framework (version 0.28.0) to simplify the understanding of Anchor-based use case implementations for the [Solana blockchain](https://solana.com).
 
 
 ⚠️ A deeper dive into Anchor is advised by reading the [Anchor documentation](https://www.anchor-lang.com). Additionally, understanding concepts such as 
