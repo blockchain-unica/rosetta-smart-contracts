@@ -16,7 +16,7 @@ We provide an overview of the Anchor framework through the implementation of the
 
 ### Main Logic
 
-Let's start by crafting the main logic of the contract. We have two actions: `deposit` and `withdraw`, each with its own context of associated accounts and parameters. We also define the account structure `BalanceHolderPDA`, which holds the donated balance and associated actors.
+Let's start by crafting the main contract logic. We have two actions: `deposit` and `withdraw`, each with its own context of associated accounts and parameters. We also define the account structure `BalanceHolderPDA`, which holds the donated balance and associated actors.
 
 
 ```rust
@@ -51,13 +51,13 @@ pub struct BalanceHolderPDA {
 ```
 
 ### Deposit Accounts Context
-Once we've defined the main logic, let's implement the DepositCtx context.
+Once we've defined the main logic, let's implement the accounts context of the deposit action.
 
 The first two accounts are the `sender` and `recipient` accounts. The sender is required to sign the transaction (`Signer` type). 
 
-The third account is the `balance_holder_pda`, a [PDA](https://solanacookbook.com/core-concepts/pdas.html#facts) account that will hold the deposited balance. The account is initialized with the `init` attribute with `sender` as the payer. The address of this account is derived through seeds in a way to establish a mapping between the the couple (`sender`, `recipient`) and their storage account. The space is calculated using the `BalanceHolderPDA::INIT_SPACE` constant to cover the [Rent exemption](https://solanacookbook.com/core-concepts/accounts.html#rent).
+The third account is the `balance_holder_pda`, a [PDA](https://solanacookbook.com/core-concepts/pdas.html#facts) account with associated type `BalanceHolderPDA`, that will hold information such as the deposited balance and the actors. The account is initialized with the `init` attribute with `sender` as the payer. The address of this account is derived through seeds in a way to establish a mapping between the the couple (`sender`, `recipient`) and their storage account. The space is calculated using the `BalanceHolderPDA::INIT_SPACE` constant to cover the [Rent exemption](https://solanacookbook.com/core-concepts/accounts.html#rent).
 
-The last account is the `system_program` account, required to transfer in instructions containing account initialization.
+The last account is the `system_program` account, a native contract, required in instructions containing account initializations.
 
 ```rust
 #[derive(Accounts)]
@@ -78,8 +78,7 @@ pub struct DepositCtx<'info> {
 ```
 
 ### Deposit Logic
-
-The deposit logic requires the amount to deposit to be greater than zero. Then, a transfer instruction is crafted to transfer the amount from the sender to the balance holder PDA. Finally, the balance holder PDA account data is set.
+Once we have the accounts context, we can implement the deposit logic that requires the amount to be deposited to be greater than zero. Then, a transfer instruction is crafted to transfer the amount from the sender to the balance holder PDA. Finally, the balance holder PDA account data is set.
 
 ```rust
 pub fn deposit(ctx: Context<DepositCtx>, amount_to_deposit: u64) -> Result<()> {
@@ -134,7 +133,7 @@ pub struct WithdrawCtx<'info> {
 
 ### Withdraw logic
 
-In the withdraw logic, we require the amount to withdraw to be greater than zero. We then decrement the assets stored in the balance holder PDA account and increment the recipient account. If all the donated assets have been withdrawn, we close the balance holder PDA account by transferring the remaining balance, designated for rent exemption to the account initializer, the `sender`.
+In the withdraw logic, we require the amount to withdraw to be greater than zero. We then decrement the assets stored in the balance holder PDA account and increment the balance of the recipient's account. If all the donated assets have been withdrawn, we close the balance holder PDA account by transferring the remaining balance, designated for rent exemption to the account initializer, the `sender`.
 
 ```rust
  pub fn withdraw(ctx: Context<WithdrawCtx>, amount_to_withdraw: u64) -> Result<()> {
