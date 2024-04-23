@@ -8,7 +8,7 @@ The methodology consists in explaining each action and the involved accounts tha
 
 
 ## Anchor overview
-If you are not familiar with Anchor, you can find a brief overview in the [Anchor overview](../../../AnchorOverview.md) document where we provide an overview of Anchor through an example. A more deep dive into Anchor is advised by reading the [Anchor documentation](https://www.anchor-lang.com).
+If you are not familiar with Anchor, you can find a brief overview in the [Anchor overview](../../....//AnchorOverview.md) document where we provide an overview of Anchor through an example. A more deep dive into Anchor is advised by reading the [Anchor documentation](https://www.anchor-lang.com).
 
 ## Contract actions
 
