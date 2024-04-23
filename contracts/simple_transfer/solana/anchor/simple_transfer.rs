@@ -26,7 +26,7 @@ pub mod simple_transfer {
         .unwrap();
 
         let balance_holder_pda = &mut ctx.accounts.balance_holder_pda;
-        balance_holder_pda.sender = *ctx.accounts.sender.key;
+        balance_holder_pda.sender = ctx.accounts.sender.key();
         balance_holder_pda.recipient = ctx.accounts.recipient.key();
         balance_holder_pda.amount = amount_to_deposit;
 
