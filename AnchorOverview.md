@@ -55,7 +55,7 @@ Once we've defined the main logic, let's implement the accounts context of the d
 
 The first two accounts are the `sender` and `recipient` accounts. The sender is required to sign the transaction (`Signer` type). 
 
-The third account is the `balance_holder_pda`, a [PDA](https://solanacookbook.com/core-concepts/pdas.html#facts) account with associated type `BalanceHolderPDA`, that will hold information such as the deposited balance and the actors. The account is initialized with the `init` attribute with `sender` as the payer. The address of this account is derived through seeds in a way to establish a mapping between the the couple (`sender`, `recipient`) and their storage account. The space is calculated using the `BalanceHolderPDA::INIT_SPACE` constant to cover the [Rent exemption](https://solanacookbook.com/core-concepts/accounts.html#rent).
+The third account is the `balance_holder_pda`, a [PDA](https://solanacookbook.com/core-concepts/pdas.html#facts) account with the associated type `BalanceHolderPDA`, that will hold information such as the deposited balance and the actors. The account is initialized with the `init` attribute with `sender` as the payer. The address of this account is derived through seeds in a way to establish a mapping between the couple (`sender`, `recipient`) and their storage account. The space is calculated using the `BalanceHolderPDA::INIT_SPACE` constant to cover the [Rent exemption](https://solanacookbook.com/core-concepts/accounts.html#rent).
 
 The last account is the `system_program` account, a native contract, required in instructions containing account initializations.
 
@@ -78,7 +78,7 @@ pub struct DepositCtx<'info> {
 ```
 
 ### Deposit Logic
-Once we have the accounts context, we can implement the deposit logic that requires the amount to be deposited to be greater than zero. Then, a transfer instruction is crafted to transfer the amount from the sender to the balance holder PDA. Finally, the balance holder PDA account data is set.
+Once we have the context, we can implement the deposit logic that requires the amount to be deposited to be greater than zero. Then, a transfer instruction is crafted to transfer the amount from the sender to the balance holder PDA. Finally, the balance holder PDA account data is set.
 
 ```rust
 pub fn deposit(ctx: Context<DepositCtx>, amount_to_deposit: u64) -> Result<()> {
