@@ -1,7 +1,8 @@
-# Anchor overview
+# Simple Transfer Contract in Anchor
 
-We provide a brief overview of the [Anchor](https://www.anchor-lang.com) framework (version 0.28.0) to simplify the understanding of Anchor-based use case implementations for the [Solana blockchain](https://solana.com).
+This is an implementation of the contract in [Anchor](https://www.anchor-lang.com), a [Rust](https://www.rust-lang.org)-based framework for Solana smart contracts. The purpose of this document is to simplify the understanding of the code by providing a high-level overview of the implementation.
 
+The full specification and possible deviations from it are described in the [specification](../../README.md). Here we describe the implementation details.
 
 ⚠️ A deeper dive into Anchor is advised by reading the [Anchor documentation](https://www.anchor-lang.com). Additionally, understanding concepts such as 
 - [Solana stateless account model](https://solanacookbook.com/core-concepts/accounts.html#facts)
@@ -10,9 +11,8 @@ We provide a brief overview of the [Anchor](https://www.anchor-lang.com) framewo
 
 is recommended for a complete understanding.
 
-## Overview by Example
+The Simple Transfer use case allows a `donor` to deposit native cryptocurrency, and a `receiver` to withdraw arbitrary fractions of the contract balance. We'll omit some implementation details, such as crate imports and error definitions, for brevity.
 
-We provide an overview of the Anchor framework through the implementation of the [Simple Transfer](contracts/simple_transfer) use case. This use case allows a `donor` to deposit native cryptocurrency, and a `receiver` to withdraw arbitrary fractions of the contract balance. We'll omit some implementation details, such as crate imports and error definitions, for brevity.
 
 ### Main Logic
 
