@@ -1,16 +1,12 @@
 use anchor_lang::prelude::*;
 
-declare_id!("8SqaUJsbWV1FHAanDG3MEfeq4EtCx2izrKdHDc5u6mjP");
+declare_id!("CgUzgJgmYN5VnQmwJuLRqwXwpaRLktt2ic61dHcPif9k");
 
 #[program]
 pub mod oracle_bet {
     use super::*;
 
-    pub fn bet(
-        ctx: Context<BetCtx>,
-        delay: u64,
-        wager: u64,
-    ) -> Result<()> {
+    pub fn join(ctx: Context<BetCtx>, delay: u64, wager: u64) -> Result<()> {
         let oracle_bet_info = &mut ctx.accounts.oracle_bet_info;
 
         oracle_bet_info.initialize(
@@ -50,7 +46,7 @@ pub mod oracle_bet {
         Ok(())
     }
 
-    pub fn win(ctx: Context<OracleSetResultCtx>) -> Result<()> {
+    pub fn win(ctx: Context<WinCtx>) -> Result<()> {
         let oracle_bet_info = &mut ctx.accounts.oracle_bet_info;
 
         msg!("Winner: {:?}", ctx.accounts.winner.key);
@@ -139,7 +135,7 @@ pub struct BetCtx<'info> {
 }
 
 #[derive(Accounts)]
-pub struct OracleSetResultCtx<'info> {
+pub struct WinCtx<'info> {
     #[account(mut)]
     pub oracle: Signer<'info>,
     #[account(mut, constraint =  *winner.key == oracle_bet_info.participant1 || *winner.key == oracle_bet_info.participant2 @ CustomError::InvalidParticipant)]

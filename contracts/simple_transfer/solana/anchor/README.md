@@ -11,10 +11,10 @@ The full specification and possible deviations from it are described in the [spe
 
 is recommended for a complete understanding.
 
-The Simple Transfer use case allows a `donor` to deposit native cryptocurrency, and a `receiver` to withdraw arbitrary fractions of the contract balance. We'll omit some implementation details, such as crate imports and error definitions, for brevity.
-
 
 ### Main Logic
+
+The use case allows a `donor` to deposit native cryptocurrency, and a `receiver` to withdraw arbitrary fractions of the contract balance. We'll omit some implementation details, such as crate imports and error definitions, for brevity.
 
 Let's start by crafting the main contract logic. We have two actions: `deposit` and `withdraw`, each with its own context of associated accounts and parameters. We also define the account structure `BalanceHolderPDA`, which holds the donated balance and associated actors.
 
@@ -33,12 +33,13 @@ pub mod simple_transfer {
 
 #[derive(Accounts)]
 pub struct DepositCtx<'info> {
-    // Deposit accounts
+    // Accounts involved in the deposit action
 }
 
 #[derive(Accounts)]
 pub struct WithdrawCtx<'info> {
     // Withdraw accounts
+    // Accounts involved in the withdraw action
 }
 
 #[account]
