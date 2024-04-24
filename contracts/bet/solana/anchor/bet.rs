@@ -6,7 +6,7 @@ declare_id!("CgUzgJgmYN5VnQmwJuLRqwXwpaRLktt2ic61dHcPif9k");
 pub mod oracle_bet {
     use super::*;
 
-    pub fn join(ctx: Context<BetCtx>, delay: u64, wager: u64) -> Result<()> {
+    pub fn join(ctx: Context<JoinCtx>, delay: u64, wager: u64) -> Result<()> {
         let oracle_bet_info = &mut ctx.accounts.oracle_bet_info;
 
         oracle_bet_info.initialize(
@@ -17,6 +17,7 @@ pub mod oracle_bet {
             wager,
         );
 
+        msg!("Transfering funds");
         anchor_lang::solana_program::program::invoke(
             &anchor_lang::solana_program::system_instruction::transfer(
                 &ctx.accounts.participant1.key(),
@@ -74,11 +75,13 @@ pub mod oracle_bet {
             CustomError::DeadlineNotReached
         );
 
+        msg!("Transfering funds to participant2");
         **participant2.to_account_info().try_borrow_mut_lamports()? += oracle_bet_info.wager;
         **oracle_bet_info
             .to_account_info()
             .try_borrow_mut_lamports()? -= oracle_bet_info.wager;
 
+        msg!("Transfering the rent to participant1");
         **participant1.to_account_info().try_borrow_mut_lamports()? +=
             oracle_bet_info.to_account_info().lamports();
         **oracle_bet_info
@@ -117,7 +120,7 @@ impl OracleBetInfo {
 }
 
 #[derive(Accounts)]
-pub struct BetCtx<'info> {
+pub struct JoinCtx<'info> {
     #[account(mut)]
     pub participant1: Signer<'info>,
     #[account(mut)]
@@ -143,7 +146,8 @@ pub struct WinCtx<'info> {
     #[account(
         mut, 
         has_one = oracle @ CustomError::InvalidOracle,
-        has_one = participant1 @ CustomError::InvalidParticipant, has_one = participant2 @ CustomError::InvalidParticipant,
+        has_one = participant1 @ CustomError::InvalidParticipant, 
+        has_one = participant2 @ CustomError::InvalidParticipant,
         seeds = [participant1.key().as_ref(), participant2.key().as_ref()], 
         bump,
     )]
