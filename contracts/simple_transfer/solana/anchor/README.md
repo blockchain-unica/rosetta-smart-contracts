@@ -1,6 +1,6 @@
 # Simple Transfer Contract in Anchor
 
-This is an implementation of the contract in [Anchor](https://www.anchor-lang.com), a [Rust](https://www.rust-lang.org)-based framework for Solana smart contracts. The purpose of this document is to simplify the understanding of the code by providing a high-level overview of the implementation.
+This is an implementation of the contract in [Anchor](https://www.anchor-lang.com), a [Rust](https://www.rust-lang.org)-based framework for Solana smart contracts. The purpose of this document is to simplify the understanding of the code by providing a high-level overview of the implementation. We'll omit some implementation details, such as crate imports and error definitions, for brevity.
 
 The full specification and possible deviations from it are described in the [specification](../../README.md). Here we describe the implementation details.
 
@@ -14,7 +14,7 @@ is recommended for a complete understanding.
 
 ### Main Logic
 
-The use case allows a `donor` to deposit native cryptocurrency, and a `receiver` to withdraw arbitrary fractions of the contract balance. We'll omit some implementation details, such as crate imports and error definitions, for brevity.
+The use case allows a `donor` to deposit native cryptocurrency, and a `receiver` to withdraw arbitrary fractions of the contract balance. 
 
 Let's start by crafting the main contract logic. We have two actions: `deposit` and `withdraw`, each with its own context of associated accounts and parameters. We also define the account structure `BalanceHolderPDA`, which holds the donated balance and associated actors.
 
