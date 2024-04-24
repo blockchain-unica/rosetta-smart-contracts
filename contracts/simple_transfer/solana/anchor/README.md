@@ -79,7 +79,7 @@ pub struct DepositCtx<'info> {
 }
 ```
 
-![Simple Transfer Accounts](./SimpleTransfer.png)
+![Contract Accounts](./SimpleTransfer.png)
 
 
 Once we have the context, we can implement the deposit logic that requires the amount to be deposited to be greater than zero. Then, a transfer instruction is used to transfer the amount from the sender to the balance holder PDA. Finally, the balance holder PDA account data is set.

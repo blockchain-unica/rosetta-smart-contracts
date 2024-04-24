@@ -100,6 +100,8 @@ pub struct JoinCtx<'info> {
 }
 ```
 
+![Contract Accounts](./OracleBet.png)
+
 Once we have the context, we can implement the logic of the `join` action. The logic involves initializing the `oracle_bet_info` account with the information about the bet, and both participants transferring the wager to the `oracle_bet_info` account.
 
 ```rust
