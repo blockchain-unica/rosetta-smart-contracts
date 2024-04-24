@@ -156,11 +156,7 @@ In the withdraw logic, we require the amount to withdraw to be greater than zero
         if ctx.accounts.balance_holder_pda.amount == 0 {
             // All the lamports have been withdrawn, closing the lamports holder account account
             **from.try_borrow_mut_lamports()? = 0;
-            **ctx
-                .accounts
-                .sender
-                .to_account_info()
-                .try_borrow_mut_lamports()? += remain_lamports;
+            **ctx.accounts.sender.to_account_info().try_borrow_mut_lamports()? += remain_lamports;
         }
 
         Ok(())
