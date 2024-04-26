@@ -111,7 +111,7 @@ let contract_outputs_token_balance = utils.get_tokens_balance_from_outputs(contr
 
 #### Join
 
-In order **preserve covenant**, we require that there is only one output associated to the contract.
+In order to **preserve covenant**, we require that there is only one output associated to the contract.
 
 ```ml
 expect True = list.length(contract_outputs) == 1
