@@ -21,7 +21,7 @@ Let's start by crafting the main contract logic. We have three actions: `join`, 
 ```rust
 pub mod oracle_bet {
 
-    pub fn join(ctx: Context<BetCtx>, delay: u64, wager: u64) -> Result<()> {
+    pub fn join(ctx: Context<JoinCtx>, delay: u64, wager: u64) -> Result<()> {
         // Bet logic
     }
 
@@ -49,7 +49,7 @@ impl OracleBetInfo {
 }
 
 #[derive(Accounts)]
-pub struct BetCtx<'info> {
+pub struct JoinCtx<'info> {
     // Accounts involved in the bet action
 }
 
