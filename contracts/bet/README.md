@@ -3,23 +3,19 @@
 ## Specification
 The Bet contract involves two players and an oracle. 
 At construction, the contract creation must specify:
-- **deadline**: a time limit is specified  (e.g. block height plus 1000), 
-- **oracle**: the address of an oracle (a user account) is specified.	
+- **deadline**: a time limit is specified  (e.g. block height plus 1000); 
+- **oracle**: the address of a user acting as an oracle.	
 
 After creation, the following actions are possible: 
-- **join**: the two players join the contract by depositing 1 token unit each.
-- **win**: after the join, the oracle is expected to determine the winner between the two players.
-The winner can redeem the whole pot of 2 token units.
-- **timeout** If the oracle does not choose the winner by the deadline,
-then both players can redeem their bets, withdrawing 1 token units each.
-
+- **join**: the two players join the contract by depositing 1 token unit each (the token can be the native cryptocurrency);
+- **win**: after the join, the oracle is expected to perform this action, determining the winner between the two players; the winner can redeem the whole pot of 2 token units.
+- **timeout** if the oracle does not choose the winner by the deadline, then both players can redeem their bets, withdrawing 1 token units each.
 
 ## Expected Features
 
 - Asset transfer
 - Multisig
 - Time constraints
-
 
 ## Implementations
 
