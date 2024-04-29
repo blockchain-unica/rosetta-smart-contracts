@@ -6,7 +6,7 @@ The Bet contract involves two players and an oracle. The two players join the co
 between the two players. The winner can redeem the complessive amount of the bet. If the oracle does not choose the winner by the deadline,
 then both players can withdraw their individual bets.
 
-This is the contract's implementation in [Aiken](https://aiken-lang.org/), the functional programming language for writing validators in Cardano.
+This is the contract implementation in [Aiken](https://aiken-lang.org/), a functional programming language for writing validators in Cardano.
 
 <!-- -->
 
@@ -18,10 +18,9 @@ Before analyzing the validation logic, it's worth recalling what datum and redee
 
 ### Datum
 
-Validators can access to an **additional section of data** payload attached to UTXOs called *datum*.\
-Datums, typically, store the current **status of the contract**.
+Validators have access to an additional section of data payload attached to UTXOs called *datum*, typically used to record the current state of the contract.
 
-In our case, the datum contains the addresses of the partecipants and the UNIX timestamp of the deadline:
+In our case, the datum contains the addresses of the players and of the oracle, and the deadline (a UNIX timestamp):
 
 <!-- ml because, like Aiken, it is a functional language -->
 ```ml 
@@ -35,13 +34,12 @@ type Datum {
 
 ### Redeemer
 
-**When spending an output** locked by a script, the transaction includes an **additional payload** called *redeemer*. \
-These data can be used by the validator to verify and fulfill the output's spending conditions. \
+When spending an output locked by a script, the transaction includes an **additional payload** called *redeemer*.
+These data can be used by the validator to verify and fulfill the output's spending conditions.
 For example, if the spending condition of an output is: "the redeeming address is allowed to spend this output only if they provide a preimage to a given hash", a well written contract will allow the user to pass the preimage through the redeemer field and it will check it.  
-In the simple UTxO model (like Bitcoin's one), redeemers (also called **witnesses**) are just the partecipants signatures. \
-On the other hand, following the Cardano's eUTxO ([extended-UTxO](https://docs.cardano.org/learn/eutxo-explainer/)) model, redeemers contain *arbitrary data* (as long as it is supported by the underlying Plutus Core layer). 
+In the Cardano [extended UTxO](https://docs.cardano.org/learn/eutxo-explainer/) model, redeemers contain *arbitrary data* (as long as it is supported by the underlying Plutus Core layer). 
 
-In our Bet contract, the ```Redeemer``` type has three different values corresponding to the three different **actions** allowed by the contract.
+In our Bet contract, the ```Redeemer``` is a sum between three different types corresponding to the three different **actions** allowed by the contract.
 
 ```ml 
 type Redeemer {
