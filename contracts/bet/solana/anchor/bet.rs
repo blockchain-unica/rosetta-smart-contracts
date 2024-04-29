@@ -1,4 +1,5 @@
 use anchor_lang::prelude::*;
+use anchor_lang::system_program;
 
 declare_id!("CgUzgJgmYN5VnQmwJuLRqwXwpaRLktt2ic61dHcPif9k");
 
@@ -7,54 +8,47 @@ pub mod oracle_bet {
     use super::*;
 
     pub fn join(ctx: Context<JoinCtx>, delay: u64, wager: u64) -> Result<()> {
+        let participant1 = ctx.accounts.participant1.to_account_info();
+        let participant2 = ctx.accounts.participant2.to_account_info();
+        let oracle = ctx.accounts.oracle.to_account_info();
         let oracle_bet_info = &mut ctx.accounts.oracle_bet_info;
 
-        oracle_bet_info.initialize(
-            *ctx.accounts.oracle.key,
-            *ctx.accounts.participant1.key,
-            *ctx.accounts.participant2.key,
-            Clock::get()?.slot + delay,
-            wager,
-        );
+        oracle_bet_info.oracle = *oracle.key;
+        oracle_bet_info.participant1 = *participant1.key;
+        oracle_bet_info.participant2 = *participant2.key;
+        oracle_bet_info.deadline = Clock::get()?.slot + delay;
+        oracle_bet_info.wager = wager;
 
-        msg!("Transfering funds");
-        anchor_lang::solana_program::program::invoke(
-            &anchor_lang::solana_program::system_instruction::transfer(
-                &ctx.accounts.participant1.key(),
-                &oracle_bet_info.key(),
-                oracle_bet_info.wager,
+        system_program::transfer(
+            CpiContext::new(
+                ctx.accounts.system_program.to_account_info(),
+                system_program::Transfer {
+                    from: participant1.clone(),
+                    to: oracle_bet_info.to_account_info().clone(),
+                },
             ),
-            &[
-                ctx.accounts.participant1.to_account_info(),
-                oracle_bet_info.to_account_info(),
-            ],
-        )
-        .unwrap();
+            oracle_bet_info.wager,
+        )?;
 
-        anchor_lang::solana_program::program::invoke(
-            &anchor_lang::solana_program::system_instruction::transfer(
-                &ctx.accounts.participant2.key(),
-                &oracle_bet_info.key(),
-                oracle_bet_info.wager,
+        system_program::transfer(
+            CpiContext::new(
+                ctx.accounts.system_program.to_account_info(),
+                system_program::Transfer {
+                    from: participant2.clone(),
+                    to: oracle_bet_info.to_account_info().clone(),
+                },
             ),
-            &[
-                ctx.accounts.participant2.to_account_info(),
-                oracle_bet_info.to_account_info(),
-            ],
-        )
-        .unwrap();
+            oracle_bet_info.wager,
+        )?;
 
         Ok(())
     }
 
     pub fn win(ctx: Context<WinCtx>) -> Result<()> {
         let oracle_bet_info = &mut ctx.accounts.oracle_bet_info;
+        let winner = ctx.accounts.winner.to_account_info();
 
-        msg!("Winner: {:?}", ctx.accounts.winner.key);
-
-        **ctx
-            .accounts
-            .winner
+        **winner
             .to_account_info()
             .try_borrow_mut_lamports()? += oracle_bet_info.to_account_info().lamports();
 
@@ -72,16 +66,14 @@ pub mod oracle_bet {
 
         require!(
             oracle_bet_info.deadline < Clock::get()?.slot,
-            CustomError::DeadlineNotReached
+            Error::DeadlineNotReached
         );
 
-        msg!("Transfering funds to participant2");
         **participant2.to_account_info().try_borrow_mut_lamports()? += oracle_bet_info.wager;
         **oracle_bet_info
             .to_account_info()
             .try_borrow_mut_lamports()? -= oracle_bet_info.wager;
 
-        msg!("Transfering the rent to participant1");
         **participant1.to_account_info().try_borrow_mut_lamports()? +=
             oracle_bet_info.to_account_info().lamports();
         **oracle_bet_info
@@ -102,30 +94,16 @@ pub struct OracleBetInfo {
     pub deadline: u64,
 }
 
-impl OracleBetInfo {
-    pub fn initialize(
-        &mut self,
-        oracle: Pubkey,
-        participant1: Pubkey,
-        participant2: Pubkey,
-        deadline: u64,
-        wager: u64,
-    ) {
-        self.oracle = oracle;
-        self.participant1 = participant1;
-        self.participant2 = participant2;
-        self.deadline = deadline;
-        self.wager = wager;
-    }
-}
-
 #[derive(Accounts)]
 pub struct JoinCtx<'info> {
     #[account(mut)]
     pub participant1: Signer<'info>,
+
     #[account(mut)]
     pub participant2: Signer<'info>,
+
     pub oracle: SystemAccount<'info>,
+
     #[account(
         init, 
         payer = participant1, 
@@ -134,6 +112,7 @@ pub struct JoinCtx<'info> {
         space = 8 + OracleBetInfo::INIT_SPACE
     )]
     pub oracle_bet_info: Account<'info, OracleBetInfo>,
+
     pub system_program: Program<'info, System>,
 }
 
@@ -141,39 +120,48 @@ pub struct JoinCtx<'info> {
 pub struct WinCtx<'info> {
     #[account(mut)]
     pub oracle: Signer<'info>,
-    #[account(mut, constraint =  *winner.key == oracle_bet_info.participant1 || *winner.key == oracle_bet_info.participant2 @ CustomError::InvalidParticipant)]
-    pub winner: SystemAccount<'info>,
+
     #[account(
         mut, 
-        has_one = oracle @ CustomError::InvalidOracle,
-        has_one = participant1 @ CustomError::InvalidParticipant, 
-        has_one = participant2 @ CustomError::InvalidParticipant,
+        constraint =  *winner.key == oracle_bet_info.participant1 || *winner.key == oracle_bet_info.participant2 @ Error::InvalidParticipant
+    )]
+    pub winner: SystemAccount<'info>,
+
+    #[account(
+        mut, 
+        has_one = oracle @ Error::InvalidOracle,
         seeds = [participant1.key().as_ref(), participant2.key().as_ref()], 
         bump,
     )]
     pub oracle_bet_info: Account<'info, OracleBetInfo>,
+
     pub participant1: SystemAccount<'info>,
+
     pub participant2: SystemAccount<'info>,
+
     pub system_program: Program<'info, System>,
 }
 
 #[derive(Accounts)]
 pub struct TimeoutCtx<'info> {
-    #[account(mut, constraint =  *participant1.key == oracle_bet_info.participant1  @ CustomError::InvalidParticipant)]
+    #[account(mut)]
     pub participant1: SystemAccount<'info>,
-    #[account(mut, constraint =  *participant2.key == oracle_bet_info.participant2 @ CustomError::InvalidParticipant)]
+
+    #[account(mut)]
     pub participant2: SystemAccount<'info>,
+
     #[account(
         mut,
         seeds = [participant1.key().as_ref(), participant2.key().as_ref()], 
         bump,
     )]
     pub oracle_bet_info: Account<'info, OracleBetInfo>,
+
     pub system_program: Program<'info, System>,
 }
 
 #[error_code]
-pub enum CustomError {
+pub enum Error {
     #[msg("Invalid participant")]
     InvalidParticipant,
 
