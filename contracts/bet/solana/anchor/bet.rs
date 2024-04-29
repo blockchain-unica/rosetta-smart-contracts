@@ -1,10 +1,10 @@
 use anchor_lang::prelude::*;
 use anchor_lang::system_program;
 
-declare_id!("CgUzgJgmYN5VnQmwJuLRqwXwpaRLktt2ic61dHcPif9k");
+declare_id!("7mMf8y3WnKREkqkUG96viUvsMfpwfaPHqxBSxbMUMJQN");
 
 #[program]
-pub mod oracle_bet {
+pub mod bet {
     use super::*;
 
     pub fn join(ctx: Context<JoinCtx>, delay: u64, wager: u64) -> Result<()> {
