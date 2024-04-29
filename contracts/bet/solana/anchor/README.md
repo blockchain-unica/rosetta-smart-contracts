@@ -13,10 +13,9 @@ is recommended for a complete understanding.
 
 ### Main Logic
 
-The use case involves two players and an oracle. Two participants join the contract by depositing and amount and setting the deadline. The oracle is expected to determine the winner between the two players. The winner can redeem the whole pot. If the oracle does not choose the winner by the deadline, then both players can redeem their bets.
+The use case involves two players and an oracle. Two participants join the contract by depositing 1 SOL each and setting the deadline. The oracle is expected to determine the winner between the two players. The winner can redeem the whole pot. If the oracle does not choose the winner by the deadline, then both players can redeem their bets.
 
 Let's start by crafting the main contract logic. We have three actions: `join`, `win`, and `timeout`, each with its own context of associated accounts and parameters. We also define the account structure `OracleBetInfo`, which holds the information about the bet.
-
 
 ```rust
 pub mod oracle_bet {
@@ -50,7 +49,7 @@ impl OracleBetInfo {
 
 #[derive(Accounts)]
 pub struct JoinCtx<'info> {
-    // Accounts involved in the bet action
+    // Accounts involved in the join action
 }
 
 #[derive(Accounts)]
@@ -70,7 +69,7 @@ Once we've defined the main logic, let's implement the accounts context of the j
 
 The `join` action involves two participants and the oracle. Both participants are required to join simultaneously. For this purpose they are typed as `Signer` accounts, contrary to the oracle.
 
-Since solana smart contracts are [stateless]((https://solanacookbook.com/core-concepts/accounts.html#facts)), the third account is the `oracle_bet_info`, a [PDA](https://solanacookbook.com/core-concepts/pdas.html#facts) account with the associated type `OracleBetInfo`, that will hold information such as the deposited balance and the actors. The account is initialized with the `init` attribute with `participant1` as the payer. The address of this account is derived through seeds in a way to establish a mapping between the couple (`participant1`, `participant2`) and their storage account. 
+Since Solana smart contracts are [stateless]((https://solanacookbook.com/core-concepts/accounts.html#facts)), the third account is the `oracle_bet_info`, a [PDA](https://solanacookbook.com/core-concepts/pdas.html#facts) account with the associated type `OracleBetInfo`, that will hold information such as the deposited balance and the actors. The account is initialized with the `init` attribute with `participant1` as the payer. The address of this account is derived through seeds in a way to establish a mapping between the couple (`participant1`, `participant2`) and their storage account. 
 An alternative mapping can be achieved by including also the `oracle` in the seeds, in this case a single couple (`participant1`, `participant2`) can have multiple bets with different oracles.
 The space is calculated using the `OracleBetInfo::INIT_SPACE` constant to cover the [Rent exemption](https://solanacookbook.com/core-concepts/accounts.html#rent) with 8 bytes allocated for Anchor [discriminator](https://book.anchor-lang.com/anchor_bts/discriminator.html). 
 
@@ -143,7 +142,7 @@ pub fn join(ctx: Context<JoinCtx>, delay: u64, wager: u64) -> Result<()> {
 
 ### Win Context and Logic
 
-The `win` context involves the oracle and the winner. The oracle is constrained to sign the transaction to avoid the [Missing signer check vulnerability](https://neodyme.io/en/blog/solana_common_pitfalls/#missing-signer-check). The winner is constrained to be one of the participants of the bet. The storage account `oracle_bet_info` is retrieved with the sape seeds used in the `join` action. 
+The `win` context involves the oracle and the winner. The oracle is constrained to sign the transaction to avoid the [Missing signer check vulnerability](https://neodyme.io/en/blog/solana_common_pitfalls/#missing-signer-check). The winner is constrained to be one of the players of the bet. The storage account `oracle_bet_info` is retrieved via the seed used in the `join` action. 
 
 ```rust
 pub struct WinCtx<'info> {
@@ -169,7 +168,7 @@ pub struct WinCtx<'info> {
 The logic of the `win` action involves transferring the balance of the `oracle_bet_info` account to the winner.
 
 
-ℹ️ In the `join` action we were constrained to invoke the system program to transfer the assets. This because the assets were provided by the participants, accounts [owned](https://solanacookbook.com/core-concepts/accounts.html#account-model) by the system program. In the `win` action, the assets are transferred to the winner from a PDA account, which is owned by the program itself. This is why we can directly manipulate the assets in the PDA account.
+In the `join` action we were constrained to invoke the system program to transfer the assets. This is because the assets were provided by the participants, whose accounts are [owned](https://solanacookbook.com/core-concepts/accounts.html#account-model) by the system program. In the `win` action, the assets are transferred to the winner from a PDA account, which is owned by the program itself. This is why we can directly manipulate the assets in the PDA account.
 
 ```rust
 pub fn win(ctx: Context<WinCtx>) -> Result<()> {
