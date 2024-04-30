@@ -83,9 +83,9 @@ The space is calculated using the `BetInfo::INIT_SPACE` constant, with 8 bytes a
 The address of `bet_info` is a special address called [PDA](https://solanacookbook.com/core-concepts/pdas.html#facts) (Program Derived Address), which are deterministically generated addresses, designed to be exclusively controlled by our contract. The `seeds` attribute is used to derive the address of the account. The seeds are used to establish a mapping between the couple (`participant1`, `participant2`) and their storage account. The consequence of this combination of seeds is that a single couple (`participant1`, `participant2`) cannot have at the same time two different bets.
 We provide a graphic representation of this concept in the image below. The arrows entering the PDA rectangle represent inputs used to derive the address of the account.
 
-The last account is the `system_program` account, a native contract required in instructions containing account initializations and asset transfers.
-
 ![Contract Accounts](./OracleBet.png)
+
+The last account is the `system_program` account, a native contract required in instructions containing account initializations and asset transfers.
 
 ```rust
 #[derive(Accounts)]
@@ -112,7 +112,7 @@ pub struct JoinCtx<'info> {
 }
 ```
 
-Once we have the context, we can implement the logic of the `join` action. The logic involves initializing the `bet_info` account with the information about the bet, and both participants transferring the same wager to the `bet_info` account. Calling the `join` action will cause an error since the `bet_info` account was already initialized.
+Once we have the context, we can implement the logic of the `join` action. The logic involves initializing the `bet_info` account with the information about the bet, and both participants transferring the same wager to the `bet_info` account. 
 
 ```rust
 pub fn join(ctx: Context<JoinCtx>, delay: u64, wager: u64) -> Result<()> {
