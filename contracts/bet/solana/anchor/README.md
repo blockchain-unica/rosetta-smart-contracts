@@ -85,6 +85,8 @@ We provide a graphic representation of this concept in the image below. The arro
 
 The last account is the `system_program` account, a native contract required in instructions containing account initializations and asset transfers.
 
+![Contract Accounts](./OracleBet.png)
+
 ```rust
 #[derive(Accounts)]
 pub struct JoinCtx<'info> {
@@ -109,8 +111,6 @@ pub struct JoinCtx<'info> {
     pub system_program: Program<'info, System>,
 }
 ```
-
-![Contract Accounts](./OracleBet.png)
 
 Once we have the context, we can implement the logic of the `join` action. The logic involves initializing the `bet_info` account with the information about the bet, and both participants transferring the same wager to the `bet_info` account. Calling the `join` action will cause an error since the `bet_info` account was already initialized.
 
