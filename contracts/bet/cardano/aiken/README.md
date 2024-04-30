@@ -34,13 +34,12 @@ type Datum {
 
 ### Redeemer
 
-When spending an output locked by a script, the transaction includes an **additional payload** called *redeemer*.
-These data can be used by the validator to verify and fulfill the output's spending conditions.
-For example, if the spending condition of an output is: "the redeeming address is allowed to spend this output only if they provide a preimage to a given hash", a well written contract will allow the user to pass the preimage through the redeemer field and it will check it.  
-In the Cardano [extended UTxO](https://docs.cardano.org/learn/eutxo-explainer/) model, redeemers contain *arbitrary data* (as long as it is supported by the underlying Plutus Core layer). 
+When spending an output locked by a script, the transaction includes an additional payload, called **redeemer**, which can be used by the validator to verify the output's spending condition.
+For example, if the spending condition requires to provide a preimage to a given hash, this preimage will likely be contained in the redeemer field.
 
-In our Bet contract, the ```Redeemer``` is a sum between three different types corresponding to the three different **actions** allowed by the contract.
+In Cardano's [extended UTxO](https://docs.cardano.org/learn/eutxo-explainer/) model, the redeemer can contain *arbitrary data*, as long as it is supported by the underlying Plutus Core layer. 
 
+In our Bet contract, we define the ```Redeemer``` type as the sum between three types corresponding to the three different **actions** supported by the contract.
 ```ml 
 type Redeemer {
     Join
@@ -51,8 +50,7 @@ type Redeemer {
 
 ### Main logic 
 
-The validator's main **structure** is the following: 
-
+The overall structure of the validator is the following: 
 <!-- scala because it allows to highlight comment and types -->
 ```scala
 validator {
@@ -84,15 +82,15 @@ validator {
 }
 ```
 
-The ```bet``` function is declared under a ```validator``` block. This means, the function must return a **boolean value** representing wether the transaction is valid or not. \
-Inside this function, we perform a *pattern matching* on the ```ctx.purpose``` value representing the kind of script being executed. We accept as valid only spending transaction (ignoring then minting transactions and similar): in fact, if the purpose is not ```Spend```, the validator returns ```False```. \
-As mentioned [before](#redeemer), to discriminate between the three different "actions", another pattern matching construct is applied to the ```redeemer``` value.   
+The ```bet``` function is declared under a ```validator``` block. This means that the function must return a boolean value representing whether the transaction is valid or not.
+Inside this function, we perform a pattern matching on the ```ctx.purpose``` value representing the kind of script being executed. We accept as valid only spending transaction (ignoring then minting transactions and similar): in fact, if the purpose is not ```Spend```, the validator returns ```False```.
+
+As mentioned [before](#redeemer), to discriminate between the three different actions, another pattern matching construct is applied to the ```redeemer``` value.   
 
 #### Preprocessing
 
-A *preprocessing* step is required to retrieve all the values common to the three actions; in this case, we're retrieving the balance of the contract. \
-All the functions in the following code snippet, are not part of the Aiken language or its standard library, they come instead from a [custom library](./utils.ak) written by us. 
-
+As a preprocessing step we retrieve all the values common to the three actions; in this case, we are retrieving the balance of the contract.
+To this purpose we exploit a [custom library](./utils.ak) that simplifies accessing parts of the transaction: 
 ```ml
 let own_input = utils.get_own_input(ctx)
 let contract_address = own_input.output.address
@@ -109,8 +107,7 @@ let contract_outputs_token_balance = utils.get_tokens_balance_from_outputs(contr
 
 #### Join
 
-In order to **preserve covenant**, we require that there is only one output associated to the contract.
-
+In order to preserve the covenant, we require that there is only one output associated to the contract.
 ```ml
 expect True = list.length(contract_outputs) == 1
 expect Some(contract_output) = list.at(contract_outputs, 0)
@@ -135,10 +132,9 @@ let player_2_inputs_token_balance = utils.get_tokens_balance_from_inputs(utils.g
 let player_2_outputs_token_balance = utils.get_tokens_balance_from_outputs(utils.get_outputs_by_vkh(tx.outputs, player_2))
 ```
 
-A boolean ```and``` block is declared to perform all the checks regarding the ```Join``` action: its value is also the value returned by the validator, because this block is the **last instruction** the function executes in this scope. 
+The following boolean ```and``` block performs all the checks regarding the ```Join``` action: its value is also the value returned by the validator, because this block is the last instruction the function executes in this scope. 
 
-We check that, before this ```Join``` action, the contract had been created and initialized with an *empty datum* and, in the other reported check, it does not contain any value related to the bet token:
-
+We start by checking that, before this ```Join``` action, the contract had been created and initialized with an *empty datum* and, in the other check, that it does not contain any value related to the bet token:
 <!-- C++ just to highlight syntax in Markdown... -->
 ```c++
 and{
@@ -154,9 +150,7 @@ and{
     // other checks
 }
 ```
-
-then, we check the *"economics" conditions* related to the bet: we've to check that, in this transaction we're validating, the contract will receive **two token units** and both players are paying **one unit each**: 
-
+Then, we check that, in the transaction we're validating, the contract will receive **two token units** and both players are paying **one unit each**: 
 ```c++
 and{
     // other checks
@@ -171,9 +165,7 @@ and{
     // other checks
 }
 ```
-
-we add a condition that checks if the two signers have updated the new datum (i.e. the new contract state, retrieved by the output associated to the contract) by assigning themselves as the two players:
-
+We then add a condition that checks if the two signers have updated the new datum (i.e. the new contract state, retrieved by the output associated to the contract) by assigning themselves as the two players:
 ```c++
 and{
     // other checks
@@ -185,9 +177,7 @@ and{
     // other checks
 }
 ```
-
-finally, and similarly, we check that the two players are choosing a valid oracle and a valid deadline: 
-
+Finally, we check that the two players are choosing a valid oracle and a valid deadline: 
 ```c++
 and{
     // other checks
@@ -201,41 +191,34 @@ and{
 }
 ```
 
-
 #### Win
 
-When the redeemer is ```Win```, the oracle has to choose a winner between the two players, this is the reason why the oracle can add an **additional parameter** to the redeemer in the ```Win``` action. \
+For this action, the oracle has to choose a winner between the two players. This is the reason why the oracle can add an additional parameter to the redeemer in the ```Win``` action.
 When checking the redeemer, we are also retrieving the ```winner``` parameter that comes with the redeemer: 
-
 ```c++
 Win(winner) -> {
     // Win logic
 }
 ```
-
-the only preprocessing we're doing here is retrieving this transaction's signer: 
-
+The only preprocessing we are doing here is retrieving this transaction signer: 
 ```ml
 expect Some(tx_signer) = list.at(tx.extra_signatories, 0)
 ```
+Similarly to the [Join action](#join), we put all the conditions in an ```and``` block.
 
-as we've done for the [```Join```](#join), we put all the conditions in an ```and``` block. \
-Firstly, the validator requires the signer to be equal to the oracle specified in the datum and it checks that the input UTxO contains 2 tokens paid by the players:
-
+First, we check that the signer is equal to the oracle specified in the datum, and that the input UTxO contains 2 tokens paid by the players:
 ```c++
 and{
-    // Only oracle can perform this action
+    // Only the oracle can perform this action
     tx_signer == datum.oracle,
 
-    // Contract must have been payed by players (i.e. players must've joined the contract)
+    // The Contract must have been paid by players (i.e. players must have joined the contract)
     contract_inputs_token_balance == 2,
 
     // other checks
 }
 ```
-
-the validator also inspects the transaction's timestamp and, in the inner ```or``` block, it requires a winner to be choosen between the two players appearing in the datum. 
-
+The validator also inspects the transaction timestamp and, in the inner ```or``` block, it requires a winner to be choosen between the two players appearing in the datum. 
 ```c++
 and {
     // other checks
@@ -252,7 +235,6 @@ and {
     // other checks
 }
 ```
-
 Finally, we require that the winner's address is the one receiving the two tokens in one of the transaction's outputs:
 
 ```c++
@@ -264,8 +246,7 @@ and {
 
 #### Timeout
 
-Regarding the ```Timeout``` action, we retrieve the two signers and their token balances.
-
+For the ```Timeout``` action, we retrieve the two signers and their token balances.
 ```ml
 // Get the two transaction's signers
 expect Some(player_1) = list.at(tx.extra_signatories, 0)
@@ -278,9 +259,7 @@ let player_1_outputs_token_balance = utils.get_tokens_balance_from_outputs(utils
 let player_2_inputs_token_balance = utils.get_tokens_balance_from_inputs(utils.get_inputs_by_vkh(tx.inputs, player_2))
 let player_2_outputs_token_balance = utils.get_tokens_balance_from_outputs(utils.get_outputs_by_vkh(tx.outputs, player_2))
 ``` 
-
-In the ```and``` block, we have to check that those two signers are the actual players specified in the datum:
-
+In the ```and``` block, we check that the two signers coincide with the players specified in the datum:
 ```c++
 and {
     // Transaction has the correct signers
@@ -290,9 +269,7 @@ and {
     // other checks
 }
 ``` 
-
-we perform the usual timestamp check. Since the timeout can be performed **only if** the deadline has expired, the transaction's timestamp must be greater than the deadline.
-
+We perform the usual timestamp check. Since the timeout can be performed **only if** the deadline has expired, the transaction timestamp must be greater than the deadline.
 ```c++
 and {
     // other checks
@@ -302,10 +279,8 @@ and {
 
     // other checks
 }
-``` 
-
-To be a valid timeout, the players must have joined the contract **previously**. The establish this, we can check the balance of the input associated with the contract: if it has 2 tokens, we can say the two players had performed the ```Join``` action:
-
+```
+To be a valid timeout, the players must have joined the contract **previously**. The establish this, we can check the balance of the input associated with the contract: if it has 2 tokens, we can say the two players had performed the Join action:
 ```c++
 and {
     // other checks
@@ -316,9 +291,7 @@ and {
     // other checks
 }
 ``` 
-
-finally, a valid timeout has to return 1 token **to each player**. So, we check that the respective output balance of the two players has increased by 1 than their inputs (we can safely perform this check because in Cardano, tokens **cannot be** used to pay transaction fees):
-
+Finally, we transfer 1 token to each player. To do that, we check that the output balance of each players is equal to its input balance increased by 1 (we can safely perform this check because in Cardano, tokens **cannot be** used to pay transaction fees):
 ```c++
 and {
     // other checks
@@ -333,5 +306,5 @@ and {
 
 <!-- 
 The offchain section has been removed. 
-The original is still aviable here: https://github.com/strausste/aiken-contracts/tree/main/oracle-bet-v2 
+The original is still available here: https://github.com/strausste/aiken-contracts/tree/main/oracle-bet-v2 
 -->
