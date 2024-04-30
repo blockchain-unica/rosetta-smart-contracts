@@ -33,7 +33,7 @@ If the platform does not support multisig transactions, then step 1. is split in
 ## Implementations
 
 - **Solidity/Ethereum**: ---
-- **Anchor/Solana**: ---
+- **Anchor/Solana**: implementation coherent with the specification.
 - **Aiken/Cardano**: ---
 - **PyTeal/Algorand**: ---
 - **SmartPy/Tezos**: ---

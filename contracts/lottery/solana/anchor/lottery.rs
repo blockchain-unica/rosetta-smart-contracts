@@ -27,24 +27,24 @@ pub mod lottery {
             end_reveal,
         )?;
 
-        let participant1 = ctx.accounts.player1.to_account_info();
+        let player1 = ctx.accounts.player1.to_account_info();
         system_program::transfer(
             CpiContext::new(
                 ctx.accounts.system_program.to_account_info(),
                 system_program::Transfer {
-                    from: participant1.clone(),
+                    from: player1.clone(),
                     to: lottery_info.to_account_info().clone(),
                 },
             ),
             amount,
         )?;
 
-        let participant2 = ctx.accounts.player2.to_account_info();
+        let player2 = ctx.accounts.player2.to_account_info();
         system_program::transfer(
             CpiContext::new(
                 ctx.accounts.system_program.to_account_info(),
                 system_program::Transfer {
-                    from: participant2.clone(),
+                    from: player2.clone(),
                     to: lottery_info.to_account_info().clone(),
                 },
             ),
