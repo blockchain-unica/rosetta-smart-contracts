@@ -75,27 +75,7 @@ The space is calculated using the `OracleBetInfo::INIT_SPACE` constant to cover 
 The last account is the `system_program` account, a native contract, required in instructions containing account initializations.
 
 ```rust
-#[derive(Accounts)]
-pub struct JoinCtx<'info> {
-    #[account(mut)]
-    pub participant1: Signer<'info>,
 
-    #[account(mut)]
-    pub participant2: Signer<'info>,
-
-    pub oracle: SystemAccount<'info>,
-
-    #[account(
-        init, 
-        payer = participant1, 
-        seeds = [participant1.key().as_ref(), participant2.key().as_ref()], 
-        bump,
-        space = 8 + OracleBetInfo::INIT_SPACE
-    )]
-    pub oracle_bet_info: Account<'info, OracleBetInfo>,
-
-    pub system_program: Program<'info, System>,
-}
 ```
 
 ![Contract Accounts](./OracleBet.png)
@@ -103,42 +83,7 @@ pub struct JoinCtx<'info> {
 Once we have the context, we can implement the logic of the `join` action. The logic involves initializing the `oracle_bet_info` account with the information about the bet, and both participants transferring the wager to the `oracle_bet_info` account.
 
 ```rust
-pub fn join(ctx: Context<JoinCtx>, delay: u64, wager: u64) -> Result<()> {
-    let participant1 = ctx.accounts.participant1.to_account_info();
-    let participant2 = ctx.accounts.participant2.to_account_info();
-    let oracle = ctx.accounts.oracle.to_account_info();
-    let oracle_bet_info = &mut ctx.accounts.oracle_bet_info;
 
-    oracle_bet_info.oracle = *oracle.key;
-    oracle_bet_info.participant1 = *participant1.key;
-    oracle_bet_info.participant2 = *participant2.key;
-    oracle_bet_info.deadline = Clock::get()?.slot + delay;
-    oracle_bet_info.wager = wager;
-
-    system_program::transfer(
-        CpiContext::new(
-            ctx.accounts.system_program.to_account_info(),
-            system_program::Transfer {
-                from: participant1.clone(),
-                to: oracle_bet_info.to_account_info().clone(),
-            },
-        ),
-        oracle_bet_info.wager,
-    )?;
-
-    system_program::transfer(
-        CpiContext::new(
-            ctx.accounts.system_program.to_account_info(),
-            system_program::Transfer {
-                from: participant2.clone(),
-                to: oracle_bet_info.to_account_info().clone(),
-            },
-        ),
-        oracle_bet_info.wager,
-    )?;
-
-    Ok(())
-}
 ```
 
 ## Win Context and Logic
@@ -146,31 +91,7 @@ pub fn join(ctx: Context<JoinCtx>, delay: u64, wager: u64) -> Result<()> {
 The `win` context involves the oracle and the winner. The oracle is constrained to sign the transaction to avoid the [Missing signer check vulnerability](https://neodyme.io/en/blog/solana_common_pitfalls/#missing-signer-check). The winner is constrained to be one of the players of the bet. The storage account `oracle_bet_info` is retrieved via the seed used in the `join` action. 
 
 ```rust
-#[derive(Accounts)]
-pub struct WinCtx<'info> {
-    #[account(mut)]
-    pub oracle: Signer<'info>,
 
-    #[account(
-        mut, 
-        constraint =  *winner.key == oracle_bet_info.participant1 || *winner.key == oracle_bet_info.participant2 @ Error::InvalidParticipant
-    )]
-    pub winner: SystemAccount<'info>,
-
-    #[account(
-        mut, 
-        has_one = oracle @ Error::InvalidOracle,
-        seeds = [participant1.key().as_ref(), participant2.key().as_ref()], 
-        bump,
-    )]
-    pub oracle_bet_info: Account<'info, OracleBetInfo>,
-
-    pub participant1: SystemAccount<'info>,
-
-    pub participant2: SystemAccount<'info>,
-
-    pub system_program: Program<'info, System>,
-}
 ```
 
 The logic of the `win` action involves transferring the balance of the `oracle_bet_info` account to the winner.
@@ -179,20 +100,7 @@ The logic of the `win` action involves transferring the balance of the `oracle_b
 In the `join` action we were constrained to invoke the system program to transfer the assets. This is because the assets were provided by the participants, whose accounts are [owned](https://solanacookbook.com/core-concepts/accounts.html#account-model) by the system program. In the `win` action, the assets are transferred to the winner from a PDA account, which is owned by the program itself. This is why we can directly manipulate the assets in the PDA account.
 
 ```rust
-pub fn win(ctx: Context<WinCtx>) -> Result<()> {
-    let oracle_bet_info = &mut ctx.accounts.oracle_bet_info;
-    let winner = ctx.accounts.winner.to_account_info();
 
-    **winner
-        .to_account_info()
-        .try_borrow_mut_lamports()? += oracle_bet_info.to_account_info().lamports();
-
-    **oracle_bet_info
-        .to_account_info()
-        .try_borrow_mut_lamports()? = 0;
-
-    Ok(())
-}
 ```
 
 ## Timeout Context and Logic
@@ -200,49 +108,11 @@ pub fn win(ctx: Context<WinCtx>) -> Result<()> {
 In the `timeout` action, besides the correctness of the addresses of the participants, we do not require any signature. The `oracle_bet_info` account is retrieved with the same seeds used in the `join` action.
 
 ```rust
-#[derive(Accounts)]
-pub struct TimeoutCtx<'info> {
-    #[account(mut)]
-    pub participant1: SystemAccount<'info>,
 
-    #[account(mut)]
-    pub participant2: SystemAccount<'info>,
-
-    #[account(
-        mut,
-        seeds = [participant1.key().as_ref(), participant2.key().as_ref()], 
-        bump,
-    )]
-    pub oracle_bet_info: Account<'info, OracleBetInfo>,
-
-    pub system_program: Program<'info, System>,
-}
 ```
 
 The logic of the `timeout` action involves refunding the participants with the wager and the participant1 also with the remaining lamports since it was the initializer of the `oracle_bet_info` account. The deadline is checked against the current slot, in case the deadline is not reached, the transaction is aborted.
 
 ```rust
-pub fn timeout(ctx: Context<TimeoutCtx>) -> Result<()> {
-    let oracle_bet_info = &mut ctx.accounts.oracle_bet_info;
-    let participant1 = ctx.accounts.participant1.to_account_info();
-    let participant2 = ctx.accounts.participant2.to_account_info();
 
-    require!(
-        oracle_bet_info.deadline < Clock::get()?.slot,
-        Error::DeadlineNotReached
-    );
-
-    **participant2.to_account_info().try_borrow_mut_lamports()? += oracle_bet_info.wager;
-    **oracle_bet_info
-        .to_account_info()
-        .try_borrow_mut_lamports()? -= oracle_bet_info.wager;
-
-    **participant1.to_account_info().try_borrow_mut_lamports()? +=
-        oracle_bet_info.to_account_info().lamports();
-    **oracle_bet_info
-        .to_account_info()
-        .try_borrow_mut_lamports()? = 0;
-
-    Ok(())
-}
 ```
