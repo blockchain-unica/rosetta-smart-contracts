@@ -13,12 +13,14 @@ pub mod bet {
         let oracle = ctx.accounts.oracle.to_account_info();
         let bet_info = &mut ctx.accounts.bet_info;
 
+        // Initializing the bet info
         bet_info.oracle = *oracle.key;
         bet_info.participant1 = *participant1.key;
         bet_info.participant2 = *participant2.key;
         bet_info.deadline = Clock::get()?.slot + delay;
         bet_info.wager = wager;
 
+        // Participant 1 deposits the wager
         system_program::transfer(
             CpiContext::new(
                 ctx.accounts.system_program.to_account_info(),
@@ -30,6 +32,7 @@ pub mod bet {
             bet_info.wager,
         )?;
 
+        // Participant 2 deposits the wager
         system_program::transfer(
             CpiContext::new(
                 ctx.accounts.system_program.to_account_info(),
@@ -48,6 +51,7 @@ pub mod bet {
         let bet_info = ctx.accounts.bet_info.to_account_info();
         let winner = ctx.accounts.winner.to_account_info();
 
+        // The winner receives the whole pot
         **winner.try_borrow_mut_lamports()? += bet_info.to_account_info().lamports();
         **bet_info.try_borrow_mut_lamports()? = 0;
 
@@ -59,16 +63,20 @@ pub mod bet {
         let participant1 = ctx.accounts.participant1.to_account_info();
         let participant2 = ctx.accounts.participant2.to_account_info();
 
+        // The deadline must be reached
         require!(
             bet_info.deadline < Clock::get()?.slot,
             Error::DeadlineNotReached
         );
 
+        // Refund participant2 with the wager
         **participant2.try_borrow_mut_lamports()? += bet_info.wager;
         **bet_info
             .to_account_info()
             .try_borrow_mut_lamports()? -= bet_info.wager;
 
+        // Refund participant1 with the wager + the bet_info rent exemption 
+        // since it' was created by participant1 in the join action
         **participant1.try_borrow_mut_lamports()? += bet_info.to_account_info().lamports();
         **bet_info
             .to_account_info()
@@ -90,30 +98,31 @@ pub struct BetInfo {
 
 #[derive(Accounts)]
 pub struct JoinCtx<'info> {
-    #[account(mut)]
+    #[account(mut)] // Mutable because depositing the wager
     pub participant1: Signer<'info>,
 
-    #[account(mut)]
+    #[account(mut)] // Mutable because depositing the wager
     pub participant2: Signer<'info>,
 
     pub oracle: SystemAccount<'info>,
 
     #[account(
-        init, 
-        payer = participant1, 
+        init, // The account must be initialized
+        payer = participant1, // with participant1 as the payer
         seeds = [participant1.key().as_ref(), participant2.key().as_ref()], 
         bump,
         space = 8 + BetInfo::INIT_SPACE
     )]
     pub bet_info: Account<'info, BetInfo>,
 
+    // Native Solana program required in account initializations and asset transfers 
     pub system_program: Program<'info, System>,
 }
 
 #[derive(Accounts)]
 pub struct WinCtx<'info> {
     #[account(mut)]
-    pub oracle: Signer<'info>,
+    pub oracle: Signer<'info>, // Signer to prevent unauthorized calls, only the oracle can invoke this action
 
     #[account(
         mut, 
