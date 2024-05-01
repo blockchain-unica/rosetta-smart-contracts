@@ -248,16 +248,12 @@ pub fn timeout(ctx: Context<TimeoutCtx>) -> Result<()> {
 
     // Refund participant2 with the wager
     **participant2.try_borrow_mut_lamports()? += bet_info.wager;
-    **bet_info
-        .to_account_info()
-        .try_borrow_mut_lamports()? -= bet_info.wager;
+    **bet_info.to_account_info().try_borrow_mut_lamports()? -= bet_info.wager;
 
     // Refund participant1 with the wager + the bet_info rent exemption 
     // since it was created by participant1 in the join action
     **participant1.try_borrow_mut_lamports()? += bet_info.to_account_info().lamports();
-    **bet_info
-        .to_account_info()
-        .try_borrow_mut_lamports()? = 0;
+    **bet_info.to_account_info().try_borrow_mut_lamports()? = 0;
 
     Ok(()) // Execution completed successfully without errors
 }
