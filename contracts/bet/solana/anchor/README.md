@@ -18,7 +18,7 @@ There are three available actions: `join`, `win`, and `timeout`. As the contract
 Solana contracts, on the other hand, only contain executive logic. The necessary data is stored in additional accounts that are supplied as input.
 In reference to our contract, as can be seen below, we establish a `BetInfo` data structure that defines the information that an account will contain for the bet.
 
-In Anchor, all accounts involved in an action are provided through a context, which is an array of accounts with various constraints applied to them. Accounts associated with the `join` action, for instance, are included in the `JoinCtx` context. In addition to the account context, we can pass additional parameters, such as the `delay` in the `join` action, to calculate the deadline.
+In Anchor, all accounts involved in an action are provided through a context, which is an array of accounts with various constraints applied to them. Accounts associated with the `join` action, for instance, are included in the `JoinCtx` context. In addition to the account context, we can pass other parameters, such as the `delay` in the `join` action, to calculate the deadline.
 
 With this knowledge in mind, the following Rust code snippet demonstrates the core contract logic:
 
@@ -77,10 +77,10 @@ Once we've defined the core contract logic, let's implement the accounts context
 The `join` action involves two participants and the oracle. Both participants are required to join simultaneously. For this purpose, they are typed as `Signer` accounts, contrary to the oracle.
 
 Since Solana smart contracts are [stateless]((https://solanacookbook.com/core-concepts/accounts.html#facts)), the third account is `bet_info` of type `BetInfo` with the purpose of storing information about the bet for the involved participants.
-It is an account that does not yet exist and is initialized (`init` attribute) by player1 (`payer` attribute). In particular, the payer covers the [rent fees](https://solanacookbook.com/core-concepts/accounts.html#rent) for the account initialization. Every account on Solana needs to be rent-exempted, meaning that it must have a balance of at least two years' worth of rent proportional to the size of the account.
-The space is calculated using the `BetInfo::INIT_SPACE` constant, with 8 bytes allocated for Anchor [discriminator](https://book.anchor-lang.com/anchor_bts/discriminator.html).
+It is an account that does not yet exist and is initialized (`init`) by player1 (`payer`). In particular, the payer covers the [rent fees](https://solanacookbook.com/core-concepts/accounts.html#rent) for the account initialization; every account on Solana needs to be rent-exempted, meaning that it must have a balance of at least two years' worth of rent proportional to the space of the account.
+In our case the space is calculated using the `BetInfo::INIT_SPACE` constant, with 8 bytes allocated for Anchor [discriminator](https://book.anchor-lang.com/anchor_bts/discriminator.html).
 
-The address of `bet_info` is a special address called [PDA](https://solanacookbook.com/core-concepts/pdas.html#facts) (Program Derived Address), which are deterministically generated addresses, designed to be exclusively controlled by our contract. The `seeds` attribute is used to derive the address of the account. The seeds are used to establish a mapping between the couple (`participant1`, `participant2`) and their storage account. The consequence of this combination of seeds is that a single couple (`participant1`, `participant2`) cannot have at the same time two different bets.
+The address of `bet_info` is a special address called [PDA](https://solanacookbook.com/core-concepts/pdas.html#facts) (Program Derived Address), which are deterministically generated addresses, designed to be exclusively controlled by our contract. Seeds are used to derive the address of the account in a way to establish a mapping between the couple (`participant1`, `participant2`) and their storage account. The consequence of this combination of seeds is that a single couple (`participant1`, `participant2`) cannot have at the same time two different bets.
 We provide a graphic representation of this concept in the image below. The arrows entering the PDA rectangle represent inputs used to derive the address of the account.
 
 ![Contract Accounts](./OracleBet.png)
@@ -111,6 +111,7 @@ pub struct JoinCtx<'info> {
     pub system_program: Program<'info, System>,
 }
 ```
+***
 
 Once we have the context, we can implement the logic of the `join` action. The logic involves initializing the `bet_info` account with the information about the bet, and both participants transferring the same wager to the `bet_info` account. 
 
@@ -188,9 +189,9 @@ pub struct WinCtx<'info> {
 }
 ```
 
-The logic of the `win` action involves transferring the balance of the `bet_info` account to the winner.
+***
 
-In the `join` action, we were constrained to invoke the system program to transfer the assets. This is because the assets were provided by the participants, whose accounts are [owned](https://solanacookbook.com/core-concepts/accounts.html#account-model) by the system program. In the `win` action, the assets are transferred to the winner from a PDA account which is owned by the contract itself. This is why we can directly manipulate the assets in the PDA account.
+The logic of the `win` action involves transferring the balance of the `bet_info` account to the winner.
 
 ```rust
 pub fn win(ctx: Context<WinCtx>) -> Result<()> {
@@ -198,13 +199,15 @@ pub fn win(ctx: Context<WinCtx>) -> Result<()> {
     let winner = ctx.accounts.winner.to_account_info();
 
     // The winner receives the whole pot using try_borrow_mut_lamports 
-    // to borrow and mutate the lamports (the base unit of currency in Solana)
+    // to borrow and mutate lamports (the base unit of currency in Solana)
     **winner.try_borrow_mut_lamports()? += bet_info.to_account_info().lamports();
     **bet_info.try_borrow_mut_lamports()? = 0;
 
     Ok(()) // Execution completed successfully without errors
 }
 ```
+
+In the `join` action, we were constrained to invoke the system program to transfer the assets. This is because the assets were provided by the participants, whose accounts are [owned](https://solanacookbook.com/core-concepts/accounts.html#account-model) by the system program. In the `win` action, the assets are transferred to the winner from a PDA account which is owned by the contract itself. This is why we can directly manipulate the assets in the PDA account.
 
 ## Timeout Context and Logic
 
@@ -230,6 +233,8 @@ pub struct TimeoutCtx<'info> {
 }
 ```
 
+***
+
 The logic of the `timeout` action involves refunding the participants with the wager and the participant1 also with the remaining lamports designed for the rent exemption, since it was the initializer of the `bet_info` account. The deadline is checked against the current slot; if the deadline is not reached, the transaction is aborted.
 
 ```rust
@@ -248,7 +253,7 @@ pub fn timeout(ctx: Context<TimeoutCtx>) -> Result<()> {
         .try_borrow_mut_lamports()? -= bet_info.wager;
 
     // Refund participant1 with the wager + the bet_info rent exemption 
-    // since it' was created by participant1 in the join action
+    // since it was created by participant1 in the join action
     **participant1.try_borrow_mut_lamports()? += bet_info.to_account_info().lamports();
     **bet_info
         .to_account_info()
