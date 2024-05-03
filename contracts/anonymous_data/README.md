@@ -15,8 +15,7 @@ Note: a user can always use a new nonce to generate a new ID and store new data.
 ## Expected Features
 
 - Abort conditions
-- Hash 
-- Key-value maps
+- Hash
 
 
 ## Implementations
