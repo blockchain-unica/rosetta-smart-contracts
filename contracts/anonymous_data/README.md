@@ -21,7 +21,7 @@ Note: a user can always use a new nonce to generate a new ID and store new data.
 
 ## Implementations
 
-- **Solidity/Ethereum**: 
+- **Solidity/Ethereum**:  implementation coherent with the specification. Uses all features (the hashing process uses the built in encoding funtion to combine the user's address with the nonce). 
 - **Anchor/Solana**: 
 - **Aiken/Cardano**:
 - **PyTeal/Algorand**:
