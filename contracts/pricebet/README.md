@@ -26,7 +26,7 @@ After creation, the following actions are possible:
 ## Implementations
 
 - **Solidity/Ethereum**: ---
-- **Anchor/Solana**: ---
+- **Anchor/Solana**: a after the deployment step has been added for allowing the owner to initialize the data
 - **Aiken/Cardano**: ---
 - **PyTeal/Algorand**: ---
 - **SmartPy/Tezos**: ---

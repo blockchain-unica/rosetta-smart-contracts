@@ -1,13 +1,13 @@
 use anchor_lang::prelude::*;
+use anchor_lang::system_program;
 use pyth_sdk_solana::load_price_feed_from_account_info;
 use std::str::FromStr;
-use anchor_lang::system_program;
 
 // Pyth oracle
 // https://www.quicknode.com/guides/solana-development/3rd-party-integrations/pyth-price-feeds
 // https://docs.rs/crate/pyth-sdk-solana/latest/source/src/lib.rs
 
-declare_id!("CL23ttCn79XGd99jYure1HCPzjGDtEgmESo1JJN5p59Q");
+declare_id!("J5hRaCiXinCxGG2kYJf6943YCGShKVQYC9N8PT3K4Tmz");
 
 const BTC_USDC_FEED: &str = "HovQMDrbAgAYPCmHVSrezcSmkMtXSSUsLDFANExrZh2J"; // only for the devnet cluster
 const BTC_USDC_FEED_OWNER: &str = "gSbePebfvPy7tRqimPoVecS2UsBvYv46ynrzWocc92s"; // only for the devnet cluster
@@ -18,46 +18,58 @@ pub mod price_bet {
 
     use super::*;
 
-    pub fn join(ctx: Context<JoinCtx>, delay: u64, wager: u64, rate: u64) -> Result<()> {
-        let oracle_bet_info = &mut ctx.accounts.oracle_bet_info;
+    pub fn init(ctx: Context<InitCtx>, delay: u64, wager: u64, rate: u64) -> Result<()> {
+        let owner = ctx.accounts.owner.to_account_info();
 
-        oracle_bet_info.initialize(
-            *ctx.accounts.participant1.key,
-            *ctx.accounts.participant2.key,
-            Clock::get()?.slot + delay,
-            wager,
-            rate,
-        );
+        let bet_info = &mut ctx.accounts.bet_info;
 
-        let participant1 = ctx.accounts.participant1.to_account_info();
+        bet_info.owner = *owner.key;
+        bet_info.player = Pubkey::default();
+        bet_info.deadline = Clock::get()?.slot + delay;
+        bet_info.wager = wager;
+        bet_info.rate = rate;
+
         system_program::transfer(
             CpiContext::new(
                 ctx.accounts.system_program.to_account_info(),
                 system_program::Transfer {
-                    from: participant1.clone(),
-                    to: oracle_bet_info.to_account_info().clone(),
+                    from: owner.clone(),
+                    to: bet_info.to_account_info().clone(),
                 },
             ),
-            oracle_bet_info.wager,
+            bet_info.wager,
         )?;
 
-        let participant2 = ctx.accounts.participant2.to_account_info();
+        Ok(())
+    }
+
+    pub fn join(ctx: Context<JoinCtx>) -> Result<()> {
+        let bet_info = &mut ctx.accounts.bet_info;
+        let player = ctx.accounts.player.to_account_info();
+
+        require!(
+            bet_info.player == Pubkey::default(),
+            CustomError::GameAlreadyJoined
+        );
+
+        bet_info.player = *player.key;
+
         system_program::transfer(
             CpiContext::new(
                 ctx.accounts.system_program.to_account_info(),
                 system_program::Transfer {
-                    from: participant2.clone(),
-                    to: oracle_bet_info.to_account_info().clone(),
+                    from: player.clone(),
+                    to: bet_info.to_account_info().clone(),
                 },
             ),
-            oracle_bet_info.wager,
+            bet_info.wager,
         )?;
 
         Ok(())
     }
 
     pub fn win(ctx: Context<WinCtx>) -> Result<()> {
-        let oracle_bet_info = &mut ctx.accounts.oracle_bet_info;
+        let bet_info = &mut ctx.accounts.bet_info;
 
         let price_account_info = &ctx.accounts.price_feed;
 
@@ -67,7 +79,7 @@ pub mod price_bet {
         );
 
         require!(
-            oracle_bet_info.deadline > Clock::get()?.slot,
+            bet_info.deadline > Clock::get()?.slot,
             CustomError::DeadlineReached
         );
 
@@ -84,36 +96,32 @@ pub mod price_bet {
 
         msg!("BTC/USD price: ({} +- {})", price, display_confidence);
 
-        require!(price > oracle_bet_info.rate, CustomError::NoWin);
+        require!(price > bet_info.rate, CustomError::NoWin);
 
         **ctx
             .accounts
-            .participant2
+            .player
             .to_account_info()
-            .try_borrow_mut_lamports()? += oracle_bet_info.to_account_info().lamports();
+            .try_borrow_mut_lamports()? += bet_info.to_account_info().lamports();
 
-        **oracle_bet_info
-            .to_account_info()
-            .try_borrow_mut_lamports()? = 0;
+        **bet_info.to_account_info().try_borrow_mut_lamports()? = 0;
 
         Ok(())
     }
 
     pub fn timeout(ctx: Context<TimeoutCtx>) -> Result<()> {
-        let oracle_bet_info = &mut ctx.accounts.oracle_bet_info;
-        let participant1 = ctx.accounts.participant1.to_account_info();
+        let bet_info = &mut ctx.accounts.bet_info;
+        let owner = ctx.accounts.owner.to_account_info();
 
         require!(
-            oracle_bet_info.deadline < Clock::get()?.slot,
+            bet_info.deadline < Clock::get()?.slot,
             CustomError::DeadlineNotReached
         );
 
-        **participant1.to_account_info().try_borrow_mut_lamports()? +=
-            oracle_bet_info.to_account_info().lamports();
+        **owner.to_account_info().try_borrow_mut_lamports()? +=
+            bet_info.to_account_info().lamports();
 
-        **oracle_bet_info
-            .to_account_info()
-            .try_borrow_mut_lamports()? = 0;
+        **bet_info.to_account_info().try_borrow_mut_lamports()? = 0;
 
         Ok(())
     }
@@ -122,60 +130,57 @@ pub mod price_bet {
 #[account]
 #[derive(InitSpace)]
 pub struct OracleBetInfo {
-    pub participant1: Pubkey,
-    pub participant2: Pubkey,
+    pub owner: Pubkey,
+    pub player: Pubkey,
     pub wager: u64,
     pub deadline: u64,
     pub rate: u64,
 }
 
-impl OracleBetInfo {
-    pub fn initialize(
-        &mut self,
-        participant1: Pubkey,
-        participant2: Pubkey,
-        deadline: u64,
-        wager: u64,
-        rate: u64,
-    ) {
-        self.participant1 = participant1;
-        self.participant2 = participant2;
-        self.deadline = deadline;
-        self.wager = wager;
-        self.rate = rate;
-    }
+#[derive(Accounts)]
+pub struct InitCtx<'info> {
+    #[account(mut)]
+    pub owner: Signer<'info>,
+    #[account(
+        init, 
+        payer = owner, 
+        seeds = [owner.key().as_ref()], 
+        bump,
+        space = 8 + OracleBetInfo::INIT_SPACE
+    )]
+    pub bet_info: Account<'info, OracleBetInfo>,
+    pub system_program: Program<'info, System>,
 }
 
 #[derive(Accounts)]
 pub struct JoinCtx<'info> {
     #[account(mut)]
-    pub participant1: Signer<'info>,
+    pub player: Signer<'info>,
     #[account(mut)]
-    pub participant2: Signer<'info>,
+    pub owner: SystemAccount<'info>,
     #[account(
-        init, 
-        payer = participant1, 
-        seeds = [participant1.key().as_ref(), participant2.key().as_ref()], 
+        mut, 
+        has_one = owner @ CustomError::InvalidParticipant, 
+        seeds = [owner.key().as_ref()],  
         bump,
-        space = 8 + OracleBetInfo::INIT_SPACE
     )]
-    pub oracle_bet_info: Account<'info, OracleBetInfo>,
+    pub bet_info: Account<'info, OracleBetInfo>,
     pub system_program: Program<'info, System>,
 }
 
 #[derive(Accounts)]
 pub struct WinCtx<'info> {
-    pub participant1: SystemAccount<'info>,
     #[account(mut)]
-    pub participant2: Signer<'info>,
+    pub player: Signer<'info>,
+    pub owner: SystemAccount<'info>,
     #[account(
         mut, 
-        has_one = participant1 @ CustomError::InvalidParticipant, 
-        has_one = participant2 @ CustomError::InvalidParticipant,
-        seeds = [participant1.key().as_ref(), participant2.key().as_ref()], 
+        has_one = owner @ CustomError::InvalidParticipant, 
+        has_one = player @ CustomError::InvalidParticipant,
+        seeds = [owner.key().as_ref()],  
         bump,
     )]
-    pub oracle_bet_info: Account<'info, OracleBetInfo>,
+    pub bet_info: Account<'info, OracleBetInfo>,
     /// CHECK
     #[account(address = Pubkey::from_str(BTC_USDC_FEED).unwrap() @ CustomError::InvalidPriceFeed)]
     pub price_feed: AccountInfo<'info>,
@@ -184,16 +189,14 @@ pub struct WinCtx<'info> {
 
 #[derive(Accounts)]
 pub struct TimeoutCtx<'info> {
-    #[account(mut, constraint =  *participant1.key == oracle_bet_info.participant1  @ CustomError::InvalidParticipant)]
-    pub participant1: Signer<'info>,
-    #[account(constraint =  *participant2.key == oracle_bet_info.participant2 @ CustomError::InvalidParticipant)]
-    pub participant2: SystemAccount<'info>,
+    #[account(mut)]
+    pub owner: Signer<'info>,
     #[account(
         mut,
-        seeds = [participant1.key().as_ref(), participant2.key().as_ref()], 
+        seeds = [owner.key().as_ref()], 
         bump,
     )]
-    pub oracle_bet_info: Account<'info, OracleBetInfo>,
+    pub bet_info: Account<'info, OracleBetInfo>,
     pub system_program: Program<'info, System>,
 }
 
@@ -204,6 +207,9 @@ pub enum CustomError {
 
     #[msg("The deadline was not reached yet")]
     DeadlineNotReached,
+
+    #[msg("The game was already joined by a player")]
+    GameAlreadyJoined,
 
     #[msg("The deadline was reached")]
     DeadlineReached,
