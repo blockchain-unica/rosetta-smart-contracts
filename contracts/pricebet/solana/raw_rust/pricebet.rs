@@ -25,11 +25,11 @@ entrypoint!(process_instruction);
 
 #[derive(BorshSerialize, BorshDeserialize, Debug)]
 pub struct OracleBetInfo {
-    pub participant1: Pubkey, // 32 bytes
-    pub participant2: Pubkey, // 32 bytes
-    pub wager: u64,           // 8 bytes
-    pub deadline: u64,        // 8 bytes
-    pub rate: u64,            // 8 bytes
+    pub owner: Pubkey,  // 32 bytes
+    pub player: Pubkey, // 32 bytes
+    pub wager: u64,     // 8 bytes
+    pub deadline: u64,  // 8 bytes
+    pub rate: u64,      // 8 bytes
 }
 
 impl OracleBetInfo {
@@ -41,7 +41,8 @@ const BTC_USDC_FEED_OWNER: &str = "gSbePebfvPy7tRqimPoVecS2UsBvYv46ynrzWocc92s";
 const STALENESS_THRESHOLD: u64 = 60; // staleness threshold in seconds
 
 pub enum OracleBetInstruction {
-    Join { delay: u64, wager: u64, rate: u64 },
+    Init { delay: u64, wager: u64, rate: u64 },
+    Join,
     Win,
     Timeout,
 }
@@ -49,18 +50,19 @@ pub enum OracleBetInstruction {
 impl OracleBetInstruction {
     pub fn from_instruction_data(instruction_data: &[u8]) -> Option<Self> {
         match instruction_data {
-            [0, tail @ ..] => Self::get_join_context(tail),
-            [1, _tail @ ..] => Some(Self::Win),
-            [2, _tail @ ..] => Some(Self::Timeout),
+            [0, tail @ ..] => Self::get_init_context(tail),
+            [1, _tail @ ..] => Some(Self::Join),
+            [2, _tail @ ..] => Some(Self::Win),
+            [3, _tail @ ..] => Some(Self::Timeout),
             _ => None,
         }
     }
 
-    fn get_join_context(instruction_data: &[u8]) -> Option<Self> {
+    fn get_init_context(instruction_data: &[u8]) -> Option<Self> {
         let delay = u64::from_le_bytes(instruction_data[0..8].try_into().unwrap());
         let wager = u64::from_le_bytes(instruction_data[8..16].try_into().unwrap());
         let rate = u64::from_le_bytes(instruction_data[16..24].try_into().unwrap());
-        Some(Self::Join { delay, wager, rate })
+        Some(Self::Init { delay, wager, rate })
     }
 }
 
@@ -73,45 +75,36 @@ pub fn process_instruction<'a>(
         .ok_or(ProgramError::InvalidInstructionData)?;
 
     match instruction {
-        OracleBetInstruction::Join { delay, wager, rate } => {
-            join(program_id, accounts, delay, wager, rate)
+        OracleBetInstruction::Init { delay, wager, rate } => {
+            init(program_id, accounts, delay, wager, rate)
         }
+        OracleBetInstruction::Join => join(program_id, accounts),
         OracleBetInstruction::Win => win(program_id, accounts),
         OracleBetInstruction::Timeout => timeout(program_id, accounts),
     }
 }
 
-fn join<'a>(
+fn init<'a>(
     program_id: &Pubkey,
     accounts: &'a [AccountInfo<'a>],
     delay: u64,
     wager: u64,
     rate: u64,
 ) -> ProgramResult {
-    msg!("join");
+    msg!("init");
     let accounts_iter: &mut std::slice::Iter<AccountInfo> = &mut accounts.iter();
-    let participant1_account: &AccountInfo = next_account_info(accounts_iter)?;
-    let participant2_account: &AccountInfo = next_account_info(accounts_iter)?;
+    let owner_account: &AccountInfo = next_account_info(accounts_iter)?;
     let oracle_bet_pda: &AccountInfo = next_account_info(accounts_iter)?;
     let system_account: &AccountInfo = next_account_info(accounts_iter)?;
 
     assert!(system_program::check_id(system_account.key));
 
-    if !participant1_account.is_signer {
+    if !owner_account.is_signer {
         return Err(ProgramError::MissingRequiredSignature);
     }
 
-    if !participant2_account.is_signer {
-        return Err(ProgramError::MissingRequiredSignature);
-    }
-
-    let (expected_pda, pda_bump) = Pubkey::find_program_address(
-        &[
-            participant1_account.key.as_ref(),
-            participant2_account.key.as_ref(),
-        ],
-        program_id,
-    );
+    let (expected_pda, pda_bump) =
+        Pubkey::find_program_address(&[owner_account.key.as_ref()], program_id);
 
     if expected_pda != *oracle_bet_pda.key {
         msg!("Invalid PDA");
@@ -122,28 +115,24 @@ fn join<'a>(
 
     invoke_signed(
         &system_instruction::create_account(
-            participant1_account.key,
+            owner_account.key,
             oracle_bet_pda.key,
             rent_lamports,
             OracleBetInfo::LEN as u64,
             program_id,
         ),
         &[
-            participant1_account.clone(),
+            owner_account.clone(),
             oracle_bet_pda.clone(),
             system_account.clone(),
         ],
-        &[&[
-            participant1_account.key.as_ref(),
-            participant2_account.key.as_ref(),
-            &[pda_bump],
-        ]],
+        &[&[owner_account.key.as_ref(), &[pda_bump]]],
     )?;
 
     let deadline = Clock::get()?.slot + delay;
     let oracle_bet_info = OracleBetInfo {
-        participant1: *participant1_account.key,
-        participant2: *participant2_account.key,
+        owner: *owner_account.key,
+        player: Pubkey::default(),
         wager,
         deadline,
         rate,
@@ -152,26 +141,58 @@ fn join<'a>(
     oracle_bet_info.serialize(&mut &mut oracle_bet_pda.try_borrow_mut_data()?[..])?;
 
     invoke(
-        &system_instruction::transfer(
-            participant1_account.key,
-            oracle_bet_pda.key,
-            oracle_bet_info.wager,
-        ),
+        &system_instruction::transfer(owner_account.key, oracle_bet_pda.key, oracle_bet_info.wager),
         &[
-            participant1_account.clone(),
+            owner_account.clone(),
             oracle_bet_pda.clone(),
             system_account.clone(),
         ],
     )?;
 
+    Ok(())
+}
+
+fn join<'a>(program_id: &Pubkey, accounts: &'a [AccountInfo<'a>]) -> ProgramResult {
+    msg!("join");
+    let accounts_iter: &mut std::slice::Iter<AccountInfo> = &mut accounts.iter();
+    let owner_account: &AccountInfo = next_account_info(accounts_iter)?;
+    let player_account: &AccountInfo = next_account_info(accounts_iter)?;
+    let oracle_bet_pda: &AccountInfo = next_account_info(accounts_iter)?;
+    let system_account: &AccountInfo = next_account_info(accounts_iter)?;
+
+    assert!(system_program::check_id(system_account.key));
+
+    if !player_account.is_signer {
+        return Err(ProgramError::MissingRequiredSignature);
+    }
+
+    let (expected_pda, _pda_bump) =
+        Pubkey::find_program_address(&[owner_account.key.as_ref()], program_id);
+
+    if expected_pda != *oracle_bet_pda.key {
+        msg!("Invalid PDA");
+        return Err(ProgramError::InvalidAccountData);
+    }
+
+    let mut oracle_bet_info = OracleBetInfo::try_from_slice(*oracle_bet_pda.data.borrow())?;
+
+    if oracle_bet_info.player != Pubkey::default() {
+        msg!("The player is already set");
+        return Err(ProgramError::InvalidInstructionData);
+    }
+
+    oracle_bet_info.player = *player_account.key;
+
+    oracle_bet_info.serialize(&mut &mut oracle_bet_pda.try_borrow_mut_data()?[..])?;
+
     invoke(
         &system_instruction::transfer(
-            participant2_account.key,
+            player_account.key,
             oracle_bet_pda.key,
             oracle_bet_info.wager,
         ),
         &[
-            participant2_account.clone(),
+            player_account.clone(),
             oracle_bet_pda.clone(),
             system_account.clone(),
         ],
@@ -183,22 +204,17 @@ fn join<'a>(
 fn win<'a>(program_id: &Pubkey, accounts: &'a [AccountInfo<'a>]) -> ProgramResult {
     msg!("win");
     let accounts_iter: &mut std::slice::Iter<AccountInfo> = &mut accounts.iter();
-    let participant1_account: &AccountInfo = next_account_info(accounts_iter)?;
-    let participant2_account: &AccountInfo = next_account_info(accounts_iter)?;
+    let owner_account: &AccountInfo = next_account_info(accounts_iter)?;
+    let player_account: &AccountInfo = next_account_info(accounts_iter)?;
     let price_feed_account: &AccountInfo = next_account_info(accounts_iter)?;
     let oracle_bet_pda: &AccountInfo = next_account_info(accounts_iter)?;
 
-    if !participant2_account.is_signer {
+    if !player_account.is_signer {
         return Err(ProgramError::MissingRequiredSignature);
     }
 
-    let (expected_pda, _pda_bump) = Pubkey::find_program_address(
-        &[
-            participant1_account.key.as_ref(),
-            participant2_account.key.as_ref(),
-        ],
-        program_id,
-    );
+    let (expected_pda, _pda_bump) =
+        Pubkey::find_program_address(&[owner_account.key.as_ref()], program_id);
 
     if expected_pda != *oracle_bet_pda.key {
         msg!("Invalid PDA");
@@ -208,8 +224,7 @@ fn win<'a>(program_id: &Pubkey, accounts: &'a [AccountInfo<'a>]) -> ProgramResul
     let oracle_bet_info: OracleBetInfo =
         OracleBetInfo::try_from_slice(*oracle_bet_pda.data.borrow())?;
 
-    if participant1_account.key != &oracle_bet_info.participant1
-        || participant2_account.key != &oracle_bet_info.participant2
+    if owner_account.key != &oracle_bet_info.owner || player_account.key != &oracle_bet_info.player
     {
         msg!("The participants are not the participants in the oracle_bet_info");
         return Err(ProgramError::InvalidInstructionData);
@@ -248,7 +263,7 @@ fn win<'a>(program_id: &Pubkey, accounts: &'a [AccountInfo<'a>]) -> ProgramResul
         return Err(ProgramError::InvalidInstructionData);
     }
 
-    **participant2_account.try_borrow_mut_lamports()? += **oracle_bet_pda.lamports.borrow();
+    **player_account.try_borrow_mut_lamports()? += **oracle_bet_pda.lamports.borrow();
     **oracle_bet_pda.try_borrow_mut_lamports()? = 0;
 
     Ok(())
@@ -257,21 +272,15 @@ fn win<'a>(program_id: &Pubkey, accounts: &'a [AccountInfo<'a>]) -> ProgramResul
 fn timeout<'a>(program_id: &Pubkey, accounts: &'a [AccountInfo<'a>]) -> ProgramResult {
     msg!("timeout");
     let accounts_iter: &mut std::slice::Iter<AccountInfo> = &mut accounts.iter();
-    let participant1_account: &AccountInfo = next_account_info(accounts_iter)?;
-    let participant2_account: &AccountInfo = next_account_info(accounts_iter)?;
+    let owner_account: &AccountInfo = next_account_info(accounts_iter)?;
     let oracle_bet_pda: &AccountInfo = next_account_info(accounts_iter)?;
 
-    if !participant1_account.is_signer {
+    if !owner_account.is_signer {
         return Err(ProgramError::MissingRequiredSignature);
     }
 
-    let (expected_pda, _pda_bump) = Pubkey::find_program_address(
-        &[
-            participant1_account.key.as_ref(),
-            participant2_account.key.as_ref(),
-        ],
-        program_id,
-    );
+    let (expected_pda, _pda_bump) =
+        Pubkey::find_program_address(&[owner_account.key.as_ref()], program_id);
 
     if expected_pda != *oracle_bet_pda.key {
         msg!("Invalid PDA");
@@ -286,14 +295,7 @@ fn timeout<'a>(program_id: &Pubkey, accounts: &'a [AccountInfo<'a>]) -> ProgramR
         return Err(ProgramError::InvalidInstructionData);
     }
 
-    if participant1_account.key != &oracle_bet_info.participant1
-        || participant2_account.key != &oracle_bet_info.participant2
-    {
-        msg!("The participants are not the participants in the oracle_bet_info");
-        return Err(ProgramError::InvalidInstructionData);
-    }
-
-    **participant1_account.try_borrow_mut_lamports()? += **oracle_bet_pda.lamports.borrow();
+    **owner_account.try_borrow_mut_lamports()? += **oracle_bet_pda.lamports.borrow();
     **oracle_bet_pda.try_borrow_mut_lamports()? = 0;
     Ok(())
 }
