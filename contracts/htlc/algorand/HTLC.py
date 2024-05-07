@@ -1,19 +1,70 @@
-from pyteal import *
+import beaker as bk
+import pyteal as pt
+from pyteal import Seq, Assert, Txn, Global, TxnField, TxnType, InnerTxnBuilder, Int, TealType, abi
 
-A = Addr("2GYIH5HXKDNXA3F7BBIAT5IX744E2WY75GIQRLEWURVRK3XXDQ6LMRAHXU")
-B = Addr("3MTDHUNSO4RXC3ZPJ67C7TLEOFHFO2UNXHE34PN52VN2CSNYSEOXXHPFNY")
-H = Bytes("base16",
-   "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824")
-S = Int(24134000)
+class HTLCState:
+    # Owner
+    owner = bk.GlobalStateValue(
+        stack_type = pt.TealType.bytes
+    )
+    # Verifier
+    verifier = bk.GlobalStateValue(
+        stack_type = pt.TealType.bytes
+    )
+    # Hash
+    hash = bk.GlobalStateValue(
+        stack_type = pt.TealType.bytes
+    )
+    # Reveal timeout
+    reveal_timeout = bk.GlobalStateValue(
+        stack_type = pt.TealType.uint64
+    )
 
-def htlc(a = A, b = B, h = H, start = S):
-    typeOK  = And(Txn.type_enum() == TxnType.Payment, 
-                  Txn.amount() == Int(0))
-    reveal  = And(Sha256(Arg(0)) == h, 
-                  Txn.close_remainder_to() == a)
-    timeout = And(Txn.first_valid() > start + Int(1000),
-                  Txn.close_remainder_to() == b)
-    return And(typeOK,Or(reveal,timeout))
+app = bk.Application("HTLC", state=HTLCState())
 
-if __name__ == "__main__":
-    print(compileTeal(htlc(), Mode.Signature))
+@app.create
+def create(
+    verifier: abi.Address,
+    hash: abi.String,
+    delay: abi.Uint64,
+    payment_txn: abi.PaymentTransaction
+):
+    return pt.Seq([
+        Assert(payment_txn.get().amount() >= pt.Int(1000000), comment="Payment must be at least 1 ALGO"),
+        Assert(payment_txn.get().sender() == Global.creator_address(), comment="Only the creator can create the contract"),
+        Assert(payment_txn.get().receiver() == Global.current_application_address(), comment="Funds must be deposited to the contract"),
+        app.state.owner.set(Txn.sender()),
+        app.state.verifier.set(verifier.get()),
+        app.state.hash.set(hash.get()),
+        app.state.reveal_timeout.set(delay.get())
+    ])
+
+@app.external
+def reveal(
+    s: abi.String
+):
+    return pt.Seq([
+        pt.Assert(pt.Txn.sender() == app.state.owner.get(), comment="Only the owner can reveal"),
+        pt.Assert(pt.Keccak256(s.get()) == app.state.hash.get(), comment="Hashes do not match"),
+        pt.InnerTxnBuilder.Execute({
+            TxnField.type_enum: TxnType.Payment,
+            TxnField.receiver: app.state.owner.get(),
+            TxnField.amount: Int(1000000),
+            TxnField.fee: Int(0),
+        }),
+    ])
+
+@app.external
+def timeout():
+    return Seq([
+        Assert(Global.round() > app.state.reveal_timeout.get()),
+        InnerTxnBuilder.Execute({
+            TxnField.type_enum: TxnType.Payment,
+            TxnField.receiver: app.state.verifier.get(),
+            TxnField.amount: Int(1000000),
+            TxnField.fee: Int(0),
+        }),
+    ])
+
+app_spec = app.build()
+print(app_spec.to_json())

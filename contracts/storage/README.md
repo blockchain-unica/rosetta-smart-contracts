@@ -27,6 +27,6 @@ length (1 to 5 simple characters, 128 simple characters).
 - **Solidity/Ethereum**: implementation coherent with the specification.
 - **Anchor/Solana**: a step has been added for initializing storage accounts.
 - **Aiken/Cardano**: implementation coherent with the specification.
-- **PyTeal/Algorand**: // TODO lore (al momento scrive int e non stringhe)
+- **PyTeal/Algorand**: implementation coherent with the specification.
 - **SmartPy/Tezos**: implementation coherent with the specification.
 - **Move/Aptos**: implementation coherent with the specification.

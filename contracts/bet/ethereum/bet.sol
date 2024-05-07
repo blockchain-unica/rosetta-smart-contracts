@@ -17,6 +17,7 @@ contract Bet {
 
     constructor(address _oracle, address payable player2, uint _timeout) payable {
         wager = msg.value;
+        // lore: aggiungere un require( msg.vaule == 1 ether ); per rispettare la specifica del README
         oracle = _oracle;
         players[0] = payable(msg.sender);
         players[1] = player2;

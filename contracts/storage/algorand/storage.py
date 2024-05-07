@@ -1,11 +1,14 @@
 from pyteal import *
 import beaker
 
-pragma(compiler_version="^0.23.0")
+pragma(compiler_version="^0.24.1")
 
 class StorageState:
-    number = beaker.GlobalStateValue(
-        stack_type=TealType.uint64,
+    bytes = beaker.GlobalStateValue(
+        stack_type=TealType.bytes,
+    )
+    string = beaker.GlobalStateValue(
+        stack_type=TealType.bytes,
     )
 
 app = (
@@ -17,17 +20,21 @@ def create():
     return Approve()
 
 @app.external
-def store(
-    number_: abi.Uint64,
+def storeBytes(
+    bytes_: abi.DynamicBytes
 ):
     return Seq(
-        app.state.number.set(number_.get())
+        app.state.bytes.set(bytes_.get())
     )
 
 @app.external(read_only=True)
-def retrieve(*, output: abi.Uint64):
-    return output.set(app.state.number)
+def storeString(
+    string_: abi.String
+):
+    return Seq(
+        app.state.string.set(string_.get())
+    )
 
 
 if __name__ == "__main__":
-    app.build().export("artifacts")
+    print(app.build().to_json())

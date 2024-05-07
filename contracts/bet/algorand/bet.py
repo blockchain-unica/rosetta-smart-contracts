@@ -43,20 +43,25 @@ def create():
     return pt.Approve()
 
 @app.external
+def init(
+    timeout_: pt.abi.Uint64,
+    oracle_: pt.abi.Address
+):
+    return pt.Seq(
+        app.state.oracle.set(oracle_.get()),
+        app.state.deadline.set(Global.round() + timeout_.get())
+    )
+
+@app.external
 def join1(
     txn: pt.abi.PaymentTransaction,
-    oracle_: pt.abi.Address,
     opponent_: pt.abi.Address,
-    timeout_: pt.abi.Uint64
 ):
     return pt.Seq(
         Assert(app.state.state.get() == States.CREATED),
         Assert(txn.get().sender() == Global.creator_address()),
         Assert(txn.get().receiver() == Global.current_application_address()),
-
-        app.state.oracle.set(oracle_.get()),
         app.state.opponent.set(opponent_.get()),
-        app.state.deadline.set(Global.round() + timeout_.get()),
         app.state.wager.set(txn.get().amount()),
         app.state.state.set(States.JOINED1),
     )
