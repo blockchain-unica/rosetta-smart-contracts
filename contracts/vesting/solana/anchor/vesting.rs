@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-declare_id!("7Entw8xHcUfoMiKFaxpxN3FA7nFZ1ybabtgXNSsCTxkp");
+declare_id!("GJGbBTA1HSKdhnKdFd3muateFVfbALqBVeqCumGTgsj4");
 
 #[program]
 pub mod vesting {
@@ -69,6 +69,11 @@ pub mod vesting {
                 **vesting_info.to_account_info().try_borrow_mut_lamports()?;
             **vesting_info.to_account_info().try_borrow_mut_lamports()? = 0;
         }
+
+        emit!(EtherReleased {
+            amount,
+            beneficiary: *beneficiary.key,
+        });
 
         Ok(())
     }
@@ -159,4 +164,10 @@ pub enum CustomError {
 
     #[msg("Invalid funder")]
     InvalidFunder,
+}
+
+#[event]
+pub struct EtherReleased {
+    amount: u64,
+    beneficiary: Pubkey,
 }

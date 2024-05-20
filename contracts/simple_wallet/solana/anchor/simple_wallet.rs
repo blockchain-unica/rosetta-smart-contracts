@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-declare_id!("KpUxvh3VECWL7eX6j3hZ8kwD9knm25KfFCk9yUSxX3U");
+declare_id!("JDiaQThJ6C1erE6Cm47A22TXzVo976Bi5ggo77M9S9kX");
 
 #[program]
 pub mod simple_wallet {
@@ -22,6 +22,12 @@ pub mod simple_wallet {
             ],
         )
         .unwrap();
+
+        emit!(Deposit {
+            sender: *ctx.accounts.owner.key,
+            amount: amount_to_deposit,
+            balance: **ctx.accounts.user_wallet_pda.to_account_info().lamports.borrow(),
+        });
         Ok(())
     }
 
@@ -38,6 +44,12 @@ pub mod simple_wallet {
         transaction_pda.receiver = *receiver.key;
         transaction_pda.amount_in_lamports = transaction_lamports_amount;
         transaction_pda.executed = false;
+
+        emit!(SubmitTransaction {
+            owner: *ctx.accounts.owner.key,
+            to: *receiver.key,
+            value: transaction_lamports_amount,
+        });
 
         Ok(())
     }
@@ -61,6 +73,10 @@ pub mod simple_wallet {
             .try_borrow_mut_lamports()? -= transaction_pda.amount_in_lamports;
         **receiver.try_borrow_mut_lamports()? += transaction_pda.amount_in_lamports;
 
+        emit!(ExecuteTransaction {
+            owner: *ctx.accounts.owner.key,
+        });
+
         Ok(())
     }
 
@@ -70,6 +86,12 @@ pub mod simple_wallet {
         let user_wallet_pda = &ctx.accounts.user_wallet_pda.to_account_info();
         **user_wallet_pda.try_borrow_mut_lamports()? -= amount_to_withdraw;
         **owner.try_borrow_mut_lamports()? += amount_to_withdraw;
+
+        emit!(Withdraw {
+            sender: *ctx.accounts.owner.key,
+            amount: amount_to_withdraw,
+            balance: **user_wallet_pda.lamports.borrow(),
+        });
         Ok(())
     }
 }
@@ -161,4 +183,32 @@ pub enum CustomError {
 
     #[msg("The provided transaction was already executed")]
     TransactionAlreadyExecuted,
+}
+
+
+
+#[event]
+pub struct Deposit {
+    sender: Pubkey,
+    amount: u64,
+    balance: u64,
+}
+
+#[event]
+pub struct Withdraw {
+    sender: Pubkey,
+    amount: u64,
+    balance: u64,
+}
+
+#[event]
+pub struct SubmitTransaction {
+    owner: Pubkey,
+    to: Pubkey,
+    value: u64,
+}
+
+#[event]
+pub struct ExecuteTransaction{
+    owner: Pubkey,
 }

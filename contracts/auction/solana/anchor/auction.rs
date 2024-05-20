@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-declare_id!("5ynM9QXdASgrGFaXA5Kq54Ly4SFqQhNK9MZrJJUxcUTK");
+declare_id!("ArpHisvZS1EECpwisEM32EXMz2hoqmdhaQwY2TxWLiD7");
 
 #[program]
 pub mod auction {
@@ -18,10 +18,15 @@ pub mod auction {
         auction_info.end_time = Clock::get()?.slot + duration_slots;
         auction_info.highest_bid = starting_bid;
         auction_info.object = auctioned_object;
+        emit!(Start {});
         Ok(())
     }
 
-    pub fn bid(ctx: Context<BidCtx>, auctioned_object: String, amount_to_deposit: u64) -> Result<()> {
+    pub fn bid(
+        ctx: Context<BidCtx>,
+        auctioned_object: String,
+        amount_to_deposit: u64,
+    ) -> Result<()> {
         let auction_info = &mut ctx.accounts.auction_info;
         let bidder = &ctx.accounts.bidder;
         let current_highest_bidder = &ctx.accounts.current_highest_bidder;
@@ -57,6 +62,11 @@ pub mod auction {
         auction_info.highest_bid = amount_to_deposit;
         auction_info.highest_bidder = *bidder.key;
 
+        emit!(Bid {
+            sender: *bidder.key,
+            amount: amount_to_deposit
+        });
+
         Ok(())
     }
 
@@ -75,6 +85,11 @@ pub mod auction {
             **auction_info.to_account_info().try_borrow_mut_lamports()?;
         **auction_info.to_account_info().try_borrow_mut_lamports()? = 0;
 
+        emit!(End {
+            winner: auction_info.highest_bidder,
+            amount: auction_info.highest_bid
+        });
+
         Ok(())
     }
 }
@@ -87,7 +102,7 @@ pub struct AuctionInfo {
     pub end_time: u64,          // 8 bytes
     pub highest_bid: u64,       // 8 bytes
     #[max_len(30)]
-    pub object: String,         
+    pub object: String,
 }
 
 #[derive(Accounts)]
@@ -150,4 +165,19 @@ pub enum CustomError {
 
     #[msg("Invalid seller for the auction provided")]
     InvalidSeller,
+}
+
+#[event]
+pub struct Start {}
+
+#[event]
+pub struct Bid {
+    sender: Pubkey,
+    amount: u64,
+}
+
+#[event]
+pub struct End {
+    winner: Pubkey,
+    amount: u64,
 }
