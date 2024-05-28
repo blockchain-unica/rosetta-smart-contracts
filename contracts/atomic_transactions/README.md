@@ -35,12 +35,6 @@ another atomic sequence of transactions).
 - **Aiken/Cardano**:
 - **PyTeal/Algorand**:
 - **SmartPy/Tezos**:
-
-// qui sotto una ipotesi di formato più strutturato per ogni piattaforma.
-// Pro: le feature usate nella tal piattaforma sono in forma di elenco (un sottoinsieme di quelle in cima a questo file)
-// Contro: per spiegare come mai si sono usate certe e non altre bisogna cmq ricorrere ad una riga di commento che spieghi in inglese discorsivo le scelte e le motivazioni fatte.
-// Allora a questo punto, perché non lasciare solamente una riga di commento libero ma che spiega tutto per bene?
-
 - **Move/Aptos**:
-        *Features*: Transaction batches, Versig on arbitrary messages.
+
 		*Comment*: atomic transactions are natively supported by the Aptos framework API.
