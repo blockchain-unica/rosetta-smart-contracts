@@ -25,4 +25,4 @@ After creation, the following actions are possible:
 - **Aiken/Cardano**: since a transaction cannot know the current block height where it is being validated, the deadline is represented as a UNIX timestamp, which is checked against the lowest bound of the validity interval of the transaction.
 - **PyTeal/Algorand**: two join functions, one for each player; the first player who joins is also the owner of the contract and its creator.
 - **SmartPy/Tezos**: two join functions, one for each player; the first player **could** also be the owner of the contract and its creator.
-- **Move/Aptos**: the deadline is a timestamp; the two players can be different from the oracle creator; the bets can be paid in any token type.
+- **Move/Aptos**: the deadline is a timestamp; the bets can be paid in any token type.
