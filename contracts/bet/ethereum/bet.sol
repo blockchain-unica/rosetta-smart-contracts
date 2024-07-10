@@ -3,41 +3,34 @@ pragma solidity ^0.8.0;
 
 contract Bet {
 
-    // player = players[choice]
-    mapping (uint => address payable) players;
+    address payable player1
+    address payable player2;
     uint deadline;
     address oracle;
     uint wager;
     bool open = true;
 
-    modifier onlyOracle(){
-        require(msg.sender == oracle, "only the oracle");
-        _;
-    }
-
-    constructor(address _oracle, address payable player2, uint _timeout) payable {
+    constructor(address _oracle, address payable _player2, uint _timeout) payable {
         wager = msg.value;
-        // lore: aggiungere un require( msg.vaule == 1 ether ); per rispettare la specifica del README
         oracle = _oracle;
-        players[0] = payable(msg.sender);
-        players[1] = player2;
+        player1 = payable(msg.sender);
+        player2 = _player2;
         deadline = block.number + _timeout;
     }
 
     function join() payable public {
         require(msg.value == wager, "invalid value");
-        require(players[1] == msg.sender, "invalid player");
+        require(player2 == msg.sender, "invalid player");
         require(open, "bets are closed");
         require(deadline >= block.number, "time out");
         open = false;
     }
 
-    function win(uint winner) external onlyOracle {
-        
+    function win(uint winner) external  {
+        require(msg.sender == oracle, "only the oracle");
         require(winner <=1, "Invalid winner selector"); 
         require(address(this).balance == 2*wager, "Invalid Balance");
-
-        address payable addressWinner = players[winner];
+        address payable addressWinner = (winner == 0) ? player1 : player2;
         (bool success,) = addressWinner.call{value: address(this).balance}("");
         require (success, "Transfer failed.");
 
@@ -46,9 +39,9 @@ contract Bet {
     function timeout() external payable {
         require(deadline < block.number, "The bets are still open");
         require(address(this).balance == 2*wager, "Invalid Balance");
-        (bool success,) = players[0].call{value: wager}("");
+        (bool success,) = player1.call{value: wager}("");
         require (success, "Transfer failed.");
-        (bool success2,) = players[1].call{value: wager}("");
+        (bool success2,) = player2.call{value: wager}("");
         require (success2, "Transfer failed.");
     }
 }
