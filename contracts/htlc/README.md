@@ -2,28 +2,24 @@
 
 ## Specification
 
-The Hash Timed Locked Contract (HTLC) involves two users,
-allows one participant to commit to a secret and reveal it afterwards.
-The commit is the Keccak-256 digest of the secret (a bitstring).
+The Hash Timed Locked Contract (HTLC) involves two users, the *committer* and the *receiver*.
+
 At contract creation, the committer:
 - deposits a collateral (in native cryptocurrency) in the contract;
 - specifies a deadline for the secret revelation, in terms of a delay from the publication of the contract;
-- specifies the receiver of the collateral, 
-in case the deposit is not revealed within the deadline.
+- specifies the receiver of the collateral, in case the deposit is not revealed within the deadline.
+- commits to a value, that is the Keccak-256 digest of a secret bitstring chosen by the committer.
 
-After contract creation, the HTLC allows two actions:
-- **reveal**, which requires the caller to provide a preimage of the commit,
-and tranfers the whole contract balance to the committer;
+After contract creation, the contract supports two actions:
+- **reveal**, which allows the committer to redeem the whole contract balance by providing a preimage of the committed hash;
 - **timeout**, which can be called only after the deadline, and tranfers the whole contract balance to the receiver.
 
-## Expected Features
+## Expected functionalities
 
 - Asset transfer
 - Time constraints
 - Abort conditions
-- (External) contract call
-- Hash
-
+- Hash on arbitrary messages
 
 ## Implementations
 
