@@ -19,13 +19,12 @@ After creation, the following actions are possible:
 ## Expected Features
 
 - Asset transfer
-- Multisig
 - Time constraints
 - Contract-to-contract interactions
 
 ## Implementations
 
-- **Solidity/Ethereum**: ---
+- **Solidity/Ethereum**: implementation coherent with the specification.
 - **Anchor/Solana**: a after the deployment step has been added for allowing the owner to initialize the data
 - **Aiken/Cardano**: ---
 - **PyTeal/Algorand**: ---
