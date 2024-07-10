@@ -19,7 +19,6 @@ After creation, the following actions are possible:
 ## Expected Features
 
 - Asset transfer
-- Multisig
 - Time constraints
 - Contract-to-contract interactions
 
