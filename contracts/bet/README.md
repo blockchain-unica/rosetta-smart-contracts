@@ -13,14 +13,14 @@ After creation, the following actions are possible:
 
 ## Required functionalities
 
-- Native token
+- Native tokens
 - Multisig transactions
 - Time constraints
 - Transaction revert
 
 ## Implementations
 
-- **Solidity/Ethereum**: since the platform does not support multisig verification, the join is split in two actions. The first player acts first; after that, the second player joins.
+- **Solidity/Ethereum**: since the platform does not support multisig transactions, the join is split in two actions. The first player acts first; after that, the second player joins.
 - **Anchor/Solana**: implementation coherent with the specification.
 - **Aiken/Cardano**: since a transaction cannot know the current block height where it is being validated, the deadline is represented as a UNIX timestamp, which is checked against the lowest bound of the validity interval of the transaction.
 - **PyTeal/Algorand**: two join functions, one for each player; the first player who joins is also the owner of the contract and its creator.
