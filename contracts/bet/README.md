@@ -11,12 +11,12 @@ After creation, the following actions are possible:
 - **win**: after both players have joined, the oracle is expected to determine the winner, who receives the whole pot;
 - **timeout** if the oracle does not choose the winner by the deadline, then both players can redeem their bets.
 
-## Expected functionalities
+## Required functionalities
 
-- Asset transfer
+- Native token
 - Multisig transactions
 - Time constraints
-- Abort conditions
+- Transaction revert
 
 ## Implementations
 
