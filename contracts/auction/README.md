@@ -17,9 +17,9 @@ amount to the contract until the duration time elapses. In the amount is not gre
 
 ## Expected Features
 
-- Asset transfer
+- Native tokens
 - Time constraints
-- Abort conditions
+- Transaction revert
 
 ## Implementations
 
