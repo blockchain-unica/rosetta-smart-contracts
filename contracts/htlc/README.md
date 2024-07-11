@@ -14,11 +14,11 @@ After contract creation, the contract supports two actions:
 - **reveal**, which allows the committer to redeem the whole contract balance by providing a preimage of the committed hash;
 - **timeout**, which can be called only after the deadline, and tranfers the whole contract balance to the receiver.
 
-## Expected functionalities
+## Required functionalities
 
-- Asset transfer
+- Native tokens
 - Time constraints
-- Abort conditions
+- Transaction revert
 - Hash on arbitrary messages
 
 ## Implementations
