@@ -18,6 +18,13 @@ stored in the contract, provided that the goal has been reached;
 - **reclaim**: after the deadline, if the goal has not been reached
 donors can withdraw the amounts they have donated.
 
+## Required functionalities
+
+- Native tokens
+- Time constraints
+- Transaction revert
+- Key-value maps
+
 ## Implementations
 
 - **Solidity/Ethereum**: implementation coherent with the specification.
