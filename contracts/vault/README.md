@@ -1,6 +1,6 @@
 # Vault
 
-## Specification  // alvi: anche qui manca l'elenco delle funzioni
+## Specification
 
 Vaults are a security mechanism to prevent cryptocurrency
 from being immediately withdrawn by an adversary who has stolen
@@ -14,11 +14,11 @@ When users want to withdraw from a vault, they must first issue a request.
 The withdrawal is finalized only after the wait time has passed since the request.
 During the wait time, the request can be cancelled by using a recovery key.
 
-## Expected Features
+## Required functionalities
 
-- Asset transfer
-- Abort conditions
-- (External) contract call
+- Native tokens
+- Time constraints
+- Transaction revert
 
 ## Implementations
 
