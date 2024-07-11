@@ -14,11 +14,10 @@ in the contract;
 - **withdraw**, which allows the receiver to withdraw 
 any amount of the token deposited in the contract.
 
-## Expected functionalities
+## Required functionalities
 
-- Asset transfer
 - Custom tokens
-- Abort conditions
+- Transaction revert
 
 ## Implementations
 
