@@ -11,12 +11,10 @@ After contract creation, the contract supports two actions:
 - **deposit** allows the owner to deposit an arbitrary amount of native cryptocurrency in the contract;
 - **withdraw** allows the receiver to withdraw any amount of the cryptocurrency deposited in the contract.
 
+## Required functionalities
 
-## Expected functionalities
-
-- Asset transfer
-- Abort conditions
-
+- Native tokens
+- Transaction revert
 
 ## Implementations
 
