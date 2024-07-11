@@ -4,16 +4,15 @@
 
 The contract allows a seller to create an auction based, with bids in the native cryptocurrency.
 The seller initializes the contract by specifying:
-- the startBid of the auction,
-- the duration of the auction (i.e., the time that bids are open from the start of the auction),
+- the starting bid of the auction;
+- the duration of the auction (i.e., the period of time in which bids are open from the start of the auction);
 - the object of the auction.
 
 After creation, the contract supports the following actions:
-- **start**: after the contract creation, the seller can start the auction. 
-- **bid**: after the auction has started, any participant can bid any amount of native cryptocurrency and transfer that 
-amount to the contract until the duration time elapses. In the amount is not greater than the current highest bid, the contract returns the old bid to the participant.
+- **start**, which allows the seller to start the auction. 
+- **bid**: after the auction has started and before its duration has expired, this action allows any user to bid any amount of native cryptocurrency, by transferring that amount to the contract. In the amount is not greater than the current highest bid, then the contract transfers the old bid to the user.
 - **withdraw**: at any time, participant can withdraw their bid if this is not the currently highest one.
-- **end**: after the deadline, the seller ends the auction and withdraws the highest bid.
+- **end**, which allows the seller to end the auction after its duration has expired, and to withdraw the highest bid.
 
 ## Required Features
 
