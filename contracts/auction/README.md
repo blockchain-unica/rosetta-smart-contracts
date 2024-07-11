@@ -10,8 +10,8 @@ The seller initializes the contract by specifying:
 
 After creation, the contract supports the following actions:
 - **start**, which allows the seller to start the auction. 
-- **bid**: after the auction has started and before its duration has expired, this action allows any user to bid any amount of native cryptocurrency, by transferring that amount to the contract. In the amount is not greater than the current highest bid, then the contract transfers the old bid to the user.
-- **withdraw**: at any time, participant can withdraw their bid if this is not the currently highest one.
+- **bid**, which allows any user to bid any amount of native cryptocurrency after the auction has started and before its duration has expired. If the the amount of the bid is greater than the current highest bid, then it is transferred to the contract; otherwise, it is returned back to the user.
+- **withdraw**, which allows any user, at any time, to withdraw their bid if this is not the currently highest one.
 - **end**, which allows the seller to end the auction after its duration has expired, and to withdraw the highest bid.
 
 ## Required Features
@@ -19,6 +19,7 @@ After creation, the contract supports the following actions:
 - Native tokens
 - Time constraints
 - Transaction revert
+- Key-value maps
 
 ## Implementations
 
