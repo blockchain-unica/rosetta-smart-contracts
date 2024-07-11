@@ -15,10 +15,10 @@ Once the deposit action has been performed, exactly one of the following actions
 - **pay**, which allows the buyer to transfer the whole contract balance to the seller.
 - **refund**, which allows the seller to transfer back the whole contract balance to the buyer.
 
-## Expected functionalities
+## Required functionalities
 
-- Asset transfer
-- Abort conditions
+- Native tokens
+- Transaction revert
 
 ## Implementations
 
