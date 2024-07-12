@@ -2,11 +2,12 @@
 
 ## Specification
 
-The contract allows a seller to create an auction based, with bids in the native cryptocurrency.
-The seller initializes the contract by specifying:
+The contract allows a seller to create an english auction, with bids in the native cryptocurrency.
+
+The seller creates the contract by specifying:
 - the starting bid of the auction;
 - the duration of the auction (i.e., the period of time in which bids are open from the start of the auction);
-- the object of the auction.
+- the object of the auction (a string, used for notarization purposes only).
 
 After creation, the contract supports the following actions:
 - **start**, which allows the seller to start the auction. 
