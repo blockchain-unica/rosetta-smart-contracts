@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-3.0
 pragma solidity ^0.8.1;
 
+import "./oracle.sol";
+
 contract PriceBet{
     uint256 initial_pot;
     uint256 deadline_block;
@@ -37,16 +39,6 @@ contract PriceBet{
         require(block.number >= deadline_block, "deadline not expired");
         (bool success, ) = owner.call{value: address(this).balance}("");
         require(success, "Transfer failed.");
-    }
-
-}
-
-
-contract Oracle{
-
-    uint256 exchange_rate = 10;
-    function get_exchange_rate() public view returns(uint256){
-        return exchange_rate;
     }
 
 }
