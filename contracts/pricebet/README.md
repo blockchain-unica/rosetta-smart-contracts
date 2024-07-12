@@ -12,7 +12,7 @@ The contract has the following parameters, defined at deployment time:
 - an **exchange rate**, that must be reached in order for the player to win the bet.  
  
 After creation, the following actions are possible: 
-- **join**: a player joins the contract by depositing an amount of tokens equal to the initial pot;
+- **join**: a player joins the contract by depositing an amount of native cryptocurrency equal to the initial pot;
 - **win**: after the join and before the deadline, the player can withdraw the whole pot if the oracle exchange rate is greater than the bet rate;
 - **timeout**: after the deadline, the owner can redeem the whole pot.
 
