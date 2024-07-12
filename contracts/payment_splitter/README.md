@@ -20,7 +20,7 @@ PaymentSplitter follows a pull payment model. This means that payments are not a
 
 ## Implementations
 
-- **Solidity/Ethereum**: 
+- **Solidity/Ethereum**: implementation coherent with the specification.
 - **Anchor/Solana**: a step has been added for initializing the data of the contract (payees, shares, released amounts, etc.). 
 - **Aiken/Cardano**:
 - **PyTeal/Algorand**:
