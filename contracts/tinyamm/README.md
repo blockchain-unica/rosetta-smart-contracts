@@ -33,9 +33,9 @@ that the contract holds the correct balances of `t0` and `t1` tokens to
 maintain the integrity of the exchange.
 
 ## Expected Features
-- Asset transfer
-- Abort conditions
-- (External) contract call
+- Custom tokens
+- Revert transactions
+- Rational arithmetics / arbitrary-precision arithmetics
 
 ## Implementations
 
