@@ -1,16 +1,15 @@
-# Decentralized Identity
+# Decentralized identity
 
 ## Specification
 
 This case study is intended to represent the SSI context.
 The reference implementation is an extraction from the EIP 1056 implementation.
+- *Identity* is a blockchain address that has the property of belonging to another address.
+- *Owner* is an account that has the authority to perform actions on the identity.
+- *Delegate* This is an account that could have some privileges for a specific identity. Each identity can have multiple delegate names, one for each specific type. The owner of an identity can assign a delegate to it, specifying the type of delegate. A delegate remains valid for a certain period of time (expressed in blocks).
+- *Actor* is the account that performs actions. In public functions, it is always the message sender.
 
-*Identity* is a blockchain address that has the property of belonging to another address.
-*Owner* is an account that has the authority to perform actions on the identity.
-*Delegate* This is an account that could have some privileges for a specific identity. Each identity can have multiple delegate names, one for each specific type. The owner of an identity can assign a delegate to it, specifying the type of delegate. A delegate remains valid for a certain period of time (expressed in blocks).
-*Actor* is the account that performs actions. In public functions, it is always the message sender.
-
-In this use case, we define two actors: Owner1, Onwer2
+In this use case, we define two actors: Owner1, Owner2
 
 After creation, the following sequence of actions is possible:
 - **Generate new Identity**. Actor: Owner1.
@@ -44,14 +43,12 @@ and the validity, namely the number of blocks for which the delegation is valid.
 - **Delegate validity check**. Actor: Owner2
 Using validDelegate, this action verifies that the delegation is valid within the validity term and not valid beyond the validity term.
 
+## Required functionalities
 
-## Expected Features
-
-- Abort conditions
-- Hash
+- Transaction revert
+- Hash on arbitrary messages
 - Versig on arbitrary messages
 - Dynamic data structures
-
 
 ## Implementations
 
