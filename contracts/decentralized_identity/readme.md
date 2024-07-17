@@ -52,9 +52,9 @@ Using validDelegate, this action verifies that the delegation is valid within th
 
 ## Implementations
 
-- **Solidity/Ethereum**: 
+- **Solidity/Ethereum**: implementation coherent with the specification.
 - **Anchor/Solana**: 
 - **Aiken/Cardano**:
-- **PyTeal/Algorand**:
+- **PyTeal/Algorand**: implementation coherent with the specification.
 - **SmartPy/Tezos**:
 - **Move/Aptos**:
