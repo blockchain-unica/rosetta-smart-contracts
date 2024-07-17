@@ -23,7 +23,7 @@ Details on the comparison between different smart contract languages are availab
 1. [Constant-product AMM](contracts/tinyamm)
 1. [Upgradeable Proxy](contracts/upgradeableProxy)
 1. [Factory](contracts/factory)
-1. [Decentralized Identity](contracts/decentralized_identity)
+1. [Decentralized identity](contracts/decentralized_identity)
 1. [Editable NFT](contracts/editableNFT)
 1. [Anonymous Data](contracts/anonymous_data)
 1. [Atomic Transactions](contracts/atomic_transactions)
