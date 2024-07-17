@@ -15,7 +15,7 @@ After creation, the contract supports the following actions:
 - **withdraw**, which allows any user, at any time, to withdraw their bid if this is not the currently highest one.
 - **end**, which allows the seller to end the auction after its duration has expired, and to withdraw the highest bid.
 
-## Required Features
+## Required functionalities
 
 - Native tokens
 - Time constraints
