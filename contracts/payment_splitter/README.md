@@ -10,7 +10,7 @@ After creation, the contract supports the following actions:
 - **receive**, which allows anyone to deposit cryptocurrency units in the contract;
 - **release**, which allows anyone to distribute the contract balance to the shareholders. Each shareholder will receive an amount proportional to the percentage of total shares they were assigned. The contract follows a pull payment model: this means that each shareholder will receive the corresponding amount in a separate call to the release function.
 
-## Required Features
+## Required functionalities
 
 - Native tokens
 - Transaction revert
