@@ -18,7 +18,7 @@ After creation, the following actions are possible:
 
 ## Expected Features
 
-- Asset transfer
+- Native tokens
 - Time constraints
 - Transaction revert
 - Contract-to-contract interactions
