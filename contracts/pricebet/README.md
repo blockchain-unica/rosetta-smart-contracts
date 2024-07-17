@@ -20,6 +20,7 @@ After creation, the following actions are possible:
 
 - Asset transfer
 - Time constraints
+- Transaction revert
 - Contract-to-contract interactions
 
 ## Implementations
