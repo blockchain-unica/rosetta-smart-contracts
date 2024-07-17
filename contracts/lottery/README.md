@@ -21,13 +21,13 @@ If the platform does not support multisig transactions, then step 1 is split in 
 - `player2` joins the lottery by paying the bet and committing to another secret;
 - if `player2` has not joined, `player1` can redeem her bet after a given deadline (`end_commit`).
 
-## Expected Features
+## Required features
 
-- Asset transfer
+- Native tokens
 - Multisig transactions
 - Time constraints
-- Abort conditions
-- Hash
+- Transaction revert
+- Hash on arbitrary messages
 - Randomness
 
 ## Implementations
