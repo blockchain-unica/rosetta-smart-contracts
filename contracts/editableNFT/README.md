@@ -1,7 +1,7 @@
-# Editable Non Fungible Token
+# Editable NFT
 
 ## Specification
-This contract implements a non fungible token characterized by simple editable data.
+This contract implements a non-fungible token (NFT) characterized by simple editable data.
 Each token is identified by its ID. It contains a arbitrary long data and a boolean variable to seal the token.
 The token is editable by its owner until he seals it.
 
@@ -20,7 +20,6 @@ to transfer the ownership of the token with ID 1 to Owner2.
 - **Seal Token**. Actor: Owner2
 This action is intended to allow the current owner to seal a specific token.
 Owner2 seals a token by passing the token ID of the token he wants to seal.
-
 
 ## Required functionalities
 - Custom tokens
