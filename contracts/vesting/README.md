@@ -16,7 +16,7 @@ After creation, the contract supports the following action:
   - at any moment between the start and the expiration of the vesting scheme, the amount is proportional to the time passed since the start of the scheme; 
   - once the scheme is expired, the amount is the entire contract balance. 
 
-## Required Features
+## Required functionalities
 
 - Native tokens
 - Time constraints
