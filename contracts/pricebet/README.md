@@ -21,7 +21,7 @@ After creation, the following actions are possible:
 - Native tokens
 - Time constraints
 - Transaction revert
-- Contract-to-contract interactions
+- Contract-to-contract calls
 
 ## Implementations
 
