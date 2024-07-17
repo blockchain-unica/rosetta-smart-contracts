@@ -22,17 +22,17 @@ The function forwards to the proxy a request to execute the *check* function of 
 with the address of the Caller contract as an argument.  
 - **TheProxy.upgradeTo** allows the user to pass the address of the new implementation of Logic.
 
-## Expected Features
-- Abort conditions
-- (External) contract call
+## Required functionalities
+- Contract update
+- Transaction revert
+- Contract-to-contract call
 - Check if sender is contract
-- Context-preserving call
+- Delegate call
 - Dynamic data structures
 
 ## Implementations
 
-- **Solidity/Ethereum**: the implementation is adapted from the ERC1967 Openzeppelin
-implementation. It uses low-level instructions for memory accessing and forwarding the message to the Logic.
+- **Solidity/Ethereum**: the implementation is adapted from the ERC1967 Openzeppelin implementation. It uses low-level instructions for memory accessing and forwarding the message to the Logic.
 - **Anchor/Solana**: Solana natively supports upgradability of contracts and requires no proxy.
 - **Aiken/Cardano**: cannot be implemented.
 - **PyTeal/Algorand**: Algorand natively supports upgradability of contracts and requires no proxy.
