@@ -16,7 +16,7 @@ After creation, the following actions are possible:
 - **win**: after the join and before the deadline, the player can withdraw the whole pot if the oracle exchange rate is greater than the bet rate;
 - **timeout**: after the deadline, the owner can redeem the whole pot.
 
-## Expected Features
+## Required functionalities
 
 - Native tokens
 - Time constraints
