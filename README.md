@@ -20,7 +20,7 @@ Details on the comparison between different smart contract languages are availab
 1. [Price Bet](contracts/pricebet)
 1. [Payment splitter](contracts/payment_splitter)
 1. [Lottery](contracts/lottery)
-1. [Constant-product AMM](contracts/tinyamm)
+1. [Constant-product AMM](contracts/constant-product-amm)
 1. [Upgradeable Proxy](contracts/upgradeableProxy)
 1. [Factory](contracts/factory)
 1. [Decentralized identity](contracts/decentralized_identity)

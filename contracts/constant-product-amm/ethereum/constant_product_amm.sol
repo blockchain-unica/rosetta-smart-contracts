@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.18;
 
-contract TinyAMM {
+contract ConstantProductAMM {
     IERC20 public immutable t0;
     IERC20 public immutable t1;
 

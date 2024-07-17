@@ -6,7 +6,7 @@ pub use spl_token::instruction::AuthorityType::AccountOwner;
 declare_id!("ADY3EuA5hCthUru7JDWrTB1CqqxZxthZGWmvYGUw96rn");
 
 #[program]
-pub mod tiny_amm {
+pub mod constant_product_amm {
     use super::*;
 
     pub fn initialize(ctx: Context<InitializeCtx>) -> Result<()> {
