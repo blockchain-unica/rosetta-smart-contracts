@@ -39,9 +39,9 @@ maintain the integrity of the exchange.
 
 ## Implementations
 
-- **Solidity/Ethereum**: 
+- **Solidity/Ethereum**: implementation coherent with the specification.
 - **Anchor/Solana**: a step has been added for initializing the data of the AMM contract (supply, if ever deposited, resources, mints, etc.).
 - **Aiken/Cardano**: 
-- **PyTeal/Algorand**: <!--- https://github.com/algorand-devrel/beaker/blob/master/examples/amm/amm.py --->
+- **PyTeal/Algorand**:
 - **SmartPy/Tezos**:
-- **Move/Aptos**: <!--- https://github.com/Miketalent/MyAptosAutomatedMarketMaker/blob/main/liquidity_pool.move --->
+- **Move/Aptos**:
