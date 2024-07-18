@@ -1,4 +1,4 @@
-module smart_contracts_comparison::htlc {
+module rosetta_smart_contracts::htlc {
     use std::vector;
     use aptos_std::aptos_hash;
     use aptos_framework::coin::{Self, Coin};

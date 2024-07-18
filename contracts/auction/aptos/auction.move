@@ -1,4 +1,4 @@
-module smart_contracts_comparison::auction {
+module rosetta_smart_contracts::auction {
 
   use std::signer;
   use aptos_std::coin::{Self,Coin};

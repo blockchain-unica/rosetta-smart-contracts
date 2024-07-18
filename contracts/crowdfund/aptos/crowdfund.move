@@ -1,4 +1,4 @@
-module smart_contracts_comparison::crowdfund {
+module rosetta_smart_contracts::crowdfund {
     use aptos_framework::coin::{Self, Coin};
     use aptos_framework::signer;
     use aptos_framework::block;
