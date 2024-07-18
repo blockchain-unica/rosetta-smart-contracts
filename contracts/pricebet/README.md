@@ -29,5 +29,5 @@ After creation, the following actions are possible:
 - **Anchor/Solana**: a after the deployment step has been added for allowing the owner to initialize the data
 - **Aiken/Cardano**: the validator retrieves an UTXO (passed as an input of the transaction) with the same address as the oracle, containing a script and accesses its datum, where the exchange rate is stored
 - **PyTeal/Algorand**: ---
-- **SmartPy/Tezos**: ---
+- **SmartPy/Tezos**: the contract owner has to be passed as parameter during contract creation
 - **Move/Aptos**: ---
