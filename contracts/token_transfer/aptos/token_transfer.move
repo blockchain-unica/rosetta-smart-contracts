@@ -1,4 +1,4 @@
-module smart_contracts_comparison::token_transfer {
+module rosetta_smart_contracts::token_transfer {
     use aptos_framework::coin::{Self, Coin};
     use aptos_framework::signer;
     

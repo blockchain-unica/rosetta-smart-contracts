@@ -1,4 +1,4 @@
-module smart_contracts_comparison::bet {
+module rosetta_smart_contracts::bet {
     
     use aptos_framework::coin::{Coin, Self};
     use std::signer::{address_of};

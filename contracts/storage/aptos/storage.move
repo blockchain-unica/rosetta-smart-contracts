@@ -1,4 +1,4 @@
-module smart_contracts_comparison::data_storage {
+module rosetta_smart_contracts::data_storage {
     use std::vector;
     use aptos_framework::signer;
     
