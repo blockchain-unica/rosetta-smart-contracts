@@ -24,7 +24,7 @@ Once the deposit action has been performed, exactly one of the following actions
 
 - **Solidity/Ethereum**: implementation coherent with the specification.
 - **Anchor/Solana**: a step has been added for initializing the data of the escrow (buyer, seller, amount, etc.).
-- **Aiken/Cardano**: implementation coherent with the specification.
+- **Aiken/Cardano**: in Cardano, a contract cannot have an empty balance. The seller creates the contract with an initialization amount in ADA, which remains for the contract's lifespan and is returned to the seller during the Pay and Refund actions. 
 - **PyTeal/Algorand**: implementation coherent with the specification.
 - **SmartPy/Tezos**: implementation coherent with the specification.
 - **Move/Aptos**: implementation coherent with the specification.

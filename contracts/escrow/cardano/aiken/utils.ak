@@ -20,6 +20,8 @@ use aiken/transaction/value
 
 pub type VerificationKeyHash = Hash<Blake2b_224, VerificationKey>
 
+pub type Lovelace = Int
+
 // /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -70,6 +72,17 @@ pub fn get_ada_from_outputs(outputs: List<Output>) -> Int {
 
 
 /// ***
+/// @funct get_ada_from_inputs
+/// @brief - Sums up all the lovelace values in the inputs list 
+/// @param inputs
+/// @return balance - The inputs' balance in lovelace
+/// *** 
+pub fn get_ada_from_inputs(inputs: List<Input>) -> Int {
+    list.reduce(inputs, 0, fn(acc, input) { acc + value.lovelace_of(input.output.value) })
+}
+
+
+/// ***
 /// @funct get_outputs_by_vkh
 /// @brief - Keeps in the outputs list only the ones having vkh as their address
 /// @param outputs
@@ -105,6 +118,20 @@ pub fn get_outputs_by_address(outputs: List<Output>, addr: Address) -> List<Outp
     list.filter(
         outputs,
         fn(output) { output.address == addr }
+    )
+}
+
+
+/// ***
+/// @funct get_inputs_by_address
+/// @brief - Keeps in the inputs list only the ones having addr as their address
+/// @param inputs
+/// @return List<Input> - The Input list containing inputs own by addr
+/// *** 
+pub fn get_inputs_by_address(inputs: List<Input>, addr: Address) {
+    list.filter(
+        inputs,
+        fn (input) { input.output.address == addr }
     )
 }
 

@@ -1,28 +1,4 @@
 // ////////////////////////////////////////////////////////////////////////////////
-
-/// Partecipants
-/// - seller (S)
-/// - buyer  (B)
-
-/// Transactions
-/// - create-contract 
-///     input:  (minimum ADA amount for creating the tx)
-///     output: UTXO_1 + datum=(seller, buyer, amount, status=empty)
-/// - deposit
-///     input:  UTXO_1
-///     input:  amount // from buyer's UTXOs
-///     output: UTXO_2 + datum=(seller, buyer, amount, status=deposited) // datum's static parts must be the same
-/// - pay
-///     input:  UTXO_2
-///     output: UTXO_3 // this one fully belongs to (S)
-/// - refund
-///     input:  UTXO_2
-///     output: UTXO_3 // this one fully belongs to (B)
-
-// ////////////////////////////////////////////////////////////////////////////////
-
-
-// ////////////////////////////////////////////////////////////////////////////////
 // Imports:
 // ////////////////////////////////////////////////////////////////////////////////
 
@@ -32,7 +8,7 @@ use aiken/transaction.{Transaction, ScriptContext, Spend, InlineDatum}
 
 // use aiken/cbor // diagnostic
 
-use escrow/utils.{VerificationKeyHash}
+use escrow/utils.{VerificationKeyHash, Lovelace}
 
 // ////////////////////////////////////////////////////////////////////////////////
 
@@ -42,21 +18,16 @@ use escrow/utils.{VerificationKeyHash}
 // ////////////////////////////////////////////////////////////////////////////////
 
 type Datum {
-    seller: VerificationKeyHash, // static
-    buyer: VerificationKeyHash,  // static
-    amount: Int,                 // static
-    status: Status               // dynamic
+    seller: VerificationKeyHash,
+    buyer: VerificationKeyHash,
+    escrow_amount: Lovelace,
+    initialization_amount: Lovelace
 }
 
-type Action { // this one is the actual redeemer
+type Redeemer {
     Deposit
     Pay
     Refund
-}
-
-type Status {
-    Empty
-    Deposited
 }
 
 // ////////////////////////////////////////////////////////////////////////////////
@@ -84,29 +55,14 @@ fn has_transaction_n_output_addresses(transaction: Transaction, n: Int) -> Bool 
 
 
 validator {
-    fn escrow(datum: Datum, redeemer: Action, ctx: ScriptContext) {
+    fn escrow(datum: Datum, redeemer: Redeemer, ctx: ScriptContext) {
         let tx = ctx.transaction
 
         let own_input = utils.get_own_input(ctx)
         let contract_address = own_input.output.address
 
-        // A correct datum we expect to be when the status is Empty
-        let empty_status_datum = Datum {
-            seller: datum.seller,
-            buyer: datum.buyer,
-            amount: datum.amount,
-            status: Empty 
-        }
-
-        // A correct datum we expect to be when the status is Deposited
-        let deposit_status_datum = Datum {
-            seller: datum.seller,
-            buyer: datum.buyer,
-            amount: datum.amount,
-            status: Deposited
-        }
-
         let contract_outputs = utils.get_outputs_by_address(tx.outputs, contract_address)
+        let contract_balance = utils.get_ada_from_inputs(utils.get_inputs_by_address(tx.inputs, contract_address))
         
         // Spending conditions
         when ctx.purpose is {
@@ -127,24 +83,24 @@ validator {
                         expect Some(_buyer_output) = list.at(buyer_outputs, 0)
 
                         and {
-                            // Deposit can be done iff status is Empty
-                            own_input.output.datum == InlineDatum(empty_status_datum), 
+                            // Deposit can be performed iff contract has not already been funded
+                            contract_balance != datum.escrow_amount,
                             
-                            // Buyer must pay the specified amount
-                            utils.get_ada_from_outputs(contract_outputs) == datum.amount,
+                            // Buyer must deposit the specified amount and this value must coexist with the ADA paid by the seller to create the contract
+                            utils.get_ada_from_outputs(contract_outputs) == datum.escrow_amount + datum.initialization_amount,
 
-                            // The new contract's datum must be the same as the previous one but with the Deposited status this time
-                            contract_output.datum == InlineDatum(deposit_status_datum)
+                            // New datum must not change
+                            contract_output.datum == InlineDatum(datum)
                         }
                     }
                     _ -> {
-                        // Pay and Refund can only be done if the current status is Deposited
-                        expect True = own_input.output.datum == InlineDatum(deposit_status_datum)
+                        // Pay and Refund can only be done if the contract has been funded
+                        expect True = contract_balance == datum.escrow_amount + datum.initialization_amount
 
                         let buyer_outputs = utils.get_outputs_by_vkh(tx.outputs, datum.buyer)
                         let seller_outputs = utils.get_outputs_by_vkh(tx.outputs, datum.seller)
 
-                        // The output of these transactions should be seller and buyer only
+                        // The output of these transactions should be the seller and buyer only, meaning contract ceases its activity after this
                         expect True = and {
                             has_transaction_n_output_addresses(tx, 2),
                             !list.is_empty(seller_outputs),
@@ -153,20 +109,20 @@ validator {
 
                         when redeemer is {
                             Pay -> and {
-                                utils.must_be_signed_by(tx, datum.buyer), // there's not need to be signed by the seller too
+                                utils.must_be_signed_by(tx, datum.buyer),
                                 
-                                // Seller must receive the amount declared in the datum
-                                utils.get_ada_from_outputs(seller_outputs) == datum.amount
+                                // Seller must receive the amount declared in the datum plus the initialization amount the seller has paid to create the contract
+                                utils.get_ada_from_outputs(seller_outputs) == datum.escrow_amount + datum.initialization_amount
                             }
                             
                             Refund -> and {
                                 utils.must_be_signed_by(tx, datum.seller),   
 
-                                // Buyer must receive the amount declared in the datum
-                                utils.get_ada_from_outputs(buyer_outputs) == datum.amount
+                                // Buyer must receive only the amount declared in the datum, doing so, seller should receive the initialization amount back
+                                utils.get_ada_from_outputs(buyer_outputs) == datum.escrow_amount
                             }
 
-                            _ -> False // this actually should never occur at this point
+                            _ -> False // invalid redeemer
                         }
                     }
                 }
