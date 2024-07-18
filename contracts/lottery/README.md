@@ -28,6 +28,7 @@ If the platform does not support multisig transactions, then step 1 is split in 
 - Time constraints
 - Transaction revert
 - Hash on arbitrary messages
+- Bitstring operations
 - Randomness
 
 ## Implementations
