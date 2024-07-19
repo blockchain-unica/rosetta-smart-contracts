@@ -17,7 +17,7 @@ After contract creation, the contract supports the following actions:
 
 - Native tokens
 - Transaction revert
-- Dynamic data structures
+- Dynamic arrays
 
 ## Implementations
 
