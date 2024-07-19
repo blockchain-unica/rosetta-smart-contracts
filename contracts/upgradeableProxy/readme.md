@@ -26,9 +26,8 @@ with the address of the Caller contract as an argument.  
 - Contract update
 - Transaction revert
 - Contract-to-contract call
-- Check if sender is contract
 - Delegate call
-- Dynamic data structures
+- Dynamic arrays
 
 ## Implementations
 
