@@ -10,8 +10,7 @@ After contract creation, the contract supports two actions:
 
 ## Required functionalities
 
-- Dynamic data structures
-- Bitstring operations
+- Dynamic arrays
 
 ## Implementations
 
