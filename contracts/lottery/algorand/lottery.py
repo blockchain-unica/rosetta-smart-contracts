@@ -23,6 +23,9 @@ class LotteryState:
         stack_type=TealType.uint64,
         static=True,
     )
+    bet_amount = beaker.GlobalStateValue(
+        stack_type=TealType.uint64,
+    )
     state = beaker.GlobalStateValue(
         stack_type=TealType.uint64,
         descr="The current logical state.",
@@ -68,6 +71,7 @@ def join0(
 
         app.state.player0.set(Txn.sender()),
         app.state.hash0.set(hash_.get()),
+        app.state.bet_amount.set(payment.get().amount()),
 
         app.state.state.set(States.JOIN1),
     )
@@ -96,6 +100,7 @@ def join1(
         Assert(app.state.state.get() == States.JOIN1),
         Assert(app.state.hash0.get() != hash_.get()),
         Assert(payment.get().receiver() == Global.current_application_address()),
+        Assert(payment.get().amount() == app.state.bet_amount.get()),
 
         app.state.player1.set(Txn.sender()),
         app.state.hash1.set(hash_.get()),
