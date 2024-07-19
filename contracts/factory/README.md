@@ -18,10 +18,8 @@ After a Product contract creation, the following actions are possible.
 ## Required functionalities
 - Transaction revert
 - In-contract deploy
-- Check if sender is contract
  
 ## Implementations
-
 - **Solidity/Ethereum**: implementation coherent with the specification.
 - **Anchor/Solana**: 
 - **Aiken/Cardano**:
