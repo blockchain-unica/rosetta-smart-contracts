@@ -5,8 +5,8 @@
 The Storage contract allows a user to store on-chain byte sequences and strings (of arbitrary size).  
 
 After contract creation, the contract supports two actions:
-- **storeBytes**, which allows the user to store an arbitrary sequence of bytes (1 to 5 bytes, 128 bytes);
-- **storeString**, which allows the user to store a string of arbitrary length (1 to 5 simple characters, 128 simple characters).
+- **storeBytes**, which allows the user to store a sequence of bytes of arbitrary lenght;
+- **storeString**, which allows the user to store a string of arbitrary length.
 
 ## Required functionalities
 
