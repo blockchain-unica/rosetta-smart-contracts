@@ -29,7 +29,7 @@ If the platform does not support multisig transactions, then step 1 is split in 
 - Transaction revert
 - Hash on arbitrary messages
 - Bitstring operations
-- Randomness
+- **Randomness**
 
 ## Implementations
 
