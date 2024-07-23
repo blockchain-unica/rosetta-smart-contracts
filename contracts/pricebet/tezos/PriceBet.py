@@ -42,17 +42,7 @@ def main():
             #check deadline
             assert sp.now > self.data.deadline, "Deadline not reached"
             
-            sp.send(self.data.owner, sp.balance)
-    
-    class Oracle(sp.Contract):
-        def __init__(self):
-            self.data.price = sp.tez(40)
-            
-        @sp.entrypoint
-        def getPrice(self, callBack):
-            #callBack
-            contract = sp.contract(sp.mutez, callBack , "setter").unwrap_some(error="ContractNotFound")
-            sp.transfer(self.data.price, sp.tez(0),contract)      
+            sp.send(self.data.owner, sp.balance)   
         
     
     
