@@ -16,6 +16,7 @@ Once a Product contract has been deplyoed, it supports the following actions:
 - In-contract deployment
 - Transaction revert
 - Key-value maps
+- Dynamic arrays
  
 ## Implementations
 - **Solidity/Ethereum**: implementation coherent with the specification.
