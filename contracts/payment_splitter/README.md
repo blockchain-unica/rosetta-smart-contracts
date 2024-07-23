@@ -23,5 +23,5 @@ After creation, the contract supports the following actions:
 - **Anchor/Solana**: a step has been added for initializing the data of the contract (payees, shares, released amounts, etc.). 
 - **Aiken/Cardano**:
 - **PyTeal/Algorand**:
-- **SmartPy/Tezos**:
+- **SmartPy/Tezos**: implementation coherent with the specification.
 - **Move/Aptos**:
