@@ -2,22 +2,19 @@
 
 ## Specification
 
-The Factory contract allows a user to create and deploy a Product contract, according to the *Factory Pattern*.
+The Factory contract allows a user to create and deploy another contract (called Product contract), according to the [Factory Pattern](https://betterprogramming.pub/learn-solidity-the-factory-pattern-75d11c3e7d29).
 
-After the Factory contract creation, the following actions are possible.
-- **createProduct**: to create a Product 
-contract, the user must specify a *tag* 
-string to be stored in the Product state. 
-- **getProducts**: at any time, the user gets 
-the list of addresses of his Product contracts.
+Once the Factory contract has been deployed, it supports the following actions"
+- **createProduct**: to create a Product contract, the user must specify a *tag* string to be stored in the Product state. 
+- **getProducts**: at any time, the user gets the list of addresses of his Product contracts.
 
-After a Product contract creation, the following actions are possible.
+Once a Product contract has been deplyoed, it supports the following actions:
 - **getTag**: the user gets the tag stored in the Product state. This action is only possible for the user who requested the creation of the Product contract.
 - **getFactory**: the user gets the address of the Factory contract that generated the Product.
 
 ## Required functionalities
+- In-contract deployment
 - Transaction revert
-- In-contract deploy
 - Key-value maps
  
 ## Implementations
