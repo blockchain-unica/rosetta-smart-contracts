@@ -15,9 +15,12 @@ in the contract;
 any amount of the token deposited in the contract.
 
 ## Required functionalities
-
 - Custom tokens
 - Transaction revert
+  
+If custom tokens are not natively available, then the following functionalities can be used to implement a workaround:
+- Key-value maps
+- Contract-to-contract calls
 
 ## Implementations
 
