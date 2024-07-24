@@ -13,6 +13,8 @@ Once the contract is deployed, it supports the following actions:
 - **reset**: deletes the current transaction batch and removes the seal, allowing the owner to use the contract for another batch.
 
 ## Required functionalities
+- Dynamic arrays
+- Bounded loops
 - Transaction revert
 - Hash on arbitrary messages
 - Versig on arbitrary messages
