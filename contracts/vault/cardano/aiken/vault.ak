@@ -1,10 +1,11 @@
-// ////////////////////////////////////////////////////////////////////////////////
+ // ////////////////////////////////////////////////////////////////////////////////
 // Imports:
 // ////////////////////////////////////////////////////////////////////////////////
 
 use aiken/list
 
 use aiken/transaction.{ScriptContext, Spend, InlineDatum}
+use aiken/transaction/value
 
 use vault/utils.{VerificationKeyHash, POSIXTime}
 
@@ -20,17 +21,18 @@ use aiken/interval.{Finite}
 // ////////////////////////////////////////////////////////////////////////////////
 
 type Datum {
-    owner: VerificationKeyHash,
-    recovery: VerificationKeyHash,
-    wait_time: POSIXTime,    // The amount of time the owner has to wait after the withdrawal request to finalize it
+    owner: VerificationKeyHash,         // Can perform a withdraw request
+    recovery: VerificationKeyHash,      // Can cancel a withdraw request
+    wait_time: POSIXTime,
     withdraw_amount: Int, 
-    request_time: POSIXTime, // The time when the withdraw request has been performed
+    receiver: VerificationKeyHash,
+    request_time: POSIXTime,
     status: Status
 }
 
 type Redeemer {
     Deposit { amount: Int }
-    Withdraw { amount: Int }
+    Withdraw { amount: Int, receiver: VerificationKeyHash }
     Finalize
     Cancel
 }
@@ -57,7 +59,8 @@ validator {
         let contract_inputs = utils.get_inputs_by_address(tx.inputs, contract_address)
         let contract_outputs = utils.get_outputs_by_address(tx.outputs, contract_address)
 
-        let contract_amount = utils.get_ada_from_inputs(contract_inputs)
+        let contract_current_amount = utils.get_ada_from_inputs(contract_inputs)
+        let contract_output_amount = utils.get_ada_from_outputs(contract_outputs)
 
         let tx_earliest_time = when tx.validity_range.lower_bound.bound_type is {
             Finite(x) -> x
@@ -74,7 +77,8 @@ validator {
             recovery: datum.recovery,
             wait_time: datum.wait_time,
             withdraw_amount: datum.withdraw_amount,
-            request_time: datum.request_time, // this doesn't have to change neither
+            receiver: datum.receiver,
+            request_time: datum.request_time,
             status: IDLE
         }
         
@@ -90,15 +94,15 @@ validator {
                             // Anyone can do this at any moment (status)
 
                             // Contract must receive the correct amount
-                            utils.get_ada_from_outputs(contract_outputs) == contract_amount + deposit_amount,
+                            contract_output_amount == contract_current_amount + deposit_amount,
 
                             // Must preserve datum
                             contract_output_datum == datum
                         }
                     }
 
-                    Withdraw(withdraw_amount) -> {
-                        let tolerance_threshold = 1000 // one second (in milliseconds)
+                    Withdraw(withdraw_amount, receiver) -> {
+                        let tolerance_threshold = 1000 // one second (in milliseconds) // TODO: remove this (e.g. try offchain with pycardano)
 
                         and {
                             utils.must_be_signed_by(tx, datum.owner),
@@ -107,19 +111,20 @@ validator {
                             datum.status == IDLE,
                             
                             // Contract must have enough ADA to accept the request
-                            utils.get_ada_from_inputs(contract_inputs) >= withdraw_amount,
+                            contract_current_amount >= withdraw_amount,
                             
                             // No ADA must be moved yet from contract
-                            utils.get_ada_from_outputs(contract_outputs) == utils.get_ada_from_inputs(contract_inputs),
+                            contract_output_amount == contract_current_amount,
                             
                             // New contract's datum must have an expected datum
                             contract_output_datum.owner == datum.owner,
                             contract_output_datum.recovery == datum.recovery,
                             contract_output_datum.wait_time == datum.wait_time,
                             contract_output_datum.withdraw_amount == withdraw_amount,
+                            contract_output_datum.receiver == receiver,
                             contract_output_datum.status == REQUEST,
 
-                            // Declared request time must be coherent with the transaction's time (there're not other ways to let this correspond to the one we send through Lucid)
+                            // Declared request time must be coherent with the transaction's time (I've not found any other way to let this correspond to the one we send through Lucid)
                             and {
                                 contract_output_datum.request_time >= tx_earliest_time - tolerance_threshold,
                                 contract_output_datum.request_time <= tx_earliest_time + tolerance_threshold
@@ -139,9 +144,20 @@ validator {
                             tx_earliest_time > datum.request_time + datum.wait_time,
 
                             // Owner is withdrawing the correct declared amount
-                            utils.get_ada_from_outputs(contract_outputs) == contract_amount - datum.withdraw_amount,
+                            contract_output_amount == contract_current_amount - datum.withdraw_amount,
 
-                            // New contract must have an expected datum
+                            // Reicever in the datum is receiving the amount
+                            if(datum.receiver == datum.owner) {
+                                // If the reciver is the owner, we must take into account fees
+                                utils.get_ada_from_outputs(utils.get_outputs_by_vkh(tx.outputs, datum.receiver)) == 
+                                    utils.get_ada_from_inputs(utils.get_inputs_by_vkh(tx.inputs, datum.receiver)) + datum.withdraw_amount - value.lovelace_of(tx.fee)
+                            }
+                            else {
+                                utils.get_ada_from_outputs(utils.get_outputs_by_vkh(tx.outputs, datum.receiver)) == 
+                                    utils.get_ada_from_inputs(utils.get_inputs_by_vkh(tx.inputs, datum.receiver)) + datum.withdraw_amount
+                            },
+                            
+                            // New contract output must have an expected datum
                             contract_output_datum == expected_idle_datum
                         }
                     }
@@ -153,13 +169,13 @@ validator {
                             // Recovery address can cancel the request only if a withdraw action has been performed before
                             datum.status == REQUEST,
 
-                            // No ADA must be taken from contract (to perform a transaction, we've to pay a minimum amount of ADA in Cardano...)
-                            utils.get_ada_from_outputs(contract_outputs) >= utils.get_ada_from_inputs(contract_inputs),
+                            // No ADA must be moved from contract
+                            contract_output_amount == contract_current_amount,
 
                             // This action is possible during the waiting time only
                             tx_earliest_time <= datum.request_time + datum.wait_time,
 
-                            // New contract must have an expected datum
+                            // New contract output must have an expected datum
                             contract_output_datum == expected_idle_datum
                         }
                     }

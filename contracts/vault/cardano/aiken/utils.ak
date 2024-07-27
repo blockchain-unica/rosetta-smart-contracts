@@ -7,7 +7,7 @@ use aiken/list
 use aiken/hash.{Blake2b_224, Hash}
 
 use aiken/transaction.{ScriptContext, Transaction, Input, Output, Spend}
-use aiken/transaction/credential.{VerificationKey, Address}
+use aiken/transaction/credential.{VerificationKey, Address, VerificationKeyCredential}
 
 use aiken/transaction/value
 
@@ -112,5 +112,54 @@ pub fn get_inputs_by_address(inputs: List<Input>, addr: Address) {
     )
 }
 
+
+/// ***
+/// @funct get_inputs_by_vkh
+/// @brief - Keeps in the inputs list only the ones having vkh as their address
+/// @param inputs
+/// @param vkh
+/// @return inputs - The Input list containing UTXOs own by vkh  
+/// ***
+pub fn get_inputs_by_vkh(inputs: List<Input>, vkc: VerificationKeyHash) -> List<Input> {
+    list.filter(
+        inputs,
+        fn(input) { // filter function
+            when input.output.address.payment_credential is {
+                VerificationKeyCredential(_) -> {
+                    // Performs the unsafe cast only if payment_credential has the type VerificationKeyCredential
+                    expect VerificationKeyCredential(tx_output_address) = input.output.address.payment_credential
+
+                    tx_output_address == vkc
+                }
+                _ -> False
+            }
+        }
+    )
+}
+
+
+/// ***
+/// @funct get_outputs_by_vkh
+/// @brief - Keeps in the outputs list only the ones having vkh as their address
+/// @param outputs
+/// @param vkh
+/// @return outputs - The Output list containing UTXOs own by vkh  
+/// ***
+pub fn get_outputs_by_vkh(outputs: List<Output>, vkc: VerificationKeyHash) -> List<Output> {
+    list.filter(
+        outputs,
+        fn(output) { // filter function
+            when output.address.payment_credential is {
+                VerificationKeyCredential(_) -> {
+                    // Performs the unsafe cast only if payment_credential has the type VerificationKeyCredential
+                    expect VerificationKeyCredential(tx_output_address) = output.address.payment_credential
+
+                    tx_output_address == vkc
+                }
+                _ -> False
+            }
+        }
+    )
+}
 
 // /////////////////////////////////////////////////////////////////////////////////////////////////////////
