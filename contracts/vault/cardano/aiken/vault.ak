@@ -102,8 +102,6 @@ validator {
                     }
 
                     Withdraw(withdraw_amount, receiver) -> {
-                        let tolerance_threshold = 1000 // one second (in milliseconds) // TODO: remove this (e.g. try offchain with pycardano)
-
                         and {
                             utils.must_be_signed_by(tx, datum.owner),
                             
@@ -122,13 +120,8 @@ validator {
                             contract_output_datum.wait_time == datum.wait_time,
                             contract_output_datum.withdraw_amount == withdraw_amount,
                             contract_output_datum.receiver == receiver,
-                            contract_output_datum.status == REQUEST,
-
-                            // Declared request time must be coherent with the transaction's time (I've not found any other way to let this correspond to the one we send through Lucid)
-                            and {
-                                contract_output_datum.request_time >= tx_earliest_time - tolerance_threshold,
-                                contract_output_datum.request_time <= tx_earliest_time + tolerance_threshold
-                            }
+                            contract_output_datum.request_time == tx_earliest_time,
+                            contract_output_datum.status == REQUEST
                         }
                         
                     }
