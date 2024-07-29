@@ -113,13 +113,11 @@ expect True = list.length(contract_outputs) == 1
 expect Some(contract_output) = list.at(contract_outputs, 0)
 ```
 
-We also retrieve the two signers identifying them as the two players, making sure they have two different addresses:
+We also retrieve the two signers identifying them as the two players:
 
 ```ml
 expect Some(player_1) = list.at(tx.extra_signatories, 0)
 expect Some(player_2) = list.at(tx.extra_signatories, 1)
-
-expect True = player_1 != player_2
 ```
 
 Since we've got the two addresses, we can compute the token balances (w.r.t. the transaction's inputs and outputs) of the two actors:
@@ -165,7 +163,8 @@ and{
     // other checks
 }
 ```
-We then add a condition that checks if the two signers have updated the new datum (i.e. the new contract state, retrieved by the output associated to the contract) by assigning themselves as the two players:
+We then add a condition that checks if the two signers have updated the new datum (i.e. the new contract state, retrieved by the output associated to the contract) by assigning themselves as the two players. 
+Finally we check that the two players are choosing a valid deadline:
 ```c++
 and{
     // other checks
@@ -174,19 +173,6 @@ and{
     contract_output_datum.player_1 == player_1,
     contract_output_datum.player_2 == player_2,
 
-    // other checks
-}
-```
-Finally, we check that the two players are choosing a valid oracle and a valid deadline: 
-```c++
-and{
-    // other checks
-
-    // Players must design an oracle but oracle cannot be player_1 or player_2
-    contract_output_datum.oracle != contract_output_datum.player_1,
-    contract_output_datum.oracle != contract_output_datum.player_2,
-
-    // Players are choosing a correct deadline
     contract_output_datum.deadline > tx_earliest_time
 }
 ```
@@ -238,6 +224,8 @@ and {
 Finally, we require that the winner's address is the one receiving the two tokens in one of the transaction's outputs:
 
 ```c++
+// other checks
+
 and {
     // Winner must receive the tokens
     utils.get_tokens_balance_from_outputs(utils.get_outputs_by_vkh(tx.outputs, winner)) == 2
@@ -299,10 +287,13 @@ and {
     // Players are receiving 1 token each
     player_1_outputs_token_balance == player_1_inputs_token_balance + 1,
     player_2_outputs_token_balance == player_2_inputs_token_balance + 1
-
-    // other checks
 }
 ``` 
+
+<!-- 
+The offchain section has been removed. 
+The original is still available here: https://github.com/strausste/aiken-contracts/tree/main/oracle-bet-v2 
+-->
 
 <!-- 
 The offchain section has been removed. 
