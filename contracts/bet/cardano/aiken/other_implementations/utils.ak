@@ -51,6 +51,18 @@ pub fn get_own_input(ctx: ScriptContext) -> Input {
 
 
 /// ***
+/// @funct must_be_signed_by
+/// @brief Checks if the provided Transaction is signed by the provided VerificationKeyHash
+/// @param transaction
+/// @param vk
+/// @return Bool - True if the transaction contains vk in the signatories, False otherwise 
+/// *** 
+pub fn must_be_signed_by(transaction: Transaction, vk: VerificationKeyHash) {
+    list.has(transaction.extra_signatories, vk)
+} 
+
+
+/// ***
 /// @funct get_ada_from_outputs
 /// @brief - Sums up all the lovelace values in the outputs list 
 /// @param outputs
@@ -69,6 +81,54 @@ pub fn get_ada_from_outputs(outputs: List<Output>) -> Int {
 /// *** 
 pub fn get_ada_from_inputs(inputs: List<Input>) -> Int {
     list.reduce(inputs, 0, fn(acc, input) { acc + value.lovelace_of(input.output.value) })
+}
+
+
+/// ***
+/// @funct get_tokens_balance_from_outputs
+/// @brief - Sums up all the tokens values in the outputs list 
+/// @param outputs
+/// @return balance - The outputs' tokens balance
+/// *** 
+pub fn get_tokens_balance_from_outputs(outputs: List<Output>) -> Int {
+    let outputs_with_token = get_outputs_with_token(outputs)
+
+    list.reduce(outputs_with_token, 0, fn(acc, output: Output) { 
+        let flattened_values = 
+            output.value
+                |> value.without_lovelace()
+                |> value.flatten() 
+            
+        let tokens_value = list.reduce(flattened_values, 0, fn(acc, value) { // sums up all the tokens value in the current output
+            acc + value.3rd // quantity (https://aiken-lang.github.io/stdlib/aiken/transaction/value.html#flatten
+        })
+
+        acc + tokens_value // adds up the current output tokens' value to the previous computations 
+    })
+}
+
+
+/// ***
+/// @funct get_tokens_balance_from_inputs
+/// @brief - Sums up all the tokens values in the inputs list 
+/// @param inputs
+/// @return balance - The inputs' tokens balance
+/// *** 
+pub fn get_tokens_balance_from_inputs(inputs: List<Input>) -> Int {
+    let inputs_with_token = get_inputs_with_token(inputs)
+
+    list.reduce(inputs_with_token, 0, fn(acc, input: Input) { 
+        let flattened_values = 
+            input.output.value
+                |> value.without_lovelace()
+                |> value.flatten() 
+            
+        let tokens_value = list.reduce(flattened_values, 0, fn(acc, value) { // sums up all the tokens value in the current input
+            acc + value.3rd // quantity (https://aiken-lang.github.io/stdlib/aiken/transaction/value.html#flatten
+        })
+
+        acc + tokens_value // adds up the current input tokens' value to the previous computations 
+    })
 }
 
 
@@ -148,6 +208,56 @@ pub fn get_inputs_by_address(inputs: List<Input>, addr: Address) {
         inputs,
         fn (input) { input.output.address == addr }
     )
+}
+
+
+/// ***
+/// @funct get_inputs_with_token
+/// @brief - Keeps in the inputs list only the ones managing native tokens (besides ADA)
+/// @dev - Please keep in mind an input will always have ADA and optionally a native token
+/// @param inputs
+/// @return List<Input> - The list of inputs having a native token
+/// *** 
+pub fn get_inputs_with_token(inputs: List<Input>) {
+    list.filter(inputs, fn(input) {
+        let current_value = input.output.value
+
+        // The current value without ADA
+        let filtered_value = value.without_lovelace(current_value)
+
+        // All the policies (exluding ADA)
+        let policies_list = list.filter(value.policies(filtered_value), fn(policy) {
+            policy != value.ada_policy_id
+        })
+        
+        // We keep the input only if now it has at least one PolicyId (i.e. it's managing at least one token)
+        !list.is_empty(policies_list)
+    })
+}
+
+
+/// ***
+/// @funct get_outputs_with_token
+/// @brief - Keeps in the outputs list only the ones managing native tokens (besides ADA)
+/// @dev - Please keep in mind an output will always have ADA and, optionally, a native token
+/// @param inputs
+/// @return List<Output> - The list of inputs having a native token
+/// *** 
+pub fn get_outputs_with_token(outputs: List<Output>) {
+    list.filter(outputs, fn(output) {
+        let current_value = output.value
+
+        // The current value without ADA
+        let filtered_value = value.without_lovelace(current_value)
+
+        // All the policies (exluding ADA)
+        let policies_list = list.filter(value.policies(filtered_value), fn(policy) {
+            policy != value.ada_policy_id
+        })
+        
+        // We keep the output only if now it has at least one PolicyId (i.e. it's managing at least one token)
+        !list.is_empty(policies_list)
+    })
 }
 
 // /////////////////////////////////////////////////////////////////////////////////////////////////////////

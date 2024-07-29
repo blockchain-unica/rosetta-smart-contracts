@@ -22,7 +22,7 @@ After creation, the following actions are possible:
 
 - **Solidity/Ethereum**: since the platform does not support multisig transactions, the join is split in two actions. The first player acts first; after that, the second player joins.
 - **Anchor/Solana**: implementation coherent with the specification.
-- **Aiken/Cardano**: since a transaction cannot know the current block height where it is being validated, the deadline is represented as a UNIX timestamp, which is checked against the lowest bound of the validity interval of the transaction.
+- **Aiken/Cardano**: the oracle cannot be one of the two players; the first player will always pay the join and the timeout transactions fees.  
 - **PyTeal/Algorand**: two join functions, one for each player; the first player who joins is also the owner of the contract and its creator.
 - **SmartPy/Tezos**: two join functions, one for each player; the first player **could** also be the owner of the contract and its creator.
 - **Move/Aptos**: the deadline is a timestamp; the bets can be paid in any token type.

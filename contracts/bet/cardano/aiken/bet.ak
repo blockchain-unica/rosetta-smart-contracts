@@ -5,12 +5,13 @@
 use aiken/list
 
 use aiken/transaction.{ScriptContext, Spend, InlineDatum}
+use aiken/transaction/value
 
 use aiken/interval.{Finite}
 
 // use aiken/cbor // diagnostic
 
-use bet/utils.{VerificationKeyHash, POSIXTime}
+use bet/utils.{VerificationKeyHash, POSIXTime, Lovelace}
 
 // ////////////////////////////////////////////////////////////////////////////////
 
@@ -21,15 +22,17 @@ use bet/utils.{VerificationKeyHash, POSIXTime}
 
 type Datum {
     oracle: VerificationKeyHash,
+    wager: Lovelace,
     player_1: VerificationKeyHash,
     player_2: VerificationKeyHash,
-    deadline: POSIXTime
+    deadline: POSIXTime,
+    is_joined: Bool
 }
 
 type Redeemer {
-    Join                                     // player_1 and player_2 join the contract
-    Win { winner: VerificationKeyHash }      // oracle chooses the winner
-    Timeout                                  // oracle hasn't choose winner before timeout
+    Join { wager: Lovelace }
+    Win { winner: VerificationKeyHash }
+    Timeout
 }
 
 // ////////////////////////////////////////////////////////////////////////////////
@@ -57,19 +60,13 @@ validator {
         let contract_outputs = utils.get_outputs_by_address(tx.outputs, contract_address)
         let contract_inputs = utils.get_inputs_by_address(tx.inputs, contract_address) 
 
-        let contract_inputs_lovelace_balance = utils.get_ada_from_inputs(contract_inputs)
-        let contract_outputs_lovelace_balance = utils.get_ada_from_outputs(contract_outputs)
-
-        let contract_inputs_token_balance = utils.get_tokens_balance_from_inputs(contract_inputs)
-        let contract_outputs_token_balance = utils.get_tokens_balance_from_outputs(contract_outputs)
+        let contract_inputs_balance = utils.get_ada_from_inputs(contract_inputs)
+        let contract_outputs_balance = utils.get_ada_from_outputs(contract_outputs)
 
         when ctx.purpose is {
             Spend(_) -> {
-                // No ADA must be taken away from this contract: tokens only
-                expect True = contract_outputs_lovelace_balance == contract_inputs_lovelace_balance
-
                 when redeemer is {
-                    Join -> {
+                    Join(wager) -> {
                         // Contract must have only one output
                         expect True = list.length(contract_outputs) == 1
                         expect Some(contract_output) = list.at(contract_outputs, 0)
@@ -78,68 +75,68 @@ validator {
                         expect InlineDatum(untyped_datum) = contract_output.datum
                         expect contract_output_datum: Datum = untyped_datum
 
-                        let empty_datum = Datum {
-                            oracle: "",
-                            player_1: "", 
-                            player_2: "",
-                            deadline: 0
-                        }
-
                         // Get the two transaction's signers
                         expect Some(player_1) = list.at(tx.extra_signatories, 0)
                         expect Some(player_2) = list.at(tx.extra_signatories, 1)
 
-                        // Players' token balances:
-                        let player_1_inputs_token_balance = utils.get_tokens_balance_from_inputs(utils.get_inputs_by_vkh(tx.inputs, player_1))
-                        let player_1_outputs_token_balance = utils.get_tokens_balance_from_outputs(utils.get_outputs_by_vkh(tx.outputs, player_1))
+                        // Players balances
+                        let player_1_inputs_balance = utils.get_ada_from_inputs(utils.get_inputs_by_vkh(tx.inputs, player_1))
+                        let player_1_outputs_balance = utils.get_ada_from_outputs(utils.get_outputs_by_vkh(tx.outputs, player_1))
 
-                        let player_2_inputs_token_balance = utils.get_tokens_balance_from_inputs(utils.get_inputs_by_vkh(tx.inputs, player_2))
-                        let player_2_outputs_token_balance = utils.get_tokens_balance_from_outputs(utils.get_outputs_by_vkh(tx.outputs, player_2))
-
+                        let player_2_inputs_balance = utils.get_ada_from_inputs(utils.get_inputs_by_vkh(tx.inputs, player_2))
+                        let player_2_outputs_balance = utils.get_ada_from_outputs(utils.get_outputs_by_vkh(tx.outputs, player_2))
 
                         and {
-                            // Contract has been created with an empty datum, hence players are correctly joining an empty contract
-                            datum == empty_datum,
+                            // Players are joining the contract before the deadline
+                            datum.deadline > tx_earliest_time,
 
-                            contract_inputs_token_balance == 0,
+                            // Players are declaring and paying the correct wager (i.e. amount players are sending to the contract minus the initialization amount)
+                            contract_outputs_balance - contract_inputs_balance == wager * 2,
 
-                            // Players are depositing 2 tokens inside the contract 
-                            contract_outputs_token_balance ==  2,
-                            
-                            // Players are paying 1 token each:
-                            player_1_outputs_token_balance == player_1_inputs_token_balance - 1, 
-                            player_2_outputs_token_balance == player_2_inputs_token_balance - 1,
+                            // The wager value must be inserted in the datum
+                            contract_output_datum.wager == wager,
+
+                            // Players are joining an empty contract and they are updating the next state accordingly
+                            !datum.is_joined && contract_output_datum.is_joined,
+
+                            // A player cannot be the oracle (as the Win checks based on the winner's outputs won't work any longer)
+                            datum.oracle != player_1 && datum.oracle != player_2,
+
+                            // Players are paying an equal amount of ADA
+                            player_1_outputs_balance == player_1_inputs_balance - wager - value.lovelace_of(tx.fee), // player_1 is also paying the transaction fees
+                            player_2_outputs_balance == player_2_inputs_balance - wager,
 
                             // New datum must update the two players based on the tx's signers
                             contract_output_datum.player_1 == player_1,
                             contract_output_datum.player_2 == player_2,
 
-                            // Players are choosing a correct deadline
-                            contract_output_datum.deadline > tx_earliest_time, 
+                            // Players are not altering the deadline and the oracle as they join the contract
+                            contract_output_datum.deadline == datum.deadline,
+                            contract_output_datum.oracle == datum.oracle
                         }
                     }
 
                     Win(winner) -> {
                         expect Some(tx_signer) = list.at(tx.extra_signatories, 0)
-
+                        
                         and {
-                            // Only oracle can perform this action
+                            // Only the oracle can perform this action
                             tx_signer == datum.oracle,
 
-                            // Contract must have been payed by players (i.e. players must have joined the contract)
-                            contract_inputs_token_balance == 2,
-
+                            // Players must have joined the contract previously
+                            !datum.is_joined,
+                            
                             // Oracle can choose the winner only before the deadline
                             datum.deadline > tx_earliest_time,
 
-                            // oracle has to choose a winner among the two players 
+                            // oracle must choose a winner among the two players 
                             or { // more like a XOR
                                 winner == datum.player_1,
                                 winner == datum.player_2
                             },
 
-                            // Winner must receive the tokens
-                            utils.get_tokens_balance_from_outputs(utils.get_outputs_by_vkh(tx.outputs, winner)) == 2
+                            // Winner must receive the whole pot
+                            utils.get_ada_from_outputs(utils.get_outputs_by_vkh(tx.outputs, winner)) == datum.wager*2
                         }
                     }
 
@@ -148,14 +145,17 @@ validator {
                         expect Some(player_1) = list.at(tx.extra_signatories, 0)
                         expect Some(player_2) = list.at(tx.extra_signatories, 1)
                 
-                        // Players' token balances:
-                        let player_1_inputs_token_balance = utils.get_tokens_balance_from_inputs(utils.get_inputs_by_vkh(tx.inputs, player_1))
-                        let player_1_outputs_token_balance = utils.get_tokens_balance_from_outputs(utils.get_outputs_by_vkh(tx.outputs, player_1))
+                        // Players balances
+                        let player_1_inputs_balance = utils.get_ada_from_inputs(utils.get_inputs_by_vkh(tx.inputs, player_1))
+                        let player_1_outputs_balance = utils.get_ada_from_outputs(utils.get_outputs_by_vkh(tx.outputs, player_1))
 
-                        let player_2_inputs_token_balance = utils.get_tokens_balance_from_inputs(utils.get_inputs_by_vkh(tx.inputs, player_2))
-                        let player_2_outputs_token_balance = utils.get_tokens_balance_from_outputs(utils.get_outputs_by_vkh(tx.outputs, player_2))
+                        let player_2_inputs_balance = utils.get_ada_from_inputs(utils.get_inputs_by_vkh(tx.inputs, player_2))
+                        let player_2_outputs_balance = utils.get_ada_from_outputs(utils.get_outputs_by_vkh(tx.outputs, player_2))
 
                         and {
+                            // Players must have joined contract previously
+                            datum.is_joined,
+
                             // Transaction has the correct signers
                             player_1 == datum.player_1,
                             player_2 == datum.player_2,
@@ -163,12 +163,9 @@ validator {
                             // Timeout action can be performed only after the deadline
                             datum.deadline < tx_earliest_time,
 
-                            // Players must have joined contract previously (this means contract has 2 tokens)
-                            contract_inputs_token_balance == 2,
-                            
-                            // Players are receiving 1 token each
-                            player_1_outputs_token_balance == player_1_inputs_token_balance + 1,
-                            player_2_outputs_token_balance == player_2_inputs_token_balance + 1
+                            // Players are receiving the wager amount
+                            player_1_outputs_balance == player_1_inputs_balance + datum.wager - value.lovelace_of(tx.fee), // player_1 is also paying the transaction fees
+                            player_2_outputs_balance == player_2_inputs_balance + datum.wager,
                         }
                     }
                 }
