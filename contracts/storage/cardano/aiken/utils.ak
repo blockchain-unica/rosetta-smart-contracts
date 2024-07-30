@@ -4,21 +4,11 @@
 
 use aiken/list
 
-use aiken/hash.{Blake2b_224, Hash}
-
 use aiken/transaction.{ScriptContext, Transaction, Input, Output, Spend}
-use aiken/transaction/credential.{VerificationKey, Address}
+use aiken/transaction/credential.{Address}
+use aiken/transaction/value
 
 // use aiken/cbor // diagnostic
-
-// /////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-// /////////////////////////////////////////////////////////////////////////////////////////////////////////
-// Types definition
-// /////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-pub type VerificationKeyHash = Hash<Blake2b_224, VerificationKey>
 
 // /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -58,6 +48,42 @@ pub fn get_outputs_by_address(outputs: List<Output>, addr: Address) -> List<Outp
         outputs,
         fn(output) { output.address == addr }
     )
+}
+
+
+/// ***
+/// @funct get_inputs_by_address
+/// @brief - Keeps in the inputs list only the ones having addr as their address
+/// @param inputs
+/// @return List<Input> - The Input list containing inputs own by addr
+/// *** 
+pub fn get_inputs_by_address(inputs: List<Input>, addr: Address) {
+    list.filter(
+        inputs,
+        fn (input) { input.output.address == addr }
+    )
+}
+
+
+/// ***
+/// @funct get_ada_from_outputs
+/// @brief - Sums up all the lovelace values in the outputs list 
+/// @param outputs
+/// @return balance - The outputs' balance in lovelace
+/// *** 
+pub fn get_ada_from_outputs(outputs: List<Output>) -> Int {
+    list.reduce(outputs, 0, fn(acc, output) { acc + value.lovelace_of(output.value) })
+}
+
+
+/// ***
+/// @funct get_ada_from_inputs
+/// @brief - Sums up all the lovelace values in the inputs list 
+/// @param inputs
+/// @return balance - The inputs' balance in lovelace
+/// *** 
+pub fn get_ada_from_inputs(inputs: List<Input>) -> Int {
+    list.reduce(inputs, 0, fn(acc, input) { acc + value.lovelace_of(input.output.value) })
 }
 
 // /////////////////////////////////////////////////////////////////////////////////////////////////////////
