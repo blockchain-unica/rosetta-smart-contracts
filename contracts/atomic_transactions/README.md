@@ -8,7 +8,7 @@ Upon creation, the contract sets its *owner*, who is the only actor who can exec
 
 Once the contract is deployed, it supports the following actions:
 - **addTransaction** adds a transaction to the batch, if the batch is not already sealed.
-- **sealAtomicTransactions** seals the transaction batch, prevengint further transactions to be added.
+- **sealAtomicTransactions** seals the transaction batch, preventing further transactions to be added.
 - **execute** atomically executes a sealed transaction batch: if even a single transaction fails, then the state is rolled back. Each transaction must be executed while preserving the context of the caller (i.e., the contract owner).
 - **reset**: deletes the current transaction batch and removes the seal, allowing the owner to use the contract for another batch.
 
