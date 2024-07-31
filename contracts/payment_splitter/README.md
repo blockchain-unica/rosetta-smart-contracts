@@ -21,7 +21,7 @@ After creation, the contract supports the following actions:
 
 - **Solidity/Ethereum**: implementation coherent with the specification.
 - **Anchor/Solana**: a step has been added for initializing the data of the contract (payees, shares, released amounts, etc.). 
-- **Aiken/Cardano**:
+- **Aiken/Cardano**: implementation coherent with the specification.
 - **PyTeal/Algorand**:
 - **SmartPy/Tezos**: implementation coherent with the specification.
 - **Move/Aptos**:
