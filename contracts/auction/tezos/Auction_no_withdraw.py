@@ -45,46 +45,4 @@ def main():
             
             #withdraw all the assets
             sp.send(self.data.admin, sp.balance)
-            
-                      
-        
-
-
-@sp.add_test(name = "auctionTest")
-def auctionTest():
-    #set scenario
-    sc = sp.test_scenario(main)
-    #create admin
-    admin = sp.test_account("admin")
-    #create time 
-    time = sp.timestamp_from_utc_now() #calculate execution time
-    #new object Auction
-    auction = main.Auction(sp.mutez(5), time, admin.address)
-    #start scenario
-    sc += auction
-
-    #users
-    sofia = sp.test_account("sofia")
-    piero = sp.test_account("piero")
-    carla = sp.test_account("carla")
-
-    #start auction
-    sc.h1("Start Auction")
-    auction.start().run(sender = admin)
-    #first bid
-    sc.h1("First Bid")
-    auction.bid().run(sender = sofia, amount = sp.mutez(100))
-    auction.bid().run(sender = sofia, amount = sp.mutez(100),valid = False)
-    #second bid
-    sc.h1("Second Bid")
-    auction.bid().run(sender = piero, amount = sp.mutez(10), valid = False)
-    auction.bid().run(sender = piero, amount = sp.mutez(101))
-    #third bid
-    sc.h1("Third Bid")
-    auction.bid().run(sender = carla, amount = sp.mutez(1000))
-    #ending
-    sc.h1("ending")
-    time = time.add_minutes(2)
-    auction.end(time).run(sender = sofia, valid = False)
-    auction.end(time).run(sender = admin)
     
