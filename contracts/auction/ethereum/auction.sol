@@ -30,17 +30,17 @@ contract auction {
     }
 
     function bid() external payable {
-        require(state == States.WAIT_CLOSING, "Auction not started");
-        require(block.timestamp < endTime, "Time ended");
-        require(msg.value > highestBid, "value < highest");
+        require(state == States.WAIT_CLOSING, "Auction not started or already closed");
+        require(block.timestamp < endTime, "Bidding time expired");
+        require(msg.value > highestBid, "value must be greater than highest");
 
         // Previous highestBid goes in the list.
         if (highestBidder != address(0)) {
-            bids[highestBidder] += highestBid;
+            bids[highestBidder] = highestBid;
         }
 
         // if a participant makes a new bid, the previous one is automatically withdrawn
-        if (bids[msg.sender]!= 0){
+        if (bids[msg.sender] != 0) {
             withdraw();
         }
 
