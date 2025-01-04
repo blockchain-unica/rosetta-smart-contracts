@@ -25,7 +25,7 @@ contract Vault {
     //  IDLE -> REQ
     function withdraw(address receiver_, uint amount_) public {
         require(state == States.IDLE);
-        require(amount <= address(this).balance);
+        require(amount_ <= address(this).balance);
         require(msg.sender == owner);
         request_time = block.number;
         amount = amount_;
