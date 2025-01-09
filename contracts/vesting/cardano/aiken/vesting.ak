@@ -1,4 +1,5 @@
-use aiken/interval.{Finite}
+// Suggested compiler version: 1.7.0 
+
 // ////////////////////////////////////////////////////////////////////////////////
 // Imports:
 // ////////////////////////////////////////////////////////////////////////////////
@@ -6,6 +7,7 @@ use aiken/interval.{Finite}
 use aiken/list
 use aiken/transaction.{InlineDatum, ScriptContext, Spend}
 use aiken/transaction/value
+use aiken/interval.{Finite}
 
 use vesting/utils.{POSIXTime, VerificationKeyHash, Lovelace}
 
