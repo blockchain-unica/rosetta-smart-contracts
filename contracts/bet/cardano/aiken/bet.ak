@@ -1,4 +1,4 @@
-// Suggested compiler version: 1.7.0 
+// Suggested stdlib version: 1.7.0 (https://github.com/aiken-lang/stdlib/releases/tag/1.7.0)
 
 // ////////////////////////////////////////////////////////////////////////////////
 // Imports:
