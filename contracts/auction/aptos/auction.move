@@ -16,6 +16,7 @@ module rosetta_smart_contracts::auction {
     coins: Coin<CoinType>                 // the Coin type is not copiable and represents an actual amount of money/assets
   }
 
+  // called by the auctioneer for initiating the auction
   public entry fun start<CoinType>(auctioneer: &signer, base: Coin<CoinType>) {
     let auctioneer_addr = signer::address_of(auctioneer);
 
