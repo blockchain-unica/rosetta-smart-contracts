@@ -3,7 +3,7 @@
 A chrestomathy of smart contracts, including implementations of use cases in different smart contract languages.
 
 Details on the comparison between different smart contract languages are available in the following research paper:
-- M. Bartoletti, L. Benetollo, M. Bugliesi, S. Crafa, G. Dal Sasso, R. Pettinau, A. Pinna, M. Piras, S. Rossi, S. Salis, A. Spanò, V. Tkachenko, R. Tonelli, R. Zunino. [Smart Contract Languages: a comparative analysis](https://arxiv.org/abs/2404.04129), ArXiV, 2024
+- M. Bartoletti, L. Benetollo, M. Bugliesi, S. Crafa, G. Dal Sasso, R. Pettinau, A. Pinna, M. Piras, S. Rossi, S. Salis, A. Spanò, V. Tkachenko, R. Tonelli, R. Zunino. [Smart Contract Languages: a comparative analysis](https://arxiv.org/abs/2404.04129), Future Generation Computer Systems 164, 2025
 
 ## Use cases
 1. [Bet](contracts/bet)
