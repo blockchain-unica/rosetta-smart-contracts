@@ -35,4 +35,4 @@ Details on the comparison between different smart contract languages are availab
 - [Aiken](https://aiken-lang.org/) (Cardano)
 - [PyTEAL](https://pyteal.readthedocs.io/en/stable/) (Algorand)
 - [SmartPy](https://smartpy.io/) (Tezos)
-- [Move](https://move-language.github.io/move/) (Aptos, Sui)
+- [Move](https://move-language.github.io/move/) (Aptos, Sui, IOTA)
