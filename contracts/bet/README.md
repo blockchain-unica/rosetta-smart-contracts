@@ -26,3 +26,4 @@ After creation, the following actions are possible:
 - **PyTeal/Algorand**: two join functions, one for each player; the first player who joins is also the owner of the contract and its creator.
 - **SmartPy/Tezos**: two join functions, one for each player; the first player **could** also be the owner of the contract and its creator.
 - **Move/Aptos**: the deadline is a timestamp; the bets can be paid in any token type.
+- **Move/IOTA**: two join function, the first player acts first and after the second player joins; the deadline is a timestamp; the bets can be paid in any token type.
