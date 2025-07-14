@@ -31,3 +31,4 @@ After creation, the following actions are possible:
 - **PyTeal/Algorand**: ---
 - **SmartPy/Tezos**: the contract owner has to be passed as parameter during contract creation
 - **Move/Aptos**: ---
+- **Move/Aptos**: implementation coherent with the specification.
