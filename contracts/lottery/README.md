@@ -39,3 +39,4 @@ If the platform does not support multisig transactions, then step 1 is split in 
 - **PyTeal/Algorand**: ---
 - **SmartPy/Tezos**: ---
 - **Move/Aptos**: ---
+- **Move/IOTA**: implementation coherent with the specification.
