@@ -28,3 +28,4 @@ Once the deposit action has been performed, exactly one of the following actions
 - **PyTeal/Algorand**: implementation coherent with the specification.
 - **SmartPy/Tezos**: implementation coherent with the specification.
 - **Move/Aptos**: implementation coherent with the specification.
+- **Move/IOTA**: implementation coherent with the specification.

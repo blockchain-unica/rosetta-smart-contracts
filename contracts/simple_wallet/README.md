@@ -27,3 +27,4 @@ After contract creation, the contract supports the following actions:
 - **PyTeal/Algorand**: implementation coherent with the specification.
 - **SmartPy/Tezos**: use of an 'emit' for the transaction ID.
 - **Move/Aptos**: implementation coherent with the specification.
+- **Move/IOTA**: implementation coherent with the specification.

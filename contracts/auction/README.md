@@ -30,3 +30,4 @@ After creation, the contract supports the following actions:
 - **PyTeal/Algorand**: implementation coherent with the specification.
 - **SmartPy/Tezos**: implementation coherent with the specification.
 - **Move/Aptos**: current bid is not sent to the contract but rather stored on chain. Bid can be any asset type. Each bidder refunds the previous one; the withdraw function does not exist.
+- **Move/IOTA**: in the bid function if a higher bid is made than the previous one, the previeus bid is sent back to the sender; the withdraw function does not exist.

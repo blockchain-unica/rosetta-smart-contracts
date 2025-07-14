@@ -25,3 +25,4 @@ After creation, the contract supports the following actions:
 - **PyTeal/Algorand**:
 - **SmartPy/Tezos**: implementation coherent with the specification.
 - **Move/Aptos**:
+- **Move/IOTA**: the release function divides the balance according to shares and saves this division within the contract; each shareholder will receive the corresponding amount calling the take_amount function. 
