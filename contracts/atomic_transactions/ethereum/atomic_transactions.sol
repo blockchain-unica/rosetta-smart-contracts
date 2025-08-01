@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.0;
 
-contract atomicTx{
+contract AtomicTransactions {
 
     struct Transaction {
         bytes data;
@@ -26,26 +26,22 @@ contract atomicTx{
         owner = msg.sender;
     }
 
-
-
     function addTransaction(Transaction memory transaction) public onlyOwner{
-            require(keccak256(transaction.data)==transaction.hash, "transaction not valid");
-            bool isValidSignature = ecrecover(transaction.hash, transaction.sigV, transaction.sigR, transaction.sigS) == owner;
-            require(isValidSignature, "signature not valid");
-            transactions.push(transaction);
+        bool isValidHash = keccak256(transaction.data)==transaction.hash; 
+        require(isValidHash, "transaction hash not valid");
+        bool isValidSignature = ecrecover(transaction.hash, transaction.sigV, transaction.sigR, transaction.sigS) == owner;
+        require(isValidSignature, "signature not valid");
+        transactions.push(transaction);
     }
-
 
     function sealAtomicTransactions() public  onlyOwner{
         seal = true;
     }
 
-
     function reset() public onlyOwner {
         seal=false;
         delete transactions;
     }
-
 
     function executeTransactions() public onlyOwner {
        require(seal, "contract not sealed" );
@@ -55,6 +51,4 @@ contract atomicTx{
            require(success, "atomic transaction failed");
        }
     }
-
-
 }
