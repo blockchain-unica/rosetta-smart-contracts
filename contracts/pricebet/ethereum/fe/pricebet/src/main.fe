@@ -1,0 +1,42 @@
+use oracle::Oracle
+
+contract PriceBet{
+    initial_pot: u256
+    deadline_block: u256
+    exchange_rate: u256
+    oracle: address
+    owner: address
+    player: address
+
+    pub fn __init__(mut self, ctx: Context, _oracle: address, _deadline: u256, _exchange_rate: u256) {
+        self.initial_pot = ctx.msg_value()
+        self.owner = ctx.msg_sender()
+        self.oracle = _oracle;
+        self.deadline_block = ctx.block_number() + _deadline;
+        self.exchange_rate = _exchange_rate;
+    }
+
+    pub fn join(mut self, ctx: Context) {
+        assert ctx.msg_value() == self.initial_pot, "Amount must be equal to initial pot"
+        assert self.player == 0x0, "Someone else already joined"
+        self.player = ctx.msg_sender()
+    }
+
+    pub fn win(mut self, mut ctx: Context) {
+        let mut TheOracle: Oracle = Oracle(self.oracle);
+        assert ctx.block_number() < self.deadline_block, "deadline expired"
+        assert ctx.msg_sender() == self.player, "invalid sender"
+        assert TheOracle.get_exchange_rate(ctx) >= self.exchange_rate, "you lost the bet"
+        ctx.send_value(to: self.player, wei: ctx.balance_of(ctx.self_address()))
+    }
+
+    // This function is here to call only to create blocks and make time be out on demand for testing purposes
+    pub fn addBlock(self, ctx: Context){
+        true
+    }
+
+    pub fn timeout(mut self, mut ctx: Context) {
+        assert ctx.block_number() >= self.deadline_block, "deadline not expired"
+        ctx.send_value(to: self.owner, wei: ctx.balance_of(ctx.self_address()))
+    }
+}

@@ -1,0 +1,55 @@
+contract Bet {
+    player1: address
+    player2: address
+    deadline: u256
+    oracle: address
+    wager: u256
+
+    pub fn __init__(mut self, ctx: Context, _oracle: address, _timeout: u256) {
+        self.player1 = ctx.msg_sender()
+        self.wager = ctx.msg_value()
+        self.oracle = _oracle
+        self.deadline = ctx.block_number() + _timeout;
+    }
+
+    pub fn join(mut self, ctx: Context) {
+        assert ctx.msg_value() == self.wager, "Invalid value"
+        assert self.player2 == 0x0, "Player2 already joined"
+        assert ctx.block_number() <= self.deadline, "Timeout"
+        self.player2 = ctx.msg_sender()
+    }
+
+    pub fn win(mut self, mut ctx: Context, winner: address) {
+        assert ctx.msg_sender() == self.oracle, "Only the oracle"
+        assert self.player2 != 0x0, "Player2 has not joined"
+
+        let mut addressWinner: address
+
+        if winner == self.player1{
+            addressWinner = self.player1
+        }
+        else if winner == self.player2{
+            addressWinner = self.player2
+        }
+        else{
+            assert false, "Invalid winner"
+        }
+
+        ctx.send_value(to: addressWinner, wei: ctx.balance_of(ctx.self_address()))
+    }
+
+    pub fn timeout(mut self, mut ctx: Context) {
+        assert ctx.block_number() > self.deadline, "The timeout has not passed"
+
+        if (ctx.balance_of(ctx.self_address()) == self.wager) {
+            ctx.send_value(to: self.player1, wei: self.wager)
+        }
+        else if (ctx.balance_of(ctx.self_address()) >= self.wager*2 and self.player2 != 0x0) {
+            ctx.send_value(to: self.player1, wei: self.wager)
+            ctx.send_value(to: self.player2, wei: self.wager)
+        }
+        else{
+            assert false, "Invalid balance"
+        }
+    }
+}

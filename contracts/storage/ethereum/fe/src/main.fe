@@ -1,0 +1,13 @@
+contract Storage {
+
+    byteSequence: Array<u8, 1>
+    textString: String<10>
+
+    pub fn storeBytes(mut self, ctx: Context, _byteSequence: Array<u8, 1>) {
+        self.byteSequence = _byteSequence
+    }
+
+    pub fn storeString(mut self, ctx: Context, _textString: String<10>) {
+        self.textString = _textString;
+    }
+}

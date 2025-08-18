@@ -1,0 +1,154 @@
+enum Status {
+    JOIN_0
+    JOIN_1
+    COMMIT_0
+    COMMIT_1
+    REVEAL_0
+    REVEAL_1
+    WIN
+    END
+
+    pub fn read(self) -> u8 {
+        match self {
+            Status::JOIN_0 => {
+                return 0
+            }
+
+            Status::JOIN_1 => {
+                return 1
+            }
+            
+            Status::COMMIT_0 => {
+                return 2
+            }
+
+            Status::COMMIT_1 => {
+                return 3
+            }
+
+            Status::REVEAL_0 => {
+                return 4
+            }
+
+            Status::REVEAL_1 => {
+                return 5
+            }
+
+            Status::WIN => {
+                return 6
+            }
+
+            Status::END => {
+                return 7
+            }
+        }
+    }
+
+}
+
+contract Lottery {
+    owner: address
+
+    player0: address
+    player1: address
+    winner: address
+
+    hash0: u256
+    hash1: u256
+
+    secret0: u256
+    secret1: u256
+
+    bet_amount: u256
+
+    end_join: u256
+    end_reveal: u256
+    
+    status: u8
+    
+    pub fn __init__(mut self, ctx: Context) {
+        self.owner = ctx.msg_sender()
+	    self.status = Status::JOIN_0.read()
+	    self.end_join = ctx.block_number() + 100
+	    self.end_reveal = self.end_join + 100
+    }
+
+    pub fn join0(mut self, ctx: Context, h: u256) {
+        assert self.status == Status::JOIN_0.read(), "Wrong status"
+        assert ctx.msg_value() > 0, "Can't join with zero Wei"
+
+        self.player0 = ctx.msg_sender()
+        self.hash0 = h
+	    self.status = Status::JOIN_1.read()
+        self.bet_amount = ctx.msg_value()
+    }
+
+    pub fn join1(mut self, ctx: Context, h: u256) {
+        assert self.status == Status::JOIN_1.read(), "Wrong status"
+        assert h != self.hash0, "Hash not valid"
+        assert ctx.msg_value() == self.bet_amount, "Bet amount not matching other Player"
+
+        self.player1 = ctx.msg_sender()
+        self.hash1 = h	
+    	self.status = Status::REVEAL_0.read()
+    }
+
+    pub fn redeem0_nojoin1(mut self, mut ctx: Context) {
+        assert self.status == Status::JOIN_1.read() and ctx.block_number() > self.end_join, "Wrong Status or time not expired"
+
+        ctx.send_value(to: self.player0, wei: ctx.balance_of(ctx.self_address()))
+        self.status = Status::END.read()
+    } 
+    
+    pub fn reveal0(mut self, ctx: Context, s: Array<u8, 32>) {
+        assert self.status == Status::REVEAL_0.read() and ctx.msg_sender() == self.player0, "Wrong Status or Caller"
+        assert keccak256(s) == self.hash0, "Hash does not match"
+
+        self.secret0 = self.hash0
+	    self.status = Status::REVEAL_1.read()
+    }
+
+    pub fn redeem1_noreveal0(mut self, mut ctx: Context) {
+        assert self.status == Status::REVEAL_0.read() and ctx.block_number() > self.end_reveal, "Wrong Status or time not expired"
+
+        ctx.send_value(to: self.player1, wei: ctx.balance_of(ctx.self_address()))
+        self.status = Status::END.read()
+    } 
+    
+    pub fn reveal1(mut self, ctx: Context, s: Array<u8, 32>) {
+        assert self.status == Status::REVEAL_1.read() and ctx.msg_sender() == self.player1, "Wrong Status or Caller"
+        assert keccak256(s)==self.hash1, "Hash does not match"
+
+        self.secret1 = self.hash1
+	    self.status = Status::WIN.read()
+    }
+
+    pub fn redeem0_noreveal1(mut self, mut ctx: Context) {
+        assert self.status == Status::REVEAL_1.read() and ctx.block_number() > self.end_reveal, "Wrong Status or time not expired"
+
+        ctx.send_value(to: self.player0, wei: ctx.balance_of(ctx.self_address()))
+        self.status = Status::END.read()
+    } 
+    
+    pub fn win(mut self, mut ctx: Context) {
+        assert self.status == Status::WIN.read(), "Wrong status"
+	
+        let mut l0: u256 = self.secret0
+        let mut l1: u256 = self.secret1
+
+        l0 = l0 % 2
+        l1 = l1 % 2
+
+        if ((l0+l1) % 2 == 0) {
+            self.winner = self.player0;
+        }
+        else {
+            self.winner = self.player1;
+        }
+
+        ctx.send_value(to: self.winner, wei: ctx.balance_of(ctx.self_address()))
+	    self.status = Status::END.read()
+    }
+
+    pub fn createBlock(self, ctx: Context){ }
+}

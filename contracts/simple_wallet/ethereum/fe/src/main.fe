@@ -1,0 +1,66 @@
+struct Transaction {
+    #indexed
+    pub to: address
+    pub value: u256
+    pub data: Array<u8, 1> //this is the payload of the transaction
+    pub executed: bool
+}
+
+contract Simple_wallet{
+
+    //workaround: using finite-sized array
+    //counting transaction manually
+    transactions: Array<Transaction, 5>
+    total_transactions: u8
+    owner: address
+
+    //when transactions are full, will be prompted to create new wallet
+    pub fn __init__(mut self, ctx: Context, _owner: address) {
+        assert _owner != 0x0, "Invalid address."
+        self.owner = _owner;
+    }
+
+    pub fn deposit(mut self, mut ctx: Context) {
+        assert ctx.msg_sender() == self.owner, "Only the owner"
+    }
+
+    pub fn createTransaction(mut self, ctx: Context, _to: address, _value: u256, _data: Array<u8, 1>) {
+        // Checking if it's the owner the classic way
+        assert ctx.msg_sender() == self.owner, "Only the owner"
+        assert _to != 0x0, "Invalid address"
+        assert self.total_transactions <= 4, "The array is full. Please withdraw all money and deploy new wallet."
+        let txId: u256 = self.total_transactions
+        self.transactions[txId] = Transaction(to: _to, value: _value, data: _data, executed: false)
+        self.total_transactions += 1
+    }
+
+    pub fn executeTransaction(mut self, mut ctx: Context, _txId: u256) {
+        // Checking if it's the owner the classic way
+        assert ctx.msg_sender() == self.owner, "Only the owner"
+        assert self.transactions[_txId].to != 0x0, "Transaction does not exist."
+        assert (not self.transactions[_txId].executed), "Transaction already executed."
+
+        //Transaction storage
+        let mut transaction: Transaction = self.transactions[_txId].to_mem()
+        assert transaction.value < ctx.balance_of(ctx.self_address()), "Insufficient funds."
+        transaction.executed = true
+        ctx.send_value(to: transaction.to, wei: transaction.value) //data: transaction.data) //only takes 2 arguments
+        self.transactions[_txId].executed = true
+       
+        //At this point, the ethereum implementation would call the contract specified in the transaction.to
+        //This is not that easily doable in Fe as external contracts are called by importing them at compile time via a system called "Ingots" that imports the interface of the external contract.
+        
+        //Below, the Solidity implementation:
+
+        //(bool success, ) = transaction.to.call{value: transaction.value}(
+        //    transaction.data
+        //);
+        //require(success, "Transfer failed.");
+   }
+
+    pub fn withdraw(mut self, mut ctx: Context) {
+        assert ctx.msg_sender() == self.owner, "Only the owner"
+        let withdraw_value: u256 = ctx.balance_of(ctx.self_address())
+        ctx.send_value(to: ctx.msg_sender(), wei: withdraw_value)
+    }
+}

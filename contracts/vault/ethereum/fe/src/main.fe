@@ -1,0 +1,66 @@
+enum States {
+    IDLE
+    REQ
+
+    pub fn read(self) -> u8 {
+        match self {
+            States::IDLE => {
+                return 0
+            }
+
+            States::REQ => {
+                return 1
+            }
+        }
+    }
+}
+
+contract Vault {
+
+    owner: address
+    recovery: address
+    wait_time: u256
+
+    receiver: address
+    request_time: u256
+    amount: u256
+    state: u8
+
+    pub fn __init__(mut self, ctx: Context, recovery_: address, wait_time_: u256) {
+        self.owner = ctx.msg_sender();
+        self.recovery = recovery_;
+
+        //making wait time in seconds instead of blocks
+        self.wait_time = (wait_time_ * 1)
+        self.state = States::IDLE.read();
+    }
+
+    pub fn receive(mut self, mut ctx: Context) { }
+
+    //  IDLE -> REQ
+    pub fn withdraw(mut self, ctx: Context, receiver_: address, amount_: u256) {
+        assert self.state == States::IDLE.read(), "State is not IDLE"
+        assert amount_ <= ctx.balance_of(ctx.self_address()), "Balance insufficient"
+        assert ctx.msg_sender() == self.owner, "Only the owner"
+        self.request_time = ctx.block_timestamp()
+        self.amount = amount_
+        self.receiver = receiver_
+        self.state = States::REQ.read()
+    }
+
+    // REQ -> IDLE
+    pub fn finalize(mut self, mut ctx: Context) { 
+        assert self.state == States::REQ.read(), "State is not REQ"
+        assert ctx.block_timestamp() >= (self.request_time + self.wait_time), "Still in waiting time..."
+        assert ctx.msg_sender() == self.owner, "Only the owner"
+        self.state = States::IDLE.read()
+        ctx.send_value(to: self.receiver, wei: self.amount)
+    }
+
+    // REQ -> IDLE
+    pub fn cancel(mut self, ctx: Context) {
+        assert self.state == States::REQ.read(), "State is not REQ"
+        assert ctx.msg_sender() == self.recovery, "Must be recovery to cancel"
+        self.state = States::IDLE.read()
+    }
+}

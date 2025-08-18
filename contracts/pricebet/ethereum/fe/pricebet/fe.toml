@@ -1,0 +1,6 @@
+name = "pricebet"
+version = "1.0"
+
+[dependencies]
+oracle = "../oracle_ingot"
+# my_lib = { path = "../my_lib", version = "1.0" }

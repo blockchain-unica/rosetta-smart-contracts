@@ -1,0 +1,44 @@
+struct EtherReleased {
+    #indexed
+    pub amount: u256
+}
+
+contract Vesting{
+
+    _released: u256
+    _beneficiary: address
+    _start: u64
+    _duration: u64
+
+    pub fn __init__(mut self, ctx: Context, beneficiaryAddress: address, startTimestamp: u64, durationSeconds: u64) {
+        assert beneficiaryAddress != 0x0, "Beneficiary is zero address"
+        self._beneficiary = beneficiaryAddress;
+        self._start = startTimestamp;
+        self._duration = durationSeconds;
+    }
+
+    pub fn release(mut self, mut ctx: Context) {
+        let _amount: u256 = self.releasable(ctx);
+        self._released += _amount;
+        ctx.send_value(to: self._beneficiary, wei: _amount)
+        ctx.emit(EtherReleased(amount: _amount))
+    }
+
+    fn releasable(mut self, ctx: Context) -> u256 {
+        return (self.vestedAmount(ctx, time_stamp: (u64(ctx.block_timestamp()))) - self._released)    }
+
+    fn vestedAmount(mut self, ctx: Context, time_stamp: u64) -> u256 {
+        return self._vestingSchedule(ctx, totalAllocation: (ctx.balance_of(ctx.self_address()) + self._released), timestamp: time_stamp);
+    }
+
+    //implementation of the vesting formula (linear curve).
+    fn _vestingSchedule(mut self, ctx: Context, totalAllocation: u256, timestamp: u64) -> u256 {
+        if (timestamp < self._start) {
+            return 0;
+        } else if (timestamp > self._start + self._duration) {
+            return totalAllocation;
+        } else {
+            return (totalAllocation * (timestamp - self._start)) / self._duration;
+        }
+    }
+}

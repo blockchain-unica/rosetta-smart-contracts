@@ -1,0 +1,106 @@
+contract PaymentSplitter {
+
+    _totalShares: u256
+    _totalReleased: u256
+
+    _shares: Map<address, u256>
+    _released: Map<address, u256>
+    _payees: Array<address, 3>
+
+    payees_counter: u256
+
+    pub fn __init__(mut self, ctx: Context, payees: Array<address, 3>, shares_: Array<u256, 3>) {
+        let mut shares_counter: u256
+
+        shares_counter = 0
+        self.payees_counter = 0
+
+        //fe has static arrays so i have to check specifically whole array
+        for _payee in payees {
+            if _payee != 0x0 {
+                self.payees_counter = self.payees_counter + 1
+            }
+        }
+
+        //fe has static arrays so i have to check specifically whole array
+        for share in shares_ {
+            if share != 0x0 {
+                shares_counter += 1
+            }
+        }
+        
+        assert self.payees_counter == shares_counter, "PaymentSplitter: payees and shares length mismatch"
+        assert self.payees_counter > 0, "PaymentSplitter: no payees"
+
+        let mut i: u256
+        i = 0
+
+        self.payees_counter = 0
+        for payee in payees {
+            if payee != 0x0 {
+                self._addPayee(ctx, account: payees[i], shares_: shares_[i])
+            }
+            i += 1
+        }
+    }
+
+    pub fn receive(self, ctx: Context) { }
+
+    pub fn totalShares(self, ctx: Context) -> u256 {
+        return self._totalShares;
+    }
+
+    pub fn totalReleased(self, ctx: Context) -> u256 {
+        return self._totalReleased;
+    }
+
+    pub fn shares(self, ctx: Context, account: address) -> u256 {
+        return self._shares[account];
+    }
+
+    pub fn released(self, ctx: Context, account: address) -> u256 {
+        return self._released[account];
+    }
+
+    pub fn payee(self, ctx: Context, index: u256) -> address {
+        return self._payees[index];
+    }
+
+    pub fn releasable(self, ctx: Context, account: address) -> u256 {
+        let totalReceived: u256 = ctx.balance_of(ctx.self_address()) + self.totalReleased(ctx)
+        return self._pendingPayment(ctx, account, totalReceived, alreadyReleased: self.released(ctx, account));
+    }
+
+    pub fn release(mut self, mut ctx: Context, account: address) {
+        
+        //unreachable
+        assert self._shares[account] > 0, "PaymentSplitter: account has no shares"
+
+        let payment: u256 = self.releasable(ctx, account)
+
+        assert payment != 0, "PaymentSplitter: account is not due payment"
+
+        self._totalReleased += payment
+        self._released[account] += payment
+
+        ctx.send_value(to: account, wei: payment)
+    }
+
+    fn _pendingPayment(self, ctx: Context, account: address, totalReceived: u256, alreadyReleased: u256) -> u256 {
+        return (totalReceived * self._shares[account]) / self._totalShares - alreadyReleased;
+    }
+
+    fn _addPayee(mut self, ctx: Context, account: address, shares_: u256) {
+        //this is not reachable
+        assert account != 0x0, "PaymentSplitter: account is the zero address"
+        
+        assert shares_ > 0, "PaymentSplitter: shares are 0"
+        assert self._shares[account] == 0, "PaymentSplitter: account already has shares"
+
+        self._payees[self.payees_counter] = account
+        self.payees_counter = self.payees_counter + 1
+
+        self._shares[account] = shares_
+        self._totalShares = self._totalShares + shares_
+    }
+}

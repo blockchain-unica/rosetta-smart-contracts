@@ -1,0 +1,80 @@
+enum States {
+    WAIT_START 
+    WAIT_CLOSING 
+    CLOSED
+
+    pub fn read(self) -> u8 {
+        match self {
+            States::WAIT_START => {
+                return 0
+            }
+
+            States::WAIT_CLOSING => {
+                return 1
+            }
+            
+            States::CLOSED => {
+                return 2
+            }
+        }
+    }
+}
+
+contract Auction {
+    state: u8
+    object: String<100>
+    seller: address
+    endTime: u256
+    highestBidder: address
+    highestBid: u256
+    bids: Map<address, u256>
+
+    pub fn __init__(mut self, ctx: Context, _object: String<100>, _startingBid: u256) {
+        self.state = States::WAIT_START.read()
+        self.object = _object;
+        self.seller = ctx.msg_sender()
+        self.highestBid = _startingBid;
+    }
+
+    pub fn start(mut self, ctx: Context, _duration: u256) {
+        assert self.state == States::WAIT_START.read(), "Auction already started"
+        assert ctx.msg_sender() == self.seller, "Only the seller"
+        self.state = States::WAIT_CLOSING.read();
+        self.endTime = ctx.block_timestamp() + (_duration * 1)
+    }
+
+    pub fn bid(mut self, mut ctx: Context) {
+        assert self.state == States::WAIT_CLOSING.read(), "Auction not started or already closed"
+        assert ctx.block_timestamp() < self.endTime, "Bidding time expired"
+        assert ctx.msg_value() > self.highestBid, "value must be greater than highest"
+
+        // Previous highestBid goes in the list.
+        if (self.highestBidder != 0x0) {
+            self.bids[self.highestBidder] = self.highestBid;
+        }
+
+        // if a participant makes a new bid, the previous one is automatically withdrawn
+        if (self.bids[ctx.msg_sender()] != 0) {
+            self.withdraw(ctx)
+        }
+
+        self.highestBidder = ctx.msg_sender()
+        self.highestBid = ctx.msg_value()
+    }
+
+    pub fn withdraw(mut self, mut ctx: Context) {
+        assert self.state != States::WAIT_START.read(), "Auction not started"
+        assert self.bids[ctx.msg_sender()] != 0, "Can't withdraw"
+        let bal: u256 = self.bids[ctx.msg_sender()];
+        self.bids[ctx.msg_sender()] = 0;
+        ctx.send_value(to: ctx.msg_sender(), wei: bal)
+    }
+
+    pub fn end(mut self, mut ctx: Context) {
+        assert ctx.msg_sender() == self.seller, "Only the seller"
+        assert self.state == States::WAIT_CLOSING.read(), "Auction not started"
+        assert ctx.block_timestamp() >= self.endTime, "Auction not ended"
+        self.state = States::CLOSED.read()
+        ctx.send_value(to: self.seller, wei: self.highestBid)
+    }
+}

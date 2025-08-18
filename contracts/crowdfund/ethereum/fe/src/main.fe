@@ -1,0 +1,33 @@
+contract Crowdfund {
+
+    end_donate: u256    // last block in which users can donate
+    goal: u256          // amount of ETH that must be donated for the crowdfunding to be succesful
+    receiver: address   // receiver of the donated funds
+    donors: Map<address, u256>
+
+    pub fn __init__(mut self, receiver_: address, end_donate_: u256, goal_: u256) {
+        self.receiver = receiver_
+        self.end_donate = end_donate_
+	    self.goal = goal_
+    }
+    
+    pub fn donate(mut self, ctx: Context) {
+        assert ctx.block_number() <= self.end_donate, "Crowdfunding is closed"
+        self.donors[ctx.msg_sender()] += ctx.msg_value()
+    }
+
+    pub fn withdraw(mut self, mut ctx: Context) {
+        assert ctx.block_number() >= self.end_donate, "Crowdfunding is still open"
+        assert ctx.balance_of(ctx.self_address()) >= self.goal, "Crowdfunding failed"
+        ctx.send_value(to: self.receiver, wei: ctx.balance_of(ctx.self_address()))
+    }
+    
+    pub fn reclaim(mut self, mut ctx: Context) { 
+        assert ctx.block_number() >= self.end_donate, "Crowdfunding is not over yet, can't reclaim"
+        assert ctx.balance_of(ctx.self_address()) < self.goal, "Crowdfunding is successful, can't reclaim"
+        assert self.donors[ctx.msg_sender()] > 0, "There is nothing to reclaim"
+        let amount: u256 = self.donors[ctx.msg_sender()];
+        self.donors[ctx.msg_sender()] = 0;
+        ctx.send_value(to: ctx.msg_sender(), wei: amount)
+    }
+}

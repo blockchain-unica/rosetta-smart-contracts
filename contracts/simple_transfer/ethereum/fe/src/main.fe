@@ -1,0 +1,22 @@
+contract SimpleTransfer {
+    recipient: address
+    owner: address
+    balance: u256
+
+    pub fn __init__(mut self, ctx: Context, _recipient: address) {
+        self.recipient = _recipient
+        self.owner = ctx.msg_sender()
+    }
+
+    pub fn deposit(mut self, mut ctx: Context) {
+        assert self.owner == ctx.msg_sender(), "only the owner can deposit"
+        self.balance = self.balance + ctx.msg_value()
+    }
+
+    pub fn withdraw(mut self, mut ctx: Context, amount: u256) {
+        assert ctx.msg_sender() == self.recipient, "only the recipient can withdraw"
+        assert amount <= self.balance, "the contract balance is less then required amount"
+        ctx.send_value(to: self.recipient, wei: amount)
+        self.balance = self.balance - ctx.msg_value()
+    }
+}
