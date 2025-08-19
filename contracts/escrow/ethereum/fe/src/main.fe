@@ -1,0 +1,60 @@
+enum States {
+    WAIT_DEPOSIT 
+    WAIT_RECIPIENT 
+    CLOSED
+
+    pub fn read(self) -> u8 {
+        match self {
+            States::WAIT_DEPOSIT => {
+                return 0
+            }
+
+            States::WAIT_RECIPIENT => {
+                return 1
+            }
+            
+            States::CLOSED => {
+                return 2
+            }
+        }
+    }
+}
+
+contract Escrow {
+
+    buyer: address
+    seller: address
+    amount: u256
+    state: u8
+
+    pub fn __init__(mut self, ctx: Context, _amount: u256, _buyer: address, _seller: address) {
+        assert _buyer != 0x0, "Buyer address not valid";
+        assert _seller != 0x0, "Seller address not valid"
+        assert ctx.msg_sender() == _seller, "The creator must be the seller"
+        self.amount = _amount;
+        self.buyer = _buyer;
+        self.seller = _seller;
+        self.state = States::WAIT_DEPOSIT.read()
+    }
+
+    pub fn deposit(mut self, mut ctx: Context) {
+        assert ctx.msg_sender() == self.buyer, "Only the buyer"
+        assert (self.state == States::WAIT_DEPOSIT.read()), "Invalid State"
+        assert ctx.msg_value() == self.amount, "Invalid amount"
+        self.state = States::WAIT_RECIPIENT.read()
+    }
+
+    pub fn pay(mut self, mut ctx: Context) {
+        assert ctx.msg_sender() == self.buyer, "Only the buyer"
+        assert self.state == States::WAIT_RECIPIENT.read(), "Invalid State"
+        self.state = States::CLOSED.read()
+        ctx.send_value(to: self.seller, wei: ctx.balance_of(ctx.self_address()))
+    }
+
+    pub fn refund(mut self, mut ctx: Context){
+        assert ctx.msg_sender() == self.seller, "Only the seller"
+        assert self.state == States::WAIT_RECIPIENT.read(), "Invalid State"
+        self.state = States::CLOSED.read()
+        ctx.send_value(to: self.buyer, wei: ctx.balance_of(ctx.self_address()))
+    }
+}

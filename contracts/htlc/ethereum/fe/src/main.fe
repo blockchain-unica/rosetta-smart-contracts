@@ -1,0 +1,26 @@
+contract HTLC {
+    owner: address  
+    verifier: address
+    hash: u256
+    reveal_timeout: u256
+    test: Array<u8, 32>
+       
+   pub fn __init__(mut self, ctx: Context, v: address, h: u256, delay: u256) {
+       assert (ctx.msg_value() >= 1000000000000000000), "ether error" // 1 ether
+       self.owner = ctx.msg_sender()
+       self.verifier = v
+       self.hash = h
+       self.reveal_timeout = ctx.block_number() + delay
+   }
+
+   pub fn reveal(mut self, mut ctx: Context, s: Array<u8, 32>) {
+       assert ctx.msg_sender() == self.owner, "only the owner" 
+       assert keccak256(s) == self.hash, "hash does not match"
+       ctx.send_value(to: self.owner, wei: ctx.balance_of(ctx.self_address()))
+   }
+
+   pub fn timeout(mut self, mut ctx: Context){
+        assert (ctx.block_number() > self.reveal_timeout), "transfer failed"
+        ctx.send_value(to: self.verifier, wei: ctx.balance_of(ctx.self_address()))
+   }
+}

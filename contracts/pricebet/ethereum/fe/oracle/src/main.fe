@@ -1,0 +1,11 @@
+
+pub contract Oracle{
+
+    exchange_rate: u256
+    
+    pub fn get_exchange_rate(mut self, ctx: Context) -> u256 {
+        self.exchange_rate = 10
+        return self.exchange_rate
+    }
+
+}

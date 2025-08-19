@@ -1,0 +1,56 @@
+contract ERC20 {
+    balances: Map<address, u256>
+
+    pub fn __init__(mut self, ctx: Context) {
+        self.balances[ctx.self_address()] = 0
+    }
+
+    pub fn addAccount(mut self, account: address){
+        self.balances[account] = 0
+    }
+
+    pub fn mint(mut self, recipient : address, amount : u256){
+        self.balances[recipient] += amount
+    }
+
+    pub fn balanceOf(self, account: address) -> u256 {
+        return self.balances[account]
+    }
+
+    pub fn transfer(mut self, from: address, to: address, amount: u256) {
+        self.balances[from] -= amount
+        self.balances[to] += amount
+    }
+
+}
+
+contract TokenTransfer {
+    recipient: address
+    owner: address
+    token_address : address
+    the_token : ERC20
+
+    pub fn __init__(mut self, ctx: Context, _recipient: address, _token_address : address) {
+        self.recipient = _recipient
+        self.owner = ctx.msg_sender()
+        self.token_address = _token_address
+        self.the_token = ERC20(self.token_address)
+
+        self.the_token.addAccount(account: self.owner)
+        self.the_token.addAccount(account: self.recipient)   
+    }
+
+    pub fn deposit(mut self, mut ctx: Context, _amount : u256) {
+        assert self.owner == ctx.msg_sender(), "only the owner can deposit"
+        let contract_address : address = ctx.self_address()
+        assert self.the_token.balanceOf(account: ctx.msg_sender()) >= _amount, "deposit failed: owner balance too low"
+        self.the_token.transfer(from: ctx.msg_sender(), to: contract_address, amount: _amount)
+    }
+
+    pub fn withdraw(mut self, mut ctx: Context, _amount: u256) {
+        assert ctx.msg_sender() == self.recipient, "only the recipient can withdraw"
+        assert self.the_token.balanceOf(account: self.token_address) >= _amount, "withdraw failed: contract balance too low"
+
+        self.the_token.transfer(from: self.token_address, to: ctx.self_address(), amount: _amount)
+    }
+}
