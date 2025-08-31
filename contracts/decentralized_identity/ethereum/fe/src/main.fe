@@ -1,0 +1,123 @@
+use std::evm
+use std::buf::{RawCallBuffer, MemoryBufferReader, MemoryBufferWriter, MemoryBuffer}
+
+enum Precompile {
+    EcRecover
+
+    pub fn addr(self) -> address {
+        match self {
+            Precompile::EcRecover => { return 0x01 }
+        }
+    }
+
+    pub fn single_buf_call(self, mut buf: MemoryBuffer) {
+        unsafe {
+            assert evm::static_call_2(
+                gas: evm::gas_remaining(), 
+                addr: self.addr(), 
+                input_offset: buf.offset(), 
+                input_len: buf.len(), 
+                output_offset: buf.offset(), 
+                output_len: buf.len()
+            )
+        }
+    }
+
+    pub fn call(self, input_buf: MemoryBuffer, mut output_buf: MemoryBuffer) {
+        unsafe {
+            assert evm::static_call_2(
+                gas: evm::gas_remaining(), 
+                addr: self.addr(), 
+                input_offset: input_buf.offset(), 
+                input_len: input_buf.len(), 
+                output_offset: output_buf.offset(), 
+                output_len: output_buf.len()
+            )
+        }
+    }
+}
+
+contract SimpleEthereumDIDRegistry {
+
+    nonce: Map<address, u256>
+    changed: Map<address, u256>
+
+    // owner = owners[identity]
+    owners: Map<address, address>
+
+    // validity = delegates[identity][keccak of delegateType][delegate]
+    delegates: Map<address, Map<u256, Map<address, u256>>>
+
+    pub fn identityOwner(self, ctx: Context, identity: address) -> address {
+        let owner: address = self.owners[identity];
+        if (owner != 0x0) {
+            return owner
+        }
+        return identity
+    }
+
+    fn ec_recover(hash: u256, v: u256, r: u256, s: u256) -> address {
+        let mut buf: MemoryBuffer = MemoryBuffer::new(len: 128) 
+
+        let mut writer: MemoryBufferWriter = buf.writer()
+        writer.write(value: hash)
+        writer.write(value: v)
+        writer.write(value: r)
+        writer.write(value: s)
+
+        Precompile::EcRecover.single_buf_call(buf)
+
+        let mut reader: MemoryBufferReader = buf.reader()
+        return address(reader.read_u256())
+    }
+
+    fn checkSignature(mut self, ctx: Context, identity: address, sigV: u256, sigR: u256, sigS: u256, hash: u256) -> address {
+        let mut signer: address = ec_recover(hash, v: sigV, r: sigR, s: sigS)
+
+        signer = address((u256(signer)))
+        
+        assert (signer == (self.identityOwner(ctx, identity))), "bad_signature"
+        
+        self.nonce[signer] += 1
+        return signer
+    }
+
+    pub fn validDelegate(self, ctx: Context, identity: address, delegateType: Array<u8, 32>, delegate: address) -> bool {
+        let validity: u256 = self.delegates[identity][keccak256(delegateType)][delegate]
+        return (validity > ctx.block_timestamp())
+    }
+
+    fn _changeOwner(mut self, ctx: Context, identity: address, actor: address, newOwner: address) {
+        assert actor == self.identityOwner(ctx, identity), "bad_actor"
+        self.owners[identity] = newOwner
+        self.changed[identity] = ctx.block_number()
+    }
+
+    pub fn changeOwner(mut self, ctx: Context, identity: address, newOwner: address) {
+        self._changeOwner(ctx, identity, actor: ctx.msg_sender(), newOwner)
+    }
+
+    pub fn changeOwnerSigned(mut self, ctx: Context, identity: address, sigV: u256, sigR: u256, sigS: u256, newOwner: address) {
+        //let hash: u256 = keccak256((0x19, 0x0, self, self.nonce[self.identityOwner(ctx, identity)], identity, "changeOwner", newOwner).abi_encode());
+        let hash: u256 = keccak256((0x19, 0x0, identity, "changeOwner", newOwner).abi_encode());
+        
+        let check: address = self.checkSignature(ctx, identity, sigV, sigR, sigS, hash)
+
+        self._changeOwner(ctx, identity, actor: check, newOwner)
+    }
+
+    fn _addDelegate(mut self, ctx: Context, identity: address, actor: address, delegateType: Array<u8, 32>, delegate: address, validity: u256) {
+        assert actor == self.identityOwner(ctx, identity), "bad_actor"
+        self.delegates[identity][keccak256(delegateType)][delegate] = ctx.block_timestamp() + validity
+        self.changed[identity] = ctx.block_number()
+    }
+
+    pub fn addDelegate(mut self, ctx: Context, identity: address, delegateType: Array<u8, 32>, delegate: address, validity: u256) {
+        self._addDelegate(ctx, identity, actor: ctx.msg_sender(), delegateType, delegate, validity);
+    }
+
+    pub fn addDelegateSigned(mut self, ctx: Context, identity: address, sigV: u256, sigR: u256, sigS: u256, delegateType: Array<u8, 32>, delegate: address, validity: u256) {
+        let hash: u256 = keccak256((0x19, 0x0, identity, "addDelegate", delegateType, delegate, validity).abi_encode())
+        self._addDelegate(ctx, identity, actor: self.checkSignature(ctx, identity, sigV, sigR, sigS, hash), delegateType, delegate, validity)
+    }
+}

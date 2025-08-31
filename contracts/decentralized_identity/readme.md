@@ -58,3 +58,4 @@ Using validDelegate, this action verifies that the delegation is valid within th
 - **PyTeal/Algorand**: implementation coherent with the specification.
 - **SmartPy/Tezos**:
 - **Move/Aptos**:
+- **Fe/Ethereum**: dynamic data structures not supported. Hash creation was simplified to comply with Fe limitations.

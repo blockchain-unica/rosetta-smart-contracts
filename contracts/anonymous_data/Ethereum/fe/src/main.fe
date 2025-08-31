@@ -1,0 +1,48 @@
+contract AnonymousData{
+
+    StoredData: Map<u256, u256>
+    owner: address
+    IDs: Array<u256, 100>
+    ID_Counter: u256
+    allData: Array<u256, 100>
+
+    pub fn __init__(mut self, ctx: Context){
+        self.owner = ctx.msg_sender()
+        self.ID_Counter = 0
+    }
+
+    pub fn storeData(mut self, ctx: Context, data: u256, user_ID: u256) {
+        self.StoredData[user_ID] = data
+        self.IDs[self.ID_Counter] = user_ID
+        self.ID_Counter += 1
+    }
+
+    pub fn getID(self, ctx: Context, nonce: u256) -> u256 {
+        return keccak256((ctx.msg_sender(), nonce).abi_encode())
+    }
+
+    //limited to 100 people
+    pub fn getAllData(mut self, ctx: Context) -> Array<u256, 100> {
+        assert ctx.msg_sender() == self.owner, "only the owner can read"        
+        let mut i: u256 = 0
+        
+        while i < 100 {
+            self.allData[i] = self.StoredData[self.IDs[i]]
+            i += 1
+        }
+
+        return self.allData.to_mem()
+    }
+
+    pub fn getMyData(self, ctx: Context, nonce: u256) -> u256 {
+        let ID: u256 = keccak256((ctx.msg_sender(), nonce).abi_encode())
+
+        if self.StoredData[ID] == 0x0 {
+            assert false, "Data not found"
+        }
+        else {
+            return self.StoredData[ID]
+        }
+        revert
+    }
+}

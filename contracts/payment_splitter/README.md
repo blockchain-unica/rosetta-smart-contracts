@@ -26,3 +26,4 @@ After creation, the contract supports the following actions:
 - **SmartPy/Tezos**: implementation coherent with the specification.
 - **Move/Aptos**:
 - **Move/IOTA**: the release function divides the balance according to shares and saves this division within the contract; each shareholder will receive the corresponding amount calling the take_amount function. 
+- **Fe/Ethereum**: since Fe does not support dynamic arrays, it requires the amount of payees and shares to be set permanently at deploy time, and also requires the deploy to exactly contain the exact amount of elements of said array in each array.

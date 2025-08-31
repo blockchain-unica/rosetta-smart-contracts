@@ -21,3 +21,4 @@ After contract creation, the contract supports two actions:
 - **SmartPy/Tezos**: implementation coherent with the specification.
 - **Move/Aptos**: implementation coherent with the specification.
 - **Move/IOTA**: implementation coherent with the specification.
+- **Fe/Ethereum**: dynamic arrays not supported. The implementation **does not** allot arbitrary size of byte sequences and strings.

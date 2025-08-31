@@ -25,3 +25,4 @@ Note: a user can always use a new nonce to generate a new ID and store new data.
 - **PyTeal/Algorand**:
 - **SmartPy/Tezos**:
 - **Move/Aptos**:
+- **Fe/Ethereum**: since Fe does not support dynamic data structures, I was forced to cap the amount of any data sructure to a fixed amount. There can only be 100 users storing data, and the stored data has to be a single uint256. The hashing process uses the built-in encoding function to combine the user's address with the nonce. 

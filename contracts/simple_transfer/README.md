@@ -25,3 +25,4 @@ After contract creation, the contract supports two actions:
 - **SmartPy/Tezos**: implementation coherent with the specification.
 - **Move/Aptos**: implementation coherent with the specification.
 - **Move/IOTA**: implementation coherent with the specification.
+- **Fe/Ethereum**: implementation coherent with the specification.

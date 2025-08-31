@@ -1,0 +1,58 @@
+use logic_interface::Logic
+
+enum Functions {
+    CHECK
+    pub fn read(self) -> u8 {
+        match self {
+            Functions::CHECK => {
+                return 0
+            }
+        }
+    }
+}
+
+contract TheProxy {
+    logic: Logic
+    admin: address
+
+    commands: Array<u8, 10>
+
+    pub fn __init__(mut self, ctx: Context, _logic: address) {
+        self.logic = Logic(_logic)
+        self.admin = ctx.msg_sender()
+        self.commands[Functions::CHECK.read()] = Functions::CHECK.read()
+    }
+
+    pub fn implementation(self, ctx: Context) -> address {
+        return address(self.logic)
+    }
+    
+    pub fn getAdmin(self, ctx: Context) -> address {
+        return self.admin
+    }
+
+    pub fn upgradeTo(mut self, ctx: Context, newImplementation: address) {
+        self.logic = Logic(newImplementation)
+    }
+
+    pub fn call(self, ctx: Context, to_call: u8, to_check: address) -> bool {
+        for i in self.commands.to_mem() {
+                if i == to_call {
+                    return self.logic.check(ctx, _toCheck: to_check)
+                }
+            }
+            
+        assert false, "Function not present in interface"
+        revert
+    }
+}
+
+contract Caller{
+    /// @dev This function Calls the Logic function "check" passing its same address.
+    pub fn callLogicByProxy(self, ctx: Context, _proxy: address) -> bool{//-> (bool,bool) {
+        let proxy: TheProxy = TheProxy(_proxy)
+        return proxy.call(ctx, to_call: Functions::CHECK.read(), to_check: _proxy)
+    }
+}
+
+

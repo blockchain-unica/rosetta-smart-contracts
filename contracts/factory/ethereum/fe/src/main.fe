@@ -1,0 +1,48 @@
+contract Product {
+    tag: String<100>
+    owner: address
+    factory: address
+
+    pub fn __init__(mut self, ctx: Context){
+        self.owner = ctx.tx_origin()
+        self.factory = ctx.msg_sender()
+    }
+
+    pub fn setTag(mut self, ctx: Context, _tag: String<100>){
+        self.tag = _tag
+    }
+
+    pub fn getTag(self, ctx: Context) -> String<100> {
+        assert ctx.msg_sender() == self.owner, "only the owner"
+        return self.tag.to_mem()
+    }
+
+    pub fn getFactory(self, ctx: Context) -> address {
+        return self.factory
+    }
+
+    pub fn getAddress(self, ctx: Context) -> address {
+        return ctx.self_address()
+    }
+}
+
+contract Factory {
+    productList: Map<address, Array<address, 100>>
+    counter: u256
+
+    pub fn __init__(mut self, ctx: Context){
+        self.counter = 0
+    }
+
+    pub fn createProduct(mut self, mut ctx: Context, _tag: String<100>) -> address {
+        let mut p: Product = Product.create(ctx, 0)
+        p.setTag(ctx, _tag)
+        self.productList[ctx.msg_sender()][self.counter] = address(p)
+        self.counter += 1
+        return p.getAddress(ctx)
+    }
+
+    pub fn getProducts(self, ctx: Context) -> Array<address, 100> {
+        return self.productList[ctx.msg_sender()].to_mem()
+    }
+}

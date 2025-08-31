@@ -26,3 +26,4 @@ Once the contract is deployed, it supports the following actions:
 - **PyTeal/Algorand**: not implemented, since transaction batches are natively supported by the platform.
 - **SmartPy/Tezos**:
 - **Move/Aptos**: not implemented, since transaction batches are natively supported by the platform.
+- **Fe/Ethereum**: dynamic arrays not supported. Not implemented, the language lacks a substitute for Solidity's delegatecall() function or is not documented.

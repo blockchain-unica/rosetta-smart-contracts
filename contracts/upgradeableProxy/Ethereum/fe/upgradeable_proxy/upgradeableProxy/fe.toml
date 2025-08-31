@@ -1,0 +1,6 @@
+name = "upgradeable_proxy"
+version = "1.0"
+
+[dependencies]
+logic_interface = "../logic_interface"
+# my_lib = { path = "../my_lib", version = "1.0" }

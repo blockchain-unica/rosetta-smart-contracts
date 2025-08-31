@@ -32,3 +32,4 @@ After creation, the following actions are possible:
 - **SmartPy/Tezos**: the contract owner has to be passed as parameter during contract creation
 - **Move/Aptos**: ---
 - **Move/IOTA**: implementation coherent with the specification.
+- **Fe/Ethereum**: implementation coherent with the specification. Contract-to-contract call was achieved via Ingot (which can be interpreted as a workaround).

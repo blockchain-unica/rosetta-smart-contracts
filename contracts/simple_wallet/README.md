@@ -28,3 +28,4 @@ After contract creation, the contract supports the following actions:
 - **SmartPy/Tezos**: use of an 'emit' for the transaction ID.
 - **Move/Aptos**: implementation coherent with the specification.
 - **Move/IOTA**: implementation coherent with the specification.
+- **Fe/Ethereum**: dynamic arrays not supported. The wallet only supports 5 transactions after which refuses creation of more transactions.
