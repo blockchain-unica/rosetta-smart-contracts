@@ -45,3 +45,4 @@ maintain the integrity of the exchange.
 - **PyTeal/Algorand**:
 - **SmartPy/Tezos**:
 - **Move/Aptos**:
+- **Fe/Ethereum**:

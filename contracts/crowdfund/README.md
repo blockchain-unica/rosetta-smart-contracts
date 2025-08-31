@@ -34,3 +34,4 @@ donors can withdraw the amounts they have donated.
 - **SmartPy/Tezos**: implementation coherent with the specification.
 - **Move/Aptos**: implementation coherent with the specification.
 - **Move/IOTA**: implementation coherent with the specification.
+- **Fe/Ethereum**: implementation coherent with the specification.

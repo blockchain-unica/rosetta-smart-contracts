@@ -31,3 +31,4 @@ After creation, the contract supports the following action:
 - **SmartPy/Tezos**: implementation coherent with the specification.
 - **Move/Aptos**: implementation coherent with the specification.
 - **Move/IOTA**: implementation coherent with the specification.
+- **Fe/Ethereum**: immutable variables are not supported, const is not implemented yet.

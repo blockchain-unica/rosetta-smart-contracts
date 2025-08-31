@@ -38,3 +38,4 @@ with the address of the Caller contract as an argument.  
 - **SmartPy/Tezos**: A contract function cannot read the balance of a given address directly, and the workaround consists of implementing a getter (*onchain view*) in the contract Caller to be read from the Logic contract. 
 SmartPy has no anonymous functions and no delegate calls and the workaround consists of the Proxy emulating the expected behavior by using a function that has the same name as the target function in Logic.
 - **Move/Aptos**: cannot be implemented.
+- **Fe/Ethereum**: implementation of the Upgradeable Proxy is more high level and there are some limitations. The Logic contract that can be upgraded is treated as a Fe Ingot (meaning signatures of functions can't change)

@@ -30,3 +30,4 @@ After contract creation, the contract supports two actions:
 - **SmartPy/Tezos**: implementation coherent with the specification.
 - **Move/Aptos**: implementation coherent with the specification.
 - **Move/IOTA**: implementation coherent with the specification.
+- **Fe/Ethereum**: many types have been adjusted to make it work with the Fe implementation of keccak256() of fe that is very different from Solidity's.

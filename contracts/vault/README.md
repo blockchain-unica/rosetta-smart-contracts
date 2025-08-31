@@ -29,3 +29,4 @@ Once the vault contract have been created, it supports the following actions:
 - **SmartPy/Tezos**: implementation coherent with the specification.
 - **Move/Aptos**: implementation coherent with the specification.
 - **Move/IOTA**: implementation coherent with the specification.
+- **Fe/Ethereum**: implementation coherent with the specification.

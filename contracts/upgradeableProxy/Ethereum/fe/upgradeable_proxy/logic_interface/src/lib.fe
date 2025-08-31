@@ -1,0 +1,6 @@
+pub contract Logic{
+    /// @dev returns true if the balance of the _toCheck address is lower than 100.
+    pub fn check(self, ctx: Context, _toCheck: address) -> bool {
+        revert
+    }
+}

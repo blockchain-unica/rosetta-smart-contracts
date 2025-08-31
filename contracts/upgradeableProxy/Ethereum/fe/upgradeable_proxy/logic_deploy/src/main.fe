@@ -1,0 +1,11 @@
+contract Logic{
+    /// @dev returns true if the balance of the _toCheck address is lower than 100.
+    pub fn check(self, ctx: Context, _toCheck: address) -> bool {
+        if (ctx.balance_of(_toCheck) < 100) { 
+            return true
+        }
+        else {
+            return false
+        }
+    }
+}

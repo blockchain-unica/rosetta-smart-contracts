@@ -1,0 +1,91 @@
+contract ERC20 {
+    
+    data: Map<u256, Array<u8, 32>>
+    isSealed: Map<u256, bool>
+    token_property: Map<u256, address>
+
+    authorized_interface: address
+    is_initialized: bool
+
+    pub fn setUp(mut self, ctx: Context, interface: address) {
+        assert self.is_initialized == false, "This ERC20 contract is already binded to an interface"
+        self.authorized_interface = interface
+        self.is_initialized = true
+    }
+
+    pub fn mint(mut self, ctx: Context, recipient : address, _token_id : u256){
+        assert ctx.msg_sender() == self.authorized_interface, "Bad caller"
+        self.token_property[_token_id] = recipient
+        self. isSealed[_token_id] = false
+    }
+
+    pub fn transferFrom(mut self, ctx: Context, from: address, to: address, _tokenID: u256) {
+        assert ctx.msg_sender() == self.authorized_interface, "Bad caller"
+        assert self.token_property[_tokenID] == from, "This token does not belong to you"
+        self.token_property[_tokenID] = to
+    }
+
+    pub fn token_property(self, ctx: Context, _token: u256) -> address {
+        assert ctx.msg_sender() == self.authorized_interface, "Bad caller"
+        return self.token_property[_token]
+    }
+
+    pub fn isSealed(self, ctx: Context, _token: u256) -> bool {
+        assert ctx.msg_sender() == self.authorized_interface, "Bad caller"
+        return self.isSealed[_token]
+    }
+
+    pub fn get_data(self, ctx: Context, _token: u256) -> Array<u8, 32> {
+        assert ctx.msg_sender() == self.authorized_interface, "Bad caller"
+        return self.data[_token].to_mem()
+    }
+
+    pub fn set_data(mut self, ctx: Context, _token: u256, data: Array<u8, 32>) {
+        assert ctx.msg_sender() == self.authorized_interface, "Bad caller"
+        self.data[_token] = data
+    }
+
+    pub fn seal(mut self, ctx: Context, _token: u256) {
+        assert ctx.msg_sender() == self.authorized_interface, "Bad caller"
+        self.isSealed[_token] = true
+    }
+}
+
+contract EditableToken{
+	lastTokenId: u256 // Id of the last minted token
+
+    token_address : address
+    the_token : ERC20
+
+    pub fn __init__(mut self, ctx: Context, _token_address: address) {
+        self.token_address = _token_address
+        self.the_token = ERC20(self.token_address)
+        self.lastTokenId = 0
+    }
+
+    pub fn sealToken(mut self, ctx: Context, tokenId: u256) {
+        assert ctx.msg_sender() == self.the_token.token_property(ctx, _token: tokenId), "You must be the owner of the token in order to manage it."
+        assert self.the_token.isSealed(ctx, _token: tokenId) == false, "The token is on sale"
+        self.the_token.seal(ctx, _token: tokenId)
+    }
+
+    pub fn setTokenData(mut self, ctx: Context, tokenId: u256, data: Array<u8, 32>) {
+        assert ctx.msg_sender() == self.the_token.token_property(ctx, _token: tokenId), "You must be the owner of the token in order to manage it."
+        assert self.the_token.isSealed(ctx, _token: tokenId) == false, "The token is sealed"
+        self.the_token.set_data(ctx, _token: tokenId, data)
+    }
+
+	pub fn buyToken(mut self, ctx: Context) {
+		self.lastTokenId += 1
+        self.the_token.mint(ctx, recipient: ctx.msg_sender(), _token_id: self.lastTokenId)
+	}
+
+	pub fn transferTo(mut self, ctx: Context, dest: address, tokenID: u256) {
+		self.the_token.transferFrom(ctx, from: ctx.msg_sender(), to: dest, _tokenID: tokenID);
+	}
+
+	pub fn getTokenData(self, ctx: Context, tokenId: u256) -> (Array<u8, 32>, bool) {
+    	assert self.the_token.token_property(ctx, _token: tokenId) != address(0), "Non existent token"
+        return (self.the_token.get_data(ctx, _token: tokenId), self.the_token.isSealed(ctx, _token: tokenId))
+	}
+}

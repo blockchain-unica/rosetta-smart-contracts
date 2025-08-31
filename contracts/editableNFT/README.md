@@ -34,3 +34,4 @@ Owner2 seals a token by passing the token ID of the token he wants to seal.
 - **PyTeal/Algorand**:
 - **SmartPy/Tezos**:
 - **Move/Aptos**:
+- **Fe/Ethereum**: the token is implemented by creating a custom ERC20 contract that is used as a token.
