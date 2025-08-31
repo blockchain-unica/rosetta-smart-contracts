@@ -25,4 +25,4 @@ Once a Product contract has been deplyoed, it supports the following actions:
 - **PyTeal/Algorand**: implementation coherent with the specification.
 - **SmartPy/Tezos**: implementation coherent with the specification.
 - **Move/Aptos**:
-- **Fe/Ethereum**: the implementation is coherent with the specification, but (possible Fe bud, Issue was created on Fe repo) the chain is not actually affected by the deployment of the product of the factory.
+- **Fe/Ethereum**: the implementation is coherent with the specification, but (possible Fe bug, Issue was created on Fe repo) the chain is not actually affected by the deployment of the product of the factory.
