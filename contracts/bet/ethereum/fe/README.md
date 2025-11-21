@@ -1,12 +1,8 @@
-# Introduction to Fe Programming Language
+# The Fe Contract Language
 
 Fe is an emerging smart contract programming language made to work with the **Ethereum** blockchain. Inspired from the chemical symbol for iron, Fe is built to deliver safety, efficiency, and reliability in smart contract development. Developed primarily in Rust, Fe aims to combine strong safetyguards with a user-friendly syntax, making it accessible to both new and experienced blockchain developers.
 
-# ⚠️ Fe status
-
-Fe is undergoing a major compiler rewrite, which means the language is temporarily not in a compilable state. As a result, all contract examples in this thesis are based on the **latest stable and working release prior to the rewrite (Fe v0.26.0)**. This ensures that the code samples are functional, even as the language is currently not ready to compile or production.
-
-# Fe's vision
+⚠️ Fe is undergoing a major compiler rewrite, which means the language is temporarily not in a compilable state. As a result, all contract examples in this thesis are based on the **latest stable and working release prior to the rewrite (Fe v0.26.0)**. This ensures that the code samples are functional, even as the language is currently not ready to compile or production.
 
 As [Fe&#39;s documentation](https://fe-lang.org/docs/index.html?highlight=python#who-is-fe-for "Fe's documentation") says, Fe aims to make contract writing easier and more secure. The developers aknowledge problems with other Smart Contract (**SC**) languages:
 
@@ -22,15 +18,13 @@ This thesis aims to provide a comprehensive overview of Fe, highlighting both it
 
 In the following sections, we will first break down the fundamental aspects of Fe. Afterwards, we will present a practical use case to further illustrate the language's features and demonstrate its application in SC development.
 
-# Writing contracts
+## Contracts
 
 Contracts are defined using the `contract` keyword, contain **variables** that persist between function calls, and **functions.**
 
-## Declaring a global variable
+### Global variables
 
-**Global variables** have to be declared right after the contract declaration,
-
-following this syntax:
+Global variables have to be declared right after the contract declaration, following this syntax:
 
 Syntax: `<name_variable>: <type>`
 
@@ -48,7 +42,7 @@ contract Example {
 >
 > Contracts in Fe work in a similar way as classes of an OO language.
 
-## Declaring a function
+### Functions
 
 Functions can be public or private, the `pub` keyword is optional, its absense implying the function is **private**. A private function is **only callable by other functions of the contract** and not by outside of it.
 
@@ -83,13 +77,13 @@ The context parameter gives access to important functions that interact with the
 
 > The Context object is automatically retrieved when a function is called via `cast` but it has to be passed explicitly when the function is called from another Fe function. All functions require the context object.
 
-### Other parameters
+#### Other parameters
 
 Other parameters can be declared after the first mandatory two, and are declared the same way as global variables.
 
 **Example:** `parameter: address`
 
-### Return type
+#### Return type
 
 Defining the return type is mandatory only if the function returns something via the `return` keyword. The definition of the return type is similar to Rust.
 
@@ -99,7 +93,7 @@ This function signature describes a function called "function" that doesn't take
 
 **Example** `return true`
 
-### Declaring local variables
+### Local variables
 
 Declaring local variables in Fe is done with the `let` keyword.
 
@@ -116,7 +110,7 @@ Declaring local variables in Fe is done with the `let` keyword.
 }
 ```
 
-## Constructor
+### Constructor
 
 Each function can have a constructor, like OO languages. In Fe, the constructor function must be declared as public and is called `__init__`.
 
@@ -134,7 +128,7 @@ This `__init__` function implies there is a global `open` parameter in the contr
 
 > 💡 Note that accessing a global function via any function requires to access is through `self` by doing `self.<global_variable>`.
 
-## Error handling with assertions
+### Error handling with assertions
 
 Fe uses `assert` statements for validation and error handling. Asserts take 1 or 2 arguments, with the first being a boolean expression, and the second an optional string containing the error to return to the user if the boolean is false.
 
@@ -158,7 +152,7 @@ pub fn function(mut self, mut ctx: Context) {
     }
 ```
 
-# Value Transfers
+## Value Transfers
 
 Fe provides ETH transfers through the context object.
 
@@ -176,31 +170,29 @@ pub fn send_eth(mut self, mut ctx: Context, person1: address, amount: u256) {
 }
 ```
 
-## Warning on transactions
+### Warning on transactions
 
 Failure of transactions should always be prevented by checking contract balance and addresses first (if possible), because Fe usually returns a cryptic `custom error` when there's an error in a transaction and it's not clear enough what is happening.
 
-# Calling a function
+## Calling a function
 
 Fe uses named parameters for clarity (`to:`, `wei:`) as seen in `ctx.send_value()`. This is valid for every function call in Fe, even functions that call other functions between the same contract.
 
-# Safety
+## Safety
 
 `ctx.send_value()` automatically handles:
 
-## Gas limits for the transfer
+### Gas limits for the transfer
 
 Every transaction on the blockchain incurs a "Gas fee," which is the cost required to execute operations. Fe automatically ensures that the sender's balance is sufficient to cover both the gas fees and any additional ETH explicitly sent with the transaction.
 
-## Reverting on failure
+### Reverting on failure
 
 Fe ensures transactional safety by automatically reverting any changes if a failure occurs, such as a failed assertion or an error during contract execution. This means that if something goes wrong, all state modifications made during the function call are undone, preserving the integrity of the contract and preventing partial updates.
 
----
+*Now we're ready to dive in to an actual use case that makes use of these functionalities.*
 
-### Now we're ready to dive in to an actual use case that makes use of these functionalities.
-
-# [Bet](src/main.fe)
+# Bet
 
 The bet contract involves two players and one oracle. The two players place their bet and the oracle decides the winner.
 
@@ -215,7 +207,7 @@ At deploy time, the contract requires 2 parameters:
 
 The player1 is the contract deployer, and at deploy time also sends native cryptocurrency that will be automatically set to be the wager of this bet.
 
-# Technical challenges and workarounds
+## Technical challenges and workarounds
 
 Unlike Solidity, Fe does not support ternary operator yet, so I used a, if-else statement to resolve the winner.
 
@@ -223,21 +215,21 @@ Unlike Solidity, Fe automatically checks for transaction to be successful, so th
 
 Failure of transactions should anyways be prevented by checking contract balance first, because otherwise a cryptic `custom error` is launched.
 
-# Execution
+## Execution
 
 After the contract is deployed, 3 functions can be called.
 
-## join()
+### join()
 
 This function lets the player2 join the Bet, they have to send the exact amount of WEI that was previously decided by player1 at deploy time. If no player2 joined yet, the caller of join() becomes automatically "player2" if the bet is open.
 
-## win(winner: address)
+### win(winner: address)
 
 This function is only callable by the oracle (that was decided by player1 at deploy time) and checks whether player2 has joined in order to choose a winner. It is implied that if both players have joined there is a total of ETH of wager*2 in order to guarantee the winner gets the right amount of ETH (whole contract balance)
 
 The parameter `winner` is the address of the winner decided by the oracle. An if-else statement resolves the winner decision and immediately after, currency is sent to designated winner.
 
-## timeout()
+### timeout()
 
 This function is callable by everyone and checks whether the bet has timed out. If oracle doesn't decide the winner in time, this function prevents frozen ETH inside the contract.
 
