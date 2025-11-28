@@ -190,9 +190,8 @@ Every transaction on the blockchain incurs a "Gas fee," which is the cost requir
 
 Fe ensures transactional safety by automatically reverting any changes if a failure occurs, such as a failed assertion or an error during contract execution. This means that if something goes wrong, all state modifications made during the function call are undone, preserving the integrity of the contract and preventing partial updates.
 
-*Now we're ready to dive in to an actual use case that makes use of these functionalities.*
 
-# Bet
+# The Bet contract in Fe
 
 The bet contract involves two players and one oracle. The two players place their bet and the oracle decides the winner.
 
