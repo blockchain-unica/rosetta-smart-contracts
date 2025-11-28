@@ -37,3 +37,4 @@ Details on the comparison between different smart contract languages are availab
 - [SmartPy](https://smartpy.io/) (Tezos)
 - [Move](https://move-language.github.io/move/) (Aptos, Sui, IOTA)
 - [Fe](https://fe-lang.org/) (Ethereum)
+- [Vyper](https://docs.vyperlang.org/en/stable/) (Ethereum)
