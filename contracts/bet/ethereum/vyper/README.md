@@ -1,4 +1,4 @@
-## Implementation
+# Bet in Vyper
 
 **join**
 
