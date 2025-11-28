@@ -1,16 +1,13 @@
-# Anonymous data
+# Anonymous data in Vyper
 
-## Implementation
-
-**State Variables**
+## State Variables
 - `userData: HashMap[bytes32, Bytes[100]]` — stores each user's data as bytes.
 
 > **Note:**  
 > Dynamic arrays in Vyper require specifying a maximum length.  
 > The **userData** variable allows up to 100 bytes, which is relatively small, but sufficient for this example.
-<br>
 
-**Initialization**
+## Initialization
 
 ```py
 @deploy
@@ -21,10 +18,9 @@ def __init__():
 The deployment function has no purpose other than deploying the contract on-chain.
 The state variable **userData** is automatically initialized with an empty value at compile time, as is the case for all variable types in Vyper.
 
-Therefore, the **__init__** function simply uses the pass keyword to indicate that it does not perform any explicit state initialization.
-<br>
+Therefore, the **__init__** function simply uses the **pass** keyword to indicate that it does not perform any explicit state initialization.
 
-**calculateID**
+## calculateID
 
 ```py
 @view
@@ -46,9 +42,8 @@ It takes in two parameters:
 It converts the inputs into fixed-size byte sequences, concatenates them, and then computes the **keccak256** hash of the result.
 
 The return value is a fixed-size 32-byte array representing the hash of the combined address and nonce.
-<br>
 
-**getID**
+## getID
 
 ```py
 @view 
@@ -58,9 +53,8 @@ def getID(_nonce: uint256) -> bytes32:
 ```
 
 The **getID** function is also a **@view** function and simply forwards the value returned by the **calculateID**.
-<br>
 
-**storeData**
+## storeData
 
 ```py
 @external
@@ -79,9 +73,8 @@ The function behaviour is as follow:
 1. It checks that **_data** is not empty.  
 2. It ensures that no existing data is already stored for the given **_userID**.  
 3. If both conditions are met, the data is saved in the **usersData** mapping under the corresponding ID.
-<br>
 
-**getMyData**
+## getMyData
 
 ```py
 @view 
@@ -99,10 +92,7 @@ The implementation is straightforward:
 - If data exists for that ID, it returns the user’s stored data.  
 - Otherwise, it reverts with an error indicating that no data is associated with the specified ID.
 
-## Implementation differences
-
-Below are some differences between the Vyper and Solidity implementations:
-
+## Differences between the Vyper and Solidity implementations
 - ID generation
     - Solidity uses the built-in function `abi.encode()` — which allows to input more than one parameter — to produce the ABI-encoded bytes of `msg.sender` +      `nonce` to be used for hashing. Vyper does not support `abi.encode`, so the Vyper contract manually encodes the address and nonce using `convert(...)` + `concat(...)`. This required introducing the helper function `calculateID`.
 - Ownership logic not implemented (there isn't a `getAllData` method)
