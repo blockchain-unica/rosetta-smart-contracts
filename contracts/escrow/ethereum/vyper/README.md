@@ -1,28 +1,5 @@
 # Escrow
 
-## Specification
-
-The escrow contract acts as a trusted intermediary between a buyer and a seller, aiming to protect the buyer from the possible non-delivery of the purchased goods.
-
-The seller initializes the contract by setting:
-- the buyer's address;
-- the amount of native cryptocurrency required as a payment.
-
-Immediately after the initialization, the contract supports a single action:
-- **deposit**, which allows the buyer to deposit the required amount in the contract.
-
-Once the deposit action has been performed, exactly one of the following actions is possible:
-- **pay**, which allows the buyer to transfer the whole contract balance to the seller.
-- **refund**, which allows the seller to transfer back the whole contract balance to the buyer.
-
-## Required functionalities
-
-- Native tokens
-- Transaction revert
-
-
-# Implementation
-
 ## State variables
 
 ```py
