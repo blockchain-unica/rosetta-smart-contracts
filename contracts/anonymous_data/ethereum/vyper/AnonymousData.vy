@@ -1,6 +1,7 @@
 # pragma version ^0.4.0
 
-usersData: HashMap[bytes32, Bytes[100]]
+MAX_DATASIZE: constant(uint256) = 100
+usersData: HashMap[bytes32, Bytes[MAX_DATASIZE]]
 
 @deploy
 def __init__():
@@ -24,15 +25,15 @@ def getID(_nonce: uint256) -> bytes32:
 
 
 @external
-def storeData(_userID: bytes32, _data: Bytes[100]):
+def storeData(_userID: bytes32, _data: Bytes[MAX_DATASIZE]):
     assert len(_data) != 0, "0 bytes of data sent"
-    assert self.usersData[_userID] == empty(Bytes[100]), "Contract already stores data for this ID"
+    assert self.usersData[_userID] == empty(Bytes[MAX_DATASIZE]), "Contract already stores data for this ID"
 
     self.usersData[_userID] = _data
 
 
 @view 
 @external
-def getMyData(_nonce: uint256) -> Bytes[100]:
+def getMyData(_nonce: uint256) -> Bytes[MAX_DATASIZE]:
     id: bytes32 = self.calculateID(msg.sender, _nonce)
     return self.usersData[id]

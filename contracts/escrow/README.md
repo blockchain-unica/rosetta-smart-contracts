@@ -30,3 +30,4 @@ Once the deposit action has been performed, exactly one of the following actions
 - **Move/Aptos**: implementation coherent with the specification.
 - **Move/IOTA**: implementation coherent with the specification.
 - **Fe/Ethereum**: implementation coherent with the specification, some adjustments were made to make Enums work.
+- **Vyper/Ethereum**: implementation coherent with the specification.

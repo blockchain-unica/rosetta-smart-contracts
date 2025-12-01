@@ -35,3 +35,4 @@ donors can withdraw the amounts they have donated.
 - **Move/Aptos**: implementation coherent with the specification.
 - **Move/IOTA**: implementation coherent with the specification.
 - **Fe/Ethereum**: implementation coherent with the specification.
+- **Vyper/Ethereum**: implementation is coherent with the specification.
