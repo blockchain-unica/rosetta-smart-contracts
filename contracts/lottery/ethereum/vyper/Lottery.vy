@@ -104,7 +104,7 @@ def redeem():
     # Both player revealed the secret
     else:
         self.winner = self.calculateWinner()
-        assert msg.sender == self.winner, "You're not the winner"
+        assert msg.sender == self.winner, "You\'re not the winner"
     
     self.lottery_ended = True
     send(self.winner, self.balance) 
