@@ -31,3 +31,4 @@ After contract creation, the contract supports two actions:
 - **Move/Aptos**: implementation coherent with the specification.
 - **Move/IOTA**: implementation coherent with the specification.
 - **Fe/Ethereum**: many types have been adjusted to make it work with the Fe implementation of keccak256() of fe that is very different from Solidity's.
+- **Vyper/Ethereum**: implementation closely follows the Solidity logic, with minor differences required by Vyper’s static sizing of dynamic data structures and manual ABI-encoding.
