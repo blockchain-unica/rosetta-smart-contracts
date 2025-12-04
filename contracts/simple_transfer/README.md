@@ -26,3 +26,4 @@ After contract creation, the contract supports two actions:
 - **Move/Aptos**: implementation coherent with the specification.
 - **Move/IOTA**: implementation coherent with the specification.
 - **Fe/Ethereum**: implementation coherent with the specification.
+- **Vyper/Ethereum**: implementation coherent with the specification.
