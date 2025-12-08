@@ -1,6 +1,38 @@
 # Bet in Vyper
 
-**join**
+## State variables
+
+```py
+ZERO_ADDR: constant(address) = 0x0000000000000000000000000000000000000000
+player1: public(address)
+player2: public(address)
+deadline: public(uint256)
+oracle: public(address)
+open: public(bool)
+wager: public(uint256)
+completed: public(bool)
+refunded: public(HashMap[address, bool])
+```
+The state variables are mostly self-explanatory and align with the contract specifications. A few deserve additional clarification:
+- `open` — indicates whether the betting phase is still active.
+- `completed` — marks whether the bet has been fully resolved.
+- `refunded` — a mapping that tracks whether each player has already been refunded.
+
+## Initialization
+
+```py
+@deploy
+def __init__(_timeout: uint256, oracle: address, _wager: uint256):
+    # Deadline based on block production rate 
+    self.deadline = block.number + _timeout
+    self.oracle = oracle
+    self.wager = _wager
+    self.open = True
+```
+
+The contract, once deployed, is initialized by setting the deadline, the address of the oracle who will choose the winner, and the wager to bet.
+
+## join
 
 ```py
 @payable
@@ -30,9 +62,8 @@ If all conditions are met:
 - If no player has joined yet, the caller becomes **player1**.
 - If one player has already joined, the caller becomes **player2**, but only if they are not the same as player1.
 - Once both players have joined, the contract sets **open** variable to **False** to prevent additional participants.
-<br>
 
-**win**
+## win
 
 ```py
 @nonreentrant
@@ -73,9 +104,8 @@ If all conditions are met:
   - If `winner == 1`, the total balance is sent to **player1**.
   - If `winner == 2`, the total balance is sent to **player2**.
   - Any other value for winner raises an "Invalid winner" error.
-<br>
 
-**timeout**
+## timeout
 
 ```py
 @nonreentrant
@@ -115,6 +145,6 @@ Once validated:
 - If both players have been refunded, the contract marks the bet as completed by setting `self.completed = True`.
 - If the caller is not one of the registered players, the function reverts with `assert False, "Not a player"`.
 
-## Implementation differences
+## Differences between the Vyper and Solidity implementations
 
 Implementation is similar to Solidity. The join is split in two actions.
