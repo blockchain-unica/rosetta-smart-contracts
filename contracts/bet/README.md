@@ -29,3 +29,5 @@ After creation, the following actions are possible:
 - **Move/IOTA**: two join function, the first player acts first and after the second player joins; the deadline is a timestamp; the bets can be paid in any token type.
 - **Fe/Ethereum**: implementation similar to Solidity. The join is split in two actions.
 - **Vyper/Ethereum**: implementation similar to Solidity. The join is split in two actions.
+- **Cairo/Starknet**: implementation similar to Solidity. The join is split in two actions. There is no native token so it uses ERC-20
+
