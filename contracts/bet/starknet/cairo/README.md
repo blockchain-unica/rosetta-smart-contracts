@@ -72,7 +72,7 @@ Constructor parameters:
 | `wager`   | Token amount each player must deposit             |
 | `token`   | ERC-20 token used for the bet                     |
 
-## join()
+## join
 
 ```py
 fn join(ref self: ContractState) {
