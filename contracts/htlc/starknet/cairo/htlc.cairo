@@ -1,13 +1,14 @@
 use starknet::ContractAddress;
+use core::byte_array::ByteArray;
 
 #[starknet::interface]
 pub trait IHTLC<TContractState> {
-    fn reveal(ref self: TContractState, secret: felt252);
+    fn reveal(ref self: TContractState, secret: ByteArray);
     fn timeout(ref self: TContractState);
     fn get_balance(self: @TContractState) -> u256;
     fn get_owner(self: @TContractState) -> ContractAddress;
     fn get_receiver(self: @TContractState) -> ContractAddress;
-    fn get_hash(self: @TContractState) -> felt252;
+    fn get_hash(self: @TContractState) -> u256;
     fn get_reveal_timeout(self: @TContractState) -> u64;
 }
 
@@ -16,7 +17,8 @@ pub mod HTLC {
     use openzeppelin::token::erc20::interface::{IERC20Dispatcher, IERC20DispatcherTrait};
     use starknet::{ContractAddress, get_caller_address, get_contract_address, get_block_info};
     use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess};
-    use core::poseidon::poseidon_hash_span;
+    use core::byte_array::ByteArray;
+    use core::keccak::compute_keccak_byte_array;
     use super::IHTLC;
 
     // ---------------------------------------------------------------------------
@@ -27,7 +29,7 @@ pub mod HTLC {
         owner: ContractAddress,       // committer
         receiver: ContractAddress,    // gets funds if timeout
         token: ContractAddress,       // ERC20 collateral token
-        hash: felt252,                // Poseidon hash of the secret
+        hash: u256,                // Poseidon hash of the secret
         reveal_timeout: u64,          // block number deadline
     }
 
@@ -52,7 +54,7 @@ pub mod HTLC {
     fn constructor(
         ref self: ContractState,
         receiver: ContractAddress,
-        hash: felt252,
+        hash: u256,
         delay: u64,
         amount: u256,
         token: ContractAddress,
@@ -80,12 +82,12 @@ pub mod HTLC {
     #[abi(embed_v0)]
     impl HTLCImpl of IHTLC<ContractState> {
 
-        fn reveal(ref self: ContractState, secret: felt252) {
+        fn reveal(ref self: ContractState, secret: ByteArray) {
             let caller = get_caller_address();
             assert(caller == self.owner.read(), Errors::ONLY_OWNER);
 
-            // hash the secret and compare
-            let computed = poseidon_hash_span(array![secret].span());
+            // keccak256 over the provided bytes
+            let computed: u256 = compute_keccak_byte_array(@secret);
             assert(computed == self.hash.read(), Errors::INVALID_SECRET);
 
             let token = IERC20Dispatcher { contract_address: self.token.read() };
@@ -115,7 +117,7 @@ pub mod HTLC {
 
         fn get_owner(self: @ContractState) -> ContractAddress { self.owner.read() }
         fn get_receiver(self: @ContractState) -> ContractAddress { self.receiver.read() }
-        fn get_hash(self: @ContractState) -> felt252 { self.hash.read() }
+        fn get_hash(self: @ContractState) -> u256 { self.hash.read() }
         fn get_reveal_timeout(self: @ContractState) -> u64 { self.reveal_timeout.read() }
     }
 }

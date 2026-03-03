@@ -7,7 +7,7 @@
 fn constructor(
     ref self: ContractState,
     receiver: ContractAddress,
-    hash: felt252,
+    hash: u256,
     delay: u64,
     amount: u256,
     token: ContractAddress,
@@ -20,7 +20,7 @@ fn constructor(
 1. The deployer becomes the **owner**.
 2. The owner provides:
    - `receiver`
-   - `hash` = Poseidon(secret)
+   - `hash` = `keccak256(secret_bytes)`
    - `delay` (in blocks)
    - `amount` (collateral)
    - `token` (ERC20 contract address)
@@ -62,16 +62,15 @@ fn reveal(ref self: ContractState, secret: felt252)
     assert(success, Errors::TRANSFER_FAILED);
 ```
 
-The secret is hashed with Poseidon and compared to the stored hash. Solidity uses keccak256(abi.encodePacked(s)). Cairo uses Poseidon, which is the native ZK-friendly hash on Starknet.
 Conditions:
 
 - Caller must be the **owner**
-- `Poseidon(secret)` must equal stored hash
+- `keccak256(secret_bytes)` must equal the stored `hash`
 
 Behavior:
 
-- Transfers entire contract balance to owner
-- Reverts if secret is invalid or caller is not owner
+- Transfers the **entire** contract token balance to the owner
+- Reverts if the caller is not owner or the secret does not match
 
 ## Timeout
 
