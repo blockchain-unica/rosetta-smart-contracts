@@ -36,3 +36,4 @@ donors can withdraw the amounts they have donated.
 - **Move/IOTA**: implementation coherent with the specification.
 - **Fe/Ethereum**: implementation coherent with the specification.
 - **Vyper/Ethereum**: implementation is similar to Solidity.
+- **Cairo/Starknet**: implementation coherent with the specification.
