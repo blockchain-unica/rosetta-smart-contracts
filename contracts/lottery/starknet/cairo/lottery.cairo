@@ -33,24 +33,21 @@ pub mod Lottery {
     // value for .01 ether
     const MIN_BET: u256 = 10_000_000_000_000_000_u256;
 
-    // ---------------------------------------------------------------------------
-    // Storage
-    // ---------------------------------------------------------------------------
     #[storage]
     struct Storage {
-        owner: ContractAddress,            // mirrors: address public owner
+        owner: ContractAddress,            
         token: ContractAddress,
-        player0: ContractAddress,          // mirrors: address payable player0
-        player1: ContractAddress,          // mirrors: address payable player1
-        winner: ContractAddress,           // mirrors: address payable winner
-        hash0: u256,                    // mirrors: bytes32 hash0
-        hash1: u256,                    // mirrors: bytes32 hash1
-        secret0: ByteArray,                  // mirrors: string secret0
-        secret1: ByteArray,                  // mirrors: string secret1
-        bet_amount: u256,                  // mirrors: uint256 bet_amount
-        status: Status,                    // mirrors: Status public status
-        end_join: u64,                     // mirrors: uint end_join
-        end_reveal: u64,                   // mirrors: uint end_reveal
+        player0: ContractAddress,          
+        player1: ContractAddress,          
+        winner: ContractAddress,           
+        hash0: u256,                    
+        hash1: u256,                    
+        secret0: ByteArray,                  
+        secret1: ByteArray,                  
+        bet_amount: u256,                  
+        status: Status,                    
+        end_join: u64,                     
+        end_reveal: u64,                  
     }
 
     // ---------------------------------------------------------------------------
