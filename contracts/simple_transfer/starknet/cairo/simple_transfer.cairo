@@ -5,10 +5,6 @@ use starknet::ContractAddress;
 pub trait ISimpleTransfer<TContractState> {
     fn deposit(ref self: TContractState, amount: u256);
     fn withdraw(ref self: TContractState, amount: u256);
-    fn get_balance(self: @TContractState) -> u256;
-    fn get_owner(self: @TContractState) -> ContractAddress;
-    fn get_recipient(self: @TContractState) -> ContractAddress;
-    fn get_token(self: @TContractState) -> ContractAddress;
 }
 
 
@@ -36,9 +32,6 @@ pub mod SimpleTransfer {
         pub const TRANSFER_FAILED: felt252  = 'transfer failed';
     }
 
-    // ---------------------------------------------------------------------------
-    // Constructor
-    // ---------------------------------------------------------------------------
     #[constructor]
     fn constructor(ref self: ContractState, recipient: ContractAddress, token: ContractAddress,) {
         self.recipient.write(recipient);
@@ -67,14 +60,5 @@ pub mod SimpleTransfer {
             let success = token.transfer(self.recipient.read(), amount);
             assert(success, Errors::TRANSFER_FAILED);
         }
-
-        fn get_balance(self: @ContractState) -> u256 {
-            let token = IERC20Dispatcher { contract_address: self.token.read() };
-            token.balance_of(get_contract_address())
-        }
-
-        fn get_owner(self: @ContractState) -> ContractAddress { self.owner.read() }
-        fn get_recipient(self: @ContractState) -> ContractAddress { self.recipient.read() }
-        fn get_token(self: @ContractState) -> ContractAddress { self.token.read() }
     }
 }
