@@ -5,11 +5,6 @@ pub trait ICrowdfund<TContractState> {
     fn donate(ref self: TContractState, amount: u256);
     fn withdraw(ref self: TContractState);
     fn reclaim(ref self: TContractState);
-    fn get_receiver(self: @TContractState) -> ContractAddress;
-    fn get_goal(self: @TContractState) -> u256;
-    fn get_end_block(self: @TContractState) -> u64;
-    fn get_balance(self: @TContractState) -> u256;
-    fn get_donation(self: @TContractState, donor: ContractAddress) -> u256;
 }
 
 #[starknet::contract]
@@ -105,17 +100,6 @@ pub mod Crowdfund {
             let success = token.transfer(caller, amount);
             assert(success, Errors::TRANSFER_FAILED);
 
-        }
-
-        fn get_receiver(self: @ContractState) -> ContractAddress { self.receiver.read() }
-        fn get_goal(self: @ContractState) -> u256 { self.goal.read() }
-        fn get_end_block(self: @ContractState) -> u64 { self.end_block.read() }
-        fn get_balance(self: @ContractState) -> u256 {
-            let token = IERC20Dispatcher { contract_address: self.token.read() };
-            token.balance_of(get_contract_address())
-        }
-        fn get_donation(self: @ContractState, donor: ContractAddress) -> u256 {
-            self.donors.read(donor)
         }
     }
 }
