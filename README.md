@@ -38,3 +38,4 @@ Details on the comparison between different smart contract languages are availab
 - [Move](https://move-language.github.io/move/) (Aptos, Sui, IOTA)
 - [Fe](https://fe-lang.org/) (Ethereum)
 - [Vyper](https://docs.vyperlang.org/en/stable/) (Ethereum)
+- [Cairo](https://www.cairo-lang.org/) (StarkNet)
