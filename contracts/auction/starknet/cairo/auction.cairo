@@ -6,13 +6,6 @@ pub trait IAuction<TContractState> {
     fn bid(ref self: TContractState, amount: u256);
     fn withdraw(ref self: TContractState);
     fn end(ref self: TContractState);
-    fn get_state(self: @TContractState) -> u8;
-    fn get_seller(self: @TContractState) -> ContractAddress;
-    fn get_highest_bidder(self: @TContractState) -> ContractAddress;
-    fn get_highest_bid(self: @TContractState) -> u256;
-    fn get_end_block(self: @TContractState) -> u64;
-    fn get_object(self: @TContractState) -> felt252;
-    fn get_bid(self: @TContractState, bidder: ContractAddress) -> u256;
 }
 
 #[starknet::contract]
@@ -105,10 +98,6 @@ pub mod Auction {
             let pending = self.bids.read(caller);
             if pending > 0 {
                 self.withdraw();
-            //     self.bids.write(caller, 0);
-            //     let refund_success = token.transfer(caller, pending);
-            //     assert(refund_success, Errors::TRANSFER_FAILED);
-            // 
             }
 
             self.highest_bidder.write(caller);
@@ -142,16 +131,6 @@ pub mod Auction {
             let token          = IERC20Dispatcher { contract_address: self.token.read() };
             let success        = token.transfer(self.seller.read(), highest_bid);
             assert(success, Errors::TRANSFER_FAILED);
-        }
-
-        fn get_state(self: @ContractState) -> u8 { self.state.read() }
-        fn get_seller(self: @ContractState) -> ContractAddress { self.seller.read() }
-        fn get_highest_bidder(self: @ContractState) -> ContractAddress { self.highest_bidder.read() }
-        fn get_highest_bid(self: @ContractState) -> u256 { self.highest_bid.read() }
-        fn get_end_block(self: @ContractState) -> u64 { self.end_block.read() }
-        fn get_object(self: @ContractState) -> felt252 { self.object.read() }
-        fn get_bid(self: @ContractState, bidder: ContractAddress) -> u256 {
-            self.bids.read(bidder)
         }
     }
 }
