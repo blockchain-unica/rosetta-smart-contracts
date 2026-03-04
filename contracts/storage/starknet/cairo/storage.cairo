@@ -2,8 +2,6 @@
 pub trait IStorage<TContractState> {
     fn store_bytes(ref self: TContractState, byte_sequence: ByteArray);
     fn store_string(ref self: TContractState, text_string: ByteArray);
-    fn get_bytes(self: @TContractState) -> ByteArray;
-    fn get_string(self: @TContractState) -> ByteArray;
 }
 
 #[starknet::contract]
@@ -29,14 +27,6 @@ pub mod Storage {
 
         fn store_string(ref self: ContractState, text_string: ByteArray) {
             self.text_string.write(text_string);
-        }
-
-        fn get_bytes(self: @ContractState) -> ByteArray {
-            self.byte_sequence.read()
-        }
-
-        fn get_string(self: @ContractState) -> ByteArray {
-            self.text_string.read()
         }
     }
 }
