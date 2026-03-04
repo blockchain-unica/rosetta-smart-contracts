@@ -19,9 +19,6 @@ pub mod Vesting {
     use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess};
     use super::IVesting;
 
-    // ---------------------------------------------------------------------------
-    // Storage
-    // ---------------------------------------------------------------------------
     #[storage]
     struct Storage {
         beneficiary: ContractAddress,
@@ -31,9 +28,6 @@ pub mod Vesting {
         token: ContractAddress,
     }
 
-    // ---------------------------------------------------------------------------
-    // Events
-    // ---------------------------------------------------------------------------
     #[event]
     #[derive(Drop, starknet::Event)]
     enum Event {
@@ -47,25 +41,13 @@ pub mod Vesting {
         amount: u256,
     }
 
-    // ---------------------------------------------------------------------------
-    // Errors
-    // ---------------------------------------------------------------------------
-    mod Errors {
+   mod Errors {
         pub const ZERO_BENEFICIARY: felt252  = 'beneficiary is zero address';
         pub const ONLY_BENEFICIARY: felt252  = 'only the beneficiary';
         pub const NOTHING_TO_RELEASE: felt252 = 'nothing to release';
         pub const TRANSFER_FAILED: felt252   = 'transfer failed';
     }
 
-    // ---------------------------------------------------------------------------
-    // Constructor
-    // ---------------------------------------------------------------------------
-    /// Deployer sets the beneficiary, start block, duration in blocks,
-    /// and deposits the initial balance (must approve first).
-    ///
-    /// mirrors: constructor(address beneficiary, uint64 start, uint64 duration) payable
-    /// ⚠️  On Starknet we use block numbers instead of timestamps,
-    ///     and ERC20 instead of native ETH.
     #[constructor]
     fn constructor(
         ref self: ContractState,
@@ -97,13 +79,9 @@ pub mod Vesting {
         }
     }
 
-    // ---------------------------------------------------------------------------
-    // Implementation
-    // ---------------------------------------------------------------------------
     #[abi(embed_v0)]
     impl VestingImpl of IVesting<ContractState> {
 
-        /// Beneficiary withdraws the currently releasable amount.
         fn release(ref self: ContractState) {
             assert(get_caller_address() == self.beneficiary.read(), Errors::ONLY_BENEFICIARY);
 
@@ -120,12 +98,10 @@ pub mod Vesting {
             self.emit(Released { beneficiary: self.beneficiary.read(), amount });
         }
 
-        /// mirrors: function releasable() public view returns (uint256)
         fn releasable(self: @ContractState) -> u256 {
             Self::vested_amount(self) - self.released.read()
         }
 
-        /// mirrors: function vestedAmount(uint64 timestamp) public view returns (uint256)
         /// uses block_number instead of timestamp — Starknet equivalent
         fn vested_amount(self: @ContractState) -> u256 {
             let token    = IERC20Dispatcher { contract_address: self.token.read() };

@@ -24,6 +24,8 @@ Parameters:
 | `initial_amount` | Tokens deposited at deployment    |
 | `token`          | ERC20 token used for vesting      |
 
+Beneficiary, start, and duration are set only in constructor so they are effectively immutable.
+
 Deployment behavior:
 
 - The beneficiary and vesting schedule are set.
