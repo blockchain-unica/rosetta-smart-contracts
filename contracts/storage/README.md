@@ -22,3 +22,4 @@ After contract creation, the contract supports two actions:
 - **Move/Aptos**: implementation coherent with the specification.
 - **Move/IOTA**: implementation coherent with the specification.
 - **Fe/Ethereum**: dynamic arrays not supported. The implementation **does not** allow arbitrary-size byte sequences and strings.
+- **Cairo/Starknet**: implementation coherent with the specification.
