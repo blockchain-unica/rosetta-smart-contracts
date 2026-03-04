@@ -5,11 +5,6 @@ pub trait IEscrow<TContractState> {
     fn deposit(ref self: TContractState);
     fn pay(ref self: TContractState);
     fn refund(ref self: TContractState);
-    fn get_state(self: @TContractState) -> u8;
-    fn get_buyer(self: @TContractState) -> ContractAddress;
-    fn get_seller(self: @TContractState) -> ContractAddress;
-    fn get_amount(self: @TContractState) -> u256;
-    fn get_token(self: @TContractState) -> ContractAddress;
 }
 
 #[starknet::contract]
@@ -20,15 +15,12 @@ pub mod Escrow {
     use super::IEscrow;
 
     // ---------------------------------------------------------------------------
-    // State machine — mirrors Solidity enum States
+    // States 
     // ---------------------------------------------------------------------------
     const WAIT_DEPOSIT: u8 = 0;
     const WAIT_RECIPIENT: u8 = 1;
     const CLOSED: u8 = 2;
 
-    // ---------------------------------------------------------------------------
-    // Storage
-    // ---------------------------------------------------------------------------
     #[storage]
     struct Storage {
         buyer: ContractAddress,
@@ -76,9 +68,6 @@ pub mod Escrow {
         self.state.write(WAIT_DEPOSIT);
     }
 
-    // ---------------------------------------------------------------------------
-    // Implementation
-    // ---------------------------------------------------------------------------
     #[abi(embed_v0)]
     impl EscrowImpl of IEscrow<ContractState> {
 
@@ -90,8 +79,6 @@ pub mod Escrow {
             let amount = self.amount.read();
             let token = IERC20Dispatcher { contract_address: self.token.read() };
 
-            // mirrors: require(msg.value == amount)
-            // on Starknet we enforce exact amount via transfer_from
             let success = token.transfer_from(caller, get_contract_address(), amount);
             assert(success, Errors::TRANSFER_FAILED);
 
@@ -123,12 +110,5 @@ pub mod Escrow {
             let success = token.transfer(self.buyer.read(), amount);
             assert(success, Errors::TRANSFER_FAILED);
         }
-
-        /// Returns current state: 0=WAIT_DEPOSIT, 1=WAIT_RECIPIENT, 2=CLOSED
-        fn get_state(self: @ContractState) -> u8 { self.state.read() }
-        fn get_buyer(self: @ContractState) -> ContractAddress { self.buyer.read() }
-        fn get_seller(self: @ContractState) -> ContractAddress { self.seller.read() }
-        fn get_amount(self: @ContractState) -> u256 { self.amount.read() }
-        fn get_token(self: @ContractState) -> ContractAddress { self.token.read() }
     }
 }
