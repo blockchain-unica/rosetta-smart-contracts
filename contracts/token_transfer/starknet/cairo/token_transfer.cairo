@@ -17,9 +17,6 @@ pub mod TokenTransfer {
     use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess};
     use super::ITokenTransfer;
 
-    // ---------------------------------------------------------------------------
-    // Storage
-    // ---------------------------------------------------------------------------
     #[storage]
     struct Storage {
         owner: ContractAddress,
@@ -36,7 +33,6 @@ pub mod TokenTransfer {
         Withdraw: Withdraw,
     }
 
-    // mirrors the Solidity event: Withdraw(address indexed sender, uint amount)
     #[derive(Drop, starknet::Event)]
     struct Withdraw {
         #[key]
@@ -55,9 +51,6 @@ pub mod TokenTransfer {
         pub const TRANSFER_FAILED: felt252   = 'transfer failed';
     }
 
-    // ---------------------------------------------------------------------------
-    // Constructor
-    // ---------------------------------------------------------------------------
     #[constructor]
     fn constructor(
         ref self: ContractState,
@@ -69,9 +62,6 @@ pub mod TokenTransfer {
         self.token.write(token);
     }
 
-    // ---------------------------------------------------------------------------
-    // Implementation
-    // ---------------------------------------------------------------------------
     #[abi(embed_v0)]
     impl TokenTransferImpl of ITokenTransfer<ContractState> {
 
@@ -87,8 +77,6 @@ pub mod TokenTransfer {
         }
 
         /// Recipient withdraws up to `amount` tokens.
-        /// Key difference from SimpleTransfer: if amount > balance,
-        /// it caps the withdrawal to the full balance instead of reverting.
         fn withdraw(ref self: ContractState, amount: u256) {
             let caller = get_caller_address();
             assert(caller == self.recipient.read(), Errors::ONLY_RECIPIENT);
@@ -97,7 +85,6 @@ pub mod TokenTransfer {
             let balance = token.balance_of(get_contract_address());
             assert(balance > 0, Errors::ZERO_BALANCE);
 
-            // cap to available balance — mirrors the Solidity if-branch
             let actual_amount = if amount > balance { balance } else { amount };
 
             let success = token.transfer(self.recipient.read(), actual_amount);
@@ -105,14 +92,5 @@ pub mod TokenTransfer {
 
             self.emit(Withdraw { sender: caller, amount: actual_amount });
         }
-
-        fn get_balance(self: @ContractState) -> u256 {
-            let token = IERC20Dispatcher { contract_address: self.token.read() };
-            token.balance_of(get_contract_address())
-        }
-
-        fn get_owner(self: @ContractState) -> ContractAddress { self.owner.read() }
-        fn get_recipient(self: @ContractState) -> ContractAddress { self.recipient.read() }
-        fn get_token(self: @ContractState) -> ContractAddress { self.token.read() }
     }
 }
