@@ -5,11 +5,6 @@ pub trait IVesting<TContractState> {
     fn release(ref self: TContractState);
     fn releasable(self: @TContractState) -> u256;
     fn vested_amount(self: @TContractState) -> u256;
-    fn get_beneficiary(self: @TContractState) -> ContractAddress;
-    fn get_start(self: @TContractState) -> u64;
-    fn get_duration(self: @TContractState) -> u64;
-    fn get_released(self: @TContractState) -> u256;
-    fn get_balance(self: @TContractState) -> u256;
 }
 
 #[starknet::contract]
@@ -121,15 +116,6 @@ pub mod Vesting {
                 let elapsed: u256 = (current_block - start).into();
                 (total * elapsed) / duration.into()
             }
-        }
-
-        fn get_beneficiary(self: @ContractState) -> ContractAddress { self.beneficiary.read() }
-        fn get_start(self: @ContractState) -> u64 { self.start.read() }
-        fn get_duration(self: @ContractState) -> u64 { self.duration.read() }
-        fn get_released(self: @ContractState) -> u256 { self.released.read() }
-        fn get_balance(self: @ContractState) -> u256 {
-            let token = IERC20Dispatcher { contract_address: self.token.read() };
-            token.balance_of(get_contract_address())
         }
     }
 }
