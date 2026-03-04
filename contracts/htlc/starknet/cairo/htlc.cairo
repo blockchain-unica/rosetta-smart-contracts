@@ -5,11 +5,6 @@ use core::byte_array::ByteArray;
 pub trait IHTLC<TContractState> {
     fn reveal(ref self: TContractState, secret: ByteArray);
     fn timeout(ref self: TContractState);
-    fn get_balance(self: @TContractState) -> u256;
-    fn get_owner(self: @TContractState) -> ContractAddress;
-    fn get_receiver(self: @TContractState) -> ContractAddress;
-    fn get_hash(self: @TContractState) -> u256;
-    fn get_reveal_timeout(self: @TContractState) -> u64;
 }
 
 #[starknet::contract]
@@ -21,9 +16,6 @@ pub mod HTLC {
     use core::keccak::compute_keccak_byte_array;
     use super::IHTLC;
 
-    // ---------------------------------------------------------------------------
-    // Storage
-    // ---------------------------------------------------------------------------
     #[storage]
     struct Storage {
         owner: ContractAddress,       // committer
@@ -44,12 +36,9 @@ pub mod HTLC {
         pub const BELOW_MIN_DEPOSIT: felt252  = 'deposit below minimum';
     }
 
-    // Minimum collateral required — mirrors Solidity's require(msg.value >= 1 ether)
+    // Minimum collateral required 
     const MIN_DEPOSIT: u256 = 1_000_000_000_000_000_000_u256; // 1 token (18 decimals)
 
-    // ---------------------------------------------------------------------------
-    // Constructor
-    // ---------------------------------------------------------------------------
     #[constructor]
     fn constructor(
         ref self: ContractState,
@@ -76,9 +65,6 @@ pub mod HTLC {
         assert(success, Errors::TRANSFER_FAILED);
     }
 
-    // ---------------------------------------------------------------------------
-    // Implementation
-    // ---------------------------------------------------------------------------
     #[abi(embed_v0)]
     impl HTLCImpl of IHTLC<ContractState> {
 
@@ -109,15 +95,5 @@ pub mod HTLC {
             let success = token.transfer(self.receiver.read(), balance);
             assert(success, Errors::TRANSFER_FAILED);
         }
-
-        fn get_balance(self: @ContractState) -> u256 {
-            let token = IERC20Dispatcher { contract_address: self.token.read() };
-            token.balance_of(get_contract_address())
-        }
-
-        fn get_owner(self: @ContractState) -> ContractAddress { self.owner.read() }
-        fn get_receiver(self: @ContractState) -> ContractAddress { self.receiver.read() }
-        fn get_hash(self: @ContractState) -> u256 { self.hash.read() }
-        fn get_reveal_timeout(self: @ContractState) -> u64 { self.reveal_timeout.read() }
     }
 }
