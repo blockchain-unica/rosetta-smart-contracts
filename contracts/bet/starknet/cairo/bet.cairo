@@ -22,13 +22,6 @@ pub trait IBet<TContractState> {
     fn join(ref self: TContractState);
     fn win(ref self: TContractState, winner: u8);
     fn timeout(ref self: TContractState);
-
-    // Getters
-    fn get_player1(self: @TContractState) -> ContractAddress;
-    fn get_player2(self: @TContractState) -> ContractAddress;
-    fn get_oracle(self: @TContractState) -> ContractAddress;
-    fn get_wager(self: @TContractState) -> u256;
-    fn get_deadline(self: @TContractState) -> u64;
 }
 
 #[starknet::contract]
@@ -40,9 +33,6 @@ pub mod Bet {
     use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess};
     use super::{IERC20Dispatcher, IERC20DispatcherTrait};
 
-    // -----------------------------------------------------------------------
-    // Storage
-    // -----------------------------------------------------------------------
     #[storage]
     struct Storage {
         player1: ContractAddress,
@@ -67,9 +57,6 @@ pub mod Bet {
         pub const TRANSFER_FAILED: felt252       = 'Transfer failed';
     }
 
-    // -----------------------------------------------------------------------
-    // Constructor
-    //
     // Player1 is the deployer. They deposit `wager` tokens immediately.
     // Before deploying, player1 must approve this contract for `wager` tokens.
     //
@@ -100,22 +87,9 @@ pub mod Bet {
         assert(ok, Errors::TRANSFER_FAILED);
     }
 
-    // -----------------------------------------------------------------------
-    // Implementation
-    // -----------------------------------------------------------------------
     #[abi(embed_v0)]
     impl BetImpl of super::IBet<ContractState> {
 
-        // -------------------------------------------------------------------
-        // join
-        //
-        // Called by player2 to enter the bet.
-        // Player2 must approve this contract for `wager` tokens beforehand.
-        // Reverts if:
-        //   - player2 has already joined
-        //   - the deadline has passed
-        //   - (implicitly) transfer_from fails if wrong amount approved
-        // -------------------------------------------------------------------
         fn join(ref self: ContractState) {
             let zero = contract_address_const::<0>();
             // Player2 must not have joined yet
@@ -133,13 +107,6 @@ pub mod Bet {
             self.player2.write(player2);
         }
 
-        // -------------------------------------------------------------------
-        // win
-        //
-        // Only callable by the oracle, only after player2 has joined.
-        // winner: 0 = player1, 1 = player2
-        // Sends the entire pot to the winner.
-        // -------------------------------------------------------------------
         fn win(ref self: ContractState, winner: u8) {
             assert(get_caller_address() == self.oracle.read(), Errors::ONLY_ORACLE);
             assert(self.player2.read() != contract_address_const::<0>(), Errors::PLAYER2_NOT_JOINED);
@@ -158,16 +125,6 @@ pub mod Bet {
 
         }
 
-        // -------------------------------------------------------------------
-        // timeout
-        //
-        // Callable by anyone after the deadline has passed.
-        // Always refunds player1.
-        // Refunds player2 only if they had joined.
-        //
-        // Note: if only player1 joined and the deadline passed, the wager
-        // is fully returned to player1. No funds remain frozen.
-        // -------------------------------------------------------------------
         fn timeout(ref self: ContractState) {
             assert(get_block_number() > self.deadline.read(), Errors::TIMEOUT_NOT_PASSED);
 
@@ -186,29 +143,6 @@ pub mod Bet {
                 let ok2 = erc20.transfer(player2, wager);
                 assert(ok2, Errors::TRANSFER_FAILED);
             }
-        }
-
-        // -------------------------------------------------------------------
-        // Getters
-        // -------------------------------------------------------------------
-        fn get_player1(self: @ContractState) -> ContractAddress {
-            self.player1.read()
-        }
-
-        fn get_player2(self: @ContractState) -> ContractAddress {
-            self.player2.read()
-        }
-
-        fn get_oracle(self: @ContractState) -> ContractAddress {
-            self.oracle.read()
-        }
-
-        fn get_wager(self: @ContractState) -> u256 {
-            self.wager.read()
-        }
-
-        fn get_deadline(self: @ContractState) -> u64 {
-            self.deadline.read()
         }
     }
 }
