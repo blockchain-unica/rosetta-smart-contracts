@@ -4,10 +4,6 @@ use starknet::ContractAddress;
 pub trait ITokenTransfer<TContractState> {
     fn deposit(ref self: TContractState, amount: u256);
     fn withdraw(ref self: TContractState, amount: u256);
-    fn get_balance(self: @TContractState) -> u256;
-    fn get_owner(self: @TContractState) -> ContractAddress;
-    fn get_recipient(self: @TContractState) -> ContractAddress;
-    fn get_token(self: @TContractState) -> ContractAddress;
 }
 
 #[starknet::contract]
