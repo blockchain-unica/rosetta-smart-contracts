@@ -11,10 +11,6 @@ pub trait ISimpleWallet<TContractState> {
     );
     fn execute_transaction(ref self: TContractState, tx_id: u64);
     fn withdraw(ref self: TContractState);
-    fn get_owner(self: @TContractState) -> ContractAddress;
-    fn get_balance(self: @TContractState) -> u256;
-    fn get_transaction_count(self: @TContractState) -> u64;
-    fn get_transaction(self: @TContractState, tx_id: u64) -> Transaction;
 }
 
 #[derive(Drop, Serde, starknet::Store)]
@@ -121,23 +117,6 @@ pub mod SimpleWallet {
             let balance = token.balance_of(get_contract_address());
             let success = token.transfer(self.owner.read(), balance);
             assert(success, Errors::TRANSFER_FAILED);
-        }
-
-        fn get_owner(self: @ContractState) -> ContractAddress { self.owner.read() }
-
-        fn get_balance(self: @ContractState) -> u256 {
-            let token = IERC20Dispatcher { contract_address: self.token.read() };
-            token.balance_of(get_contract_address())
-        }
-
-        // mirrors: transactions.length
-        fn get_transaction_count(self: @ContractState) -> u64 {
-            self.transactions.len()
-        }
-
-        fn get_transaction(self: @ContractState, tx_id: u64) -> Transaction {
-            assert(tx_id < self.transactions.len(), Errors::TX_NOT_FOUND);
-            self.transactions.at(tx_id).read()
         }
     }
 }
