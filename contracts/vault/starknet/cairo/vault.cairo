@@ -6,14 +6,6 @@ pub trait IVault<TContractState> {
     fn withdraw(ref self: TContractState, receiver: ContractAddress, amount: u256);
     fn finalize(ref self: TContractState);
     fn cancel(ref self: TContractState);
-    fn get_state(self: @TContractState) -> u8;
-    fn get_owner(self: @TContractState) -> ContractAddress;
-    fn get_recovery(self: @TContractState) -> ContractAddress;
-    fn get_wait_time(self: @TContractState) -> u64;
-    fn get_balance(self: @TContractState) -> u256;
-    fn get_request_block(self: @TContractState) -> u64;
-    fn get_pending_receiver(self: @TContractState) -> ContractAddress;
-    fn get_pending_amount(self: @TContractState) -> u256;
 }
 
 #[starknet::contract]
@@ -24,7 +16,7 @@ pub mod Vault {
     use super::IVault;
 
     // ---------------------------------------------------------------------------
-    // State machine — mirrors Solidity enum States
+    // States
     // ---------------------------------------------------------------------------
     const IDLE: u8 = 0;
     const REQ: u8  = 1;
@@ -61,7 +53,6 @@ pub mod Vault {
     // Constructor
     // ---------------------------------------------------------------------------
     /// Owner deploys vault specifying the recovery address and wait time in blocks.
-    /// mirrors: constructor(address payable recovery_, uint wait_time_) payable
     /// The initial deposit is handled via deposit() since we use ERC20.
     #[constructor]
     fn constructor(
@@ -83,8 +74,6 @@ pub mod Vault {
     #[abi(embed_v0)]
     impl VaultImpl of IVault<ContractState> {
 
-        /// Anyone can deposit tokens into the vault.
-        /// mirrors Solidity's: receive() external payable {}
         /// Depositor must call approve(vault, amount) on the token first.
         fn receive(ref self: ContractState, amount: u256) {
             let caller  = get_caller_address();
@@ -136,17 +125,5 @@ pub mod Vault {
 
             self.state.write(IDLE);
         }
-
-        fn get_state(self: @ContractState) -> u8 { self.state.read() }
-        fn get_owner(self: @ContractState) -> ContractAddress { self.owner.read() }
-        fn get_recovery(self: @ContractState) -> ContractAddress { self.recovery.read() }
-        fn get_wait_time(self: @ContractState) -> u64 { self.wait_time.read() }
-        fn get_balance(self: @ContractState) -> u256 {
-            let token = IERC20Dispatcher { contract_address: self.token.read() };
-            token.balance_of(get_contract_address())
-        }
-        fn get_request_block(self: @ContractState) -> u64 { self.request_block.read() }
-        fn get_pending_receiver(self: @ContractState) -> ContractAddress { self.receiver.read() }
-        fn get_pending_amount(self: @ContractState) -> u256 { self.amount.read() }
     }
 }
