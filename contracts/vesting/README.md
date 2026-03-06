@@ -32,3 +32,4 @@ After creation, the contract supports the following action:
 - **Move/Aptos**: implementation coherent with the specification.
 - **Move/IOTA**: implementation coherent with the specification.
 - **Fe/Ethereum**: immutable variables are not supported, const is not implemented yet.
+- **Cairo/Starknet**: implementation similar to Solidity.
