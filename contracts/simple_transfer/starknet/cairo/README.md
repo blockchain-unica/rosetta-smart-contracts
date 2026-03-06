@@ -1,35 +1,29 @@
-# SimpleTransfer (Cairo / Starknet)
+# SimpleTransfer
 
-> On Starknet, ETH is an ERC20 token. This contract works with any ERC20 token (e.g. Starknet ETH).
+## Storage
 
-## The flow
+```cairo
+struct Storage {
+    owner: ContractAddress,
+    recipient: ContractAddress,
+    token: ContractAddress, // e.g. Starknet ETH token address
+}
+```
 
-At deployment:
-
-- The deployer becomes the **owner**
-- A **recipient** address is set
-- An ERC20 **token address** is set (e.g. Starknet ETH)
-
-After deployment:
-
-- `deposit(amount)`
-  - Only callable by **owner**
-  - Transfers `amount` tokens from owner to contract
-  - Requires prior ERC20 `approve`
-
-- `withdraw(amount)`
-  - Only callable by **recipient**
-  - Transfers `amount` tokens from contract to recipient
-  - `amount` must be ≤ contract token balance
+| Field       | Type              | Description                                    |
+| ----------- | ----------------- | ---------------------------------------------- |
+| `owner`     | `ContractAddress` | Deployer — the only address allowed to deposit |
+| `recipient` | `ContractAddress` | The only address allowed to withdraw           |
+| `token`     | `ContractAddress` | ERC20 token used for deposits and withdrawals  |
 
 ## Constructor
 
-```py
-cairo
-constructor(
-    recipient: ContractAddress,
-    token: ContractAddress
-)
+```cairo
+fn constructor(ref self: ContractState, recipient: ContractAddress, token: ContractAddress,) {
+    self.recipient.write(recipient);
+    self.owner.write(get_caller_address());
+    self.token.write(token);
+}
 ```
 
 Parameters:
@@ -37,11 +31,12 @@ Parameters:
 - recipient — address allowed to withdraw
 - token — ERC20 token used for deposits/withdrawals
 
-Called once at deployment. The deployer automatically becomes the owner.
+- Caller becomes the `owner`
+- `recipient` and `token` are fixed — cannot be changed after deployment
 
 ## Deposit
 
-```py
+```cairo
 fn deposit(ref self: ContractState, amount: u256) {
     let caller = get_caller_address();
     assert(caller == self.owner.read(), Errors::ONLY_OWNER);
@@ -52,12 +47,16 @@ fn deposit(ref self: ContractState, amount: u256) {
 }
 ```
 
-- Guards that only the owner can call it
-- Uses transfer_from to pull tokens from the owner's wallet into the contract — this is why the owner must call approve(contract_address, amount) on the token before calling deposit
+Owner deposits tokens into the contract.
+
+- Only callable by the `owner`
+- Transfers `amount` from owner to the contract via `transfer_from`
+- Owner must have approved the contract to spend `amount` beforehand
+- Can be called multiple times — balances accumulate
 
 ## Withdraw
 
-```py
+```cairo
 fn withdraw(ref self: ContractState, amount: u256) {
     let caller = get_caller_address();
     assert(caller == self.recipient.read(), Errors::ONLY_RECIPIENT);
@@ -71,6 +70,8 @@ fn withdraw(ref self: ContractState, amount: u256) {
 }
 ```
 
-- Guards that only the recipient can call it
-- Checks the contract actually holds enough tokens before attempting the transfer
-- Uses `transfer` to push tokens out from the contract to the recipient — no `approve` needed here since the contract is spending its own tokens
+Recipient withdraws tokens from the contract.
+
+- Only callable by the `recipient`
+- `amount` must be less than or equal to the current contract balance
+- Transfers exactly `amount` tokens to the recipient
