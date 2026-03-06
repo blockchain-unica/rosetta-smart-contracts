@@ -8,22 +8,20 @@ pub trait IVault<TContractState> {
     fn cancel(ref self: TContractState);
 }
 
+#[derive(Drop, Serde, PartialEq, Copy, starknet::Store)]
+pub enum State {
+    #[default]
+    Idle,  // no pending withdrawal request
+    Req,   // withdrawal request submitted, waiting for finalization
+}
+
 #[starknet::contract]
 pub mod Vault {
     use openzeppelin::token::erc20::interface::{IERC20Dispatcher, IERC20DispatcherTrait};
     use starknet::{ContractAddress, get_caller_address, get_contract_address, get_block_info};
     use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess};
-    use super::IVault;
+    use super::{IVault, State};
 
-    // ---------------------------------------------------------------------------
-    // States
-    // ---------------------------------------------------------------------------
-    const IDLE: u8 = 0;
-    const REQ: u8  = 1;
-
-    // ---------------------------------------------------------------------------
-    // Storage
-    // ---------------------------------------------------------------------------
     #[storage]
     struct Storage {
         owner: ContractAddress,
@@ -49,9 +47,7 @@ pub mod Vault {
         pub const TRANSFER_FAILED: felt252    = 'transfer failed';
     }
 
-    // ---------------------------------------------------------------------------
-    // Constructor
-    // ---------------------------------------------------------------------------
+    
     /// Owner deploys vault specifying the recovery address and wait time in blocks.
     /// The initial deposit is handled via deposit() since we use ERC20.
     #[constructor]
@@ -65,7 +61,7 @@ pub mod Vault {
         self.recovery.write(recovery);
         self.wait_time.write(wait_time);
         self.token.write(token);
-        self.state.write(IDLE);
+        self.state.write(State::Idle);
     }
 
     // ---------------------------------------------------------------------------
@@ -85,7 +81,7 @@ pub mod Vault {
         /// Owner issues a withdraw request. Transitions IDLE -> REQ.
         fn withdraw(ref self: ContractState, receiver: ContractAddress, amount: u256) {
             assert(get_caller_address() == self.owner.read(), Errors::ONLY_OWNER);
-            assert(self.state.read() == IDLE, Errors::NOT_IDLE);
+            assert(self.state.read() == State::Idle, Errors::NOT_IDLE);
 
             let token   = IERC20Dispatcher { contract_address: self.token.read() };
             let balance = token.balance_of(get_contract_address());
@@ -95,13 +91,13 @@ pub mod Vault {
             self.request_block.write(current_block);
             self.amount.write(amount);
             self.receiver.write(receiver);
-            self.state.write(REQ);
+            self.state.write(State::Req);
         }
 
         /// Owner finalizes the withdraw after wait time has elapsed. REQ -> IDLE.
         fn finalize(ref self: ContractState) {
             assert(get_caller_address() == self.owner.read(), Errors::ONLY_OWNER);
-            assert(self.state.read() == REQ, Errors::NOT_REQ);
+            assert(self.state.read() == State::Req, Errors::NOT_REQ);
 
             let current_block = get_block_info().unbox().block_number;
             assert(
@@ -109,7 +105,7 @@ pub mod Vault {
                 Errors::WAIT_NOT_ELAPSED
             );
 
-            self.state.write(IDLE);
+            self.state.write(State::Idle);
 
             let amount   = self.amount.read();
             let receiver = self.receiver.read();
@@ -121,9 +117,9 @@ pub mod Vault {
         /// Recovery key cancels the pending withdraw request. REQ -> IDLE.
         fn cancel(ref self: ContractState) {
             assert(get_caller_address() == self.recovery.read(), Errors::ONLY_RECOVERY);
-            assert(self.state.read() == REQ, Errors::NOT_REQ);
+            assert(self.state.read() == State::Req, Errors::NOT_REQ);
 
-            self.state.write(IDLE);
+            self.state.write(State::Idle);
         }
     }
 }
