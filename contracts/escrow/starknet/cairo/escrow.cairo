@@ -7,19 +7,20 @@ pub trait IEscrow<TContractState> {
     fn refund(ref self: TContractState);
 }
 
+#[derive(Drop, Serde, PartialEq, Copy, starknet::Store)]
+pub enum State {
+    #[default]
+    WaitDeposit,    // auction has not started yet
+    WaitRecipient,  // auction is running, accepting bids
+    Closed,       // auction has ended
+}
+
 #[starknet::contract]
 pub mod Escrow {
     use openzeppelin::token::erc20::interface::{IERC20Dispatcher, IERC20DispatcherTrait};
     use starknet::{ContractAddress, get_caller_address, get_contract_address};
     use starknet::storage::{StoragePointerReadAccess, StoragePointerWriteAccess};
-    use super::IEscrow;
-
-    // ---------------------------------------------------------------------------
-    // States 
-    // ---------------------------------------------------------------------------
-    const WAIT_DEPOSIT: u8 = 0;
-    const WAIT_RECIPIENT: u8 = 1;
-    const CLOSED: u8 = 2;
+    use super::{IEscrow, State};
 
     #[storage]
     struct Storage {
@@ -30,9 +31,6 @@ pub mod Escrow {
         state: u8,
     }
 
-    // ---------------------------------------------------------------------------
-    // Errors
-    // ---------------------------------------------------------------------------
     mod Errors {
         pub const ONLY_BUYER: felt252          = 'only the buyer';
         pub const ONLY_SELLER: felt252         = 'only the seller';
@@ -43,9 +41,6 @@ pub mod Escrow {
         pub const TRANSFER_FAILED: felt252     = 'transfer failed';
     }
 
-    // ---------------------------------------------------------------------------
-    // Constructor — seller deploys and sets buyer + required amount
-    // ---------------------------------------------------------------------------
     #[constructor]
     fn constructor(
         ref self: ContractState,
@@ -65,7 +60,7 @@ pub mod Escrow {
         self.buyer.write(buyer);
         self.seller.write(seller);
         self.token.write(token);
-        self.state.write(WAIT_DEPOSIT);
+        self.state.write(State::WaitDeposit);
     }
 
     #[abi(embed_v0)]
@@ -74,7 +69,7 @@ pub mod Escrow {
         fn deposit(ref self: ContractState) {
             let caller = get_caller_address();
             assert(caller == self.buyer.read(), Errors::ONLY_BUYER);
-            assert(self.state.read() == WAIT_DEPOSIT, Errors::INVALID_STATE);
+            assert(self.state.read() == State::WaitDeposit, Errors::INVALID_STATE);
 
             let amount = self.amount.read();
             let token = IERC20Dispatcher { contract_address: self.token.read() };
@@ -82,15 +77,15 @@ pub mod Escrow {
             let success = token.transfer_from(caller, get_contract_address(), amount);
             assert(success, Errors::TRANSFER_FAILED);
 
-            self.state.write(WAIT_RECIPIENT);
+            self.state.write(State::WaitRecipient);
         }
 
         fn pay(ref self: ContractState) {
             let caller = get_caller_address();
             assert(caller == self.buyer.read(), Errors::ONLY_BUYER);
-            assert(self.state.read() == WAIT_RECIPIENT, Errors::INVALID_STATE);
+            assert(self.state.read() == State::WaitRecipient, Errors::INVALID_STATE);
 
-            self.state.write(CLOSED);
+            self.state.write(State::Closed);
 
             let amount = self.amount.read();
             let token = IERC20Dispatcher { contract_address: self.token.read() };
@@ -101,9 +96,9 @@ pub mod Escrow {
         fn refund(ref self: ContractState) {
             let caller = get_caller_address();
             assert(caller == self.seller.read(), Errors::ONLY_SELLER);
-            assert(self.state.read() == WAIT_RECIPIENT, Errors::INVALID_STATE);
+            assert(self.state.read() == State::WaitRecipient, Errors::INVALID_STATE);
 
-            self.state.write(CLOSED);
+            self.state.write(State::Closed);
 
             let amount = self.amount.read();
             let token = IERC20Dispatcher { contract_address: self.token.read() };
