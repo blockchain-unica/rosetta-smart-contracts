@@ -1,9 +1,39 @@
 # Vesting
 
+## Storage vars
+
+```cairo
+struct Storage {
+    beneficiary: ContractAddress,
+    start: u64,       // block number from which vesting begins
+    duration: u64,    // duration in blocks
+    released: u256,   // total already released to beneficiary
+    token: ContractAddress,
+}
+```
+
+| Field         | Type              | Description                                          |
+| ------------- | ----------------- | ---------------------------------------------------- |
+| `beneficiary` | `ContractAddress` | Address that receives vested tokens — cannot be zero |
+| `start`       | `u64`             | Block number at which vesting begins                 |
+| `duration`    | `u64`             | Number of blocks over which tokens vest fully        |
+| `released`    | `u256`            | Cumulative amount already claimed by the beneficiary |
+| `token`       | `ContractAddress` | ERC20 token being vested                             |
+
+## Events
+
+### `Released`
+
+Emitted after every successful `release()` call.
+
+| Field         | Type              | Indexed | Description                        |
+| ------------- | ----------------- | ------- | ---------------------------------- |
+| `beneficiary` | `ContractAddress` | yes     | Address that received the tokens   |
+| `amount`      | `u256`            | no      | Amount transferred in this release |
+
 ## Constructor
 
 ```cairo
-#[constructor]
 fn constructor(
     ref self: ContractState,
     beneficiary: ContractAddress,
@@ -11,57 +41,46 @@ fn constructor(
     duration: u64,
     initial_amount: u256,
     token: ContractAddress,
-)
+) {
+    assert(
+        beneficiary != starknet::contract_address_const::<0>(),
+        Errors::ZERO_BENEFICIARY
+    );
+    self.beneficiary.write(beneficiary);
+    self.start.write(start);
+    self.duration.write(duration);
+    self.token.write(token);
+    // deposit initial balance at creation — deployer must approve first
+    if initial_amount > 0 {
+        let token_dispatcher = IERC20Dispatcher { contract_address: token };
+        let success = token_dispatcher.transfer_from(
+            get_caller_address(),
+            get_contract_address(),
+            initial_amount
+        );
+        assert(success, Errors::TRANSFER_FAILED);
+    }
+}
 ```
 
-Parameters:
+- Deployer must have approved the contract for `initial_amount` tokens before deploying
+- If `initial_amount` is zero no deposit is made — tokens can be sent later via ERC20 transfer
+- `start` is an **absolute** block number — deployer must compute `current_block + offset` off-chain if needed
 
-| Parameter        | Description                       |
-| ---------------- | --------------------------------- |
-| `beneficiary`    | Address receiving vested tokens   |
-| `start`          | Block number when vesting starts  |
-| `duration`       | Number of blocks for full vesting |
-| `initial_amount` | Tokens deposited at deployment    |
-| `token`          | ERC20 token used for vesting      |
-
-Beneficiary, start, and duration are set only in constructor so they are effectively immutable.
-
-Deployment behavior:
-
-- The beneficiary and vesting schedule are set.
-- If `initial_amount > 0`, the deployer transfers tokens to the contract.
-- The deployer must call `approve()` before deployment if tokens are deposited.
-
-Example:
-
-```py
-    token.approve(vesting_address, initial_amount)
-```
-
-# Vesting
-
-The contract uses **linear vesting**:
-
-- Before `start` → **0 tokens vested**
-- Between `start` and `start + duration` → tokens vest gradually
-- After `start + duration` → **100% of tokens vested**
-
-Formula used:
-
-```py
-vested = total_tokens * elapsed_time / duration
-```
-
-Where:
-
-```py
-total_tokens = current_balance + already_released
-```
-
-## Beneficiary Releases
+## Release
 
 ```cairo
-fn release()
+fn release(ref self: ContractState) {
+    assert(get_caller_address() == self.beneficiary.read(), Errors::ONLY_BENEFICIARY);
+    let amount = Self::releasable(@self);
+    assert(amount > 0, Errors::NOTHING_TO_RELEASE);
+    // update released BEFORE transfer — CEI pattern
+    self.released.write(self.released.read() + amount);
+    let token   = IERC20Dispatcher { contract_address: self.token.read() };
+    let success = token.transfer(self.beneficiary.read(), amount);
+    assert(success, Errors::TRANSFER_FAILED);
+    self.emit(Released { beneficiary: self.beneficiary.read(), amount });
+}
 ```
 
 Callable only by the **beneficiary**.
@@ -76,7 +95,9 @@ Actions:
 ## Releasable Amount
 
 ```cairo
-fn releasable() -> u256
+fn releasable(self: @ContractState) -> u256 {
+    Self::vested_amount(self) - self.released.read()
+}
 ```
 
 Returns the number of tokens currently available for withdrawal.
@@ -88,7 +109,27 @@ releasable = vested_amount - released
 ## Total Vested Amount
 
 ```cairo
-fn vested_amount() -> u256
+fn vested_amount(self: @ContractState) -> u256 {
+    let token    = IERC20Dispatcher { contract_address: self.token.read() };
+    let balance  = token.balance_of(get_contract_address());
+    let total    = balance + self.released.read();
+    // mirrors: _vestingSchedule(address(this).balance + _released, timestamp)
+    let current_block = get_block_info().unbox().block_number;
+    let start         = self.start.read();
+    let duration      = self.duration.read();
+    if current_block < start {
+        0
+    } else if current_block > start + duration {
+        total
+    } else {
+        let elapsed: u256 = (current_block - start).into();
+        (total * elapsed) / duration.into()
+    }
+}
 ```
 
-Calculates the total tokens that should be vested according to the schedule.
+Returns the total amount vested so far according to the linear schedule.
+
+- Read-only — no state changes
+- Uses `block_number` as the time reference
+- `total = current_balance + released` — accounts for tokens added after deployment
