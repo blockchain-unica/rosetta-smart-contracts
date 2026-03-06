@@ -31,7 +31,61 @@ pub enum Status {
 - Player1 must deposit **exactly the same amount**
 - Player1’s committed hash must be **different** from Player0’s hash
 
-### Deadlines
+## Storage variables
+
+```cairo
+struct Storage {
+    owner: ContractAddress,
+    token: ContractAddress,
+    player0: ContractAddress,
+    player1: ContractAddress,
+    winner: ContractAddress,
+    hash0: u256,
+    hash1: u256,
+    secret0: ByteArray,
+    secret1: ByteArray,
+    bet_amount: u256,
+    status: Status,
+    end_join: u64,
+    end_reveal: u64,
+}
+```
+
+| Field        | Type              | Description                                            |
+| ------------ | ----------------- | ------------------------------------------------------ |
+| `owner`      | `ContractAddress` | Contract deployer                                      |
+| `token`      | `ContractAddress` | ERC20 token used for bets                              |
+| `player0`    | `ContractAddress` | First player to join                                   |
+| `player1`    | `ContractAddress` | Second player to join                                  |
+| `winner`     | `ContractAddress` | Address of the winner — set by `win()`                 |
+| `hash0`      | `u256`            | `keccak256` commitment from player0                    |
+| `hash1`      | `u256`            | `keccak256` commitment from player1                    |
+| `secret0`    | `ByteArray`       | Revealed secret from player0                           |
+| `secret1`    | `ByteArray`       | Revealed secret from player1                           |
+| `bet_amount` | `u256`            | Bet amount set by player0 — player1 must match exactly |
+| `status`     | `Status`          | Current lifecycle state                                |
+| `end_join`   | `u64`             | Absolute block deadline for player1 to join            |
+| `end_reveal` | `u64`             | Absolute block deadline for both players to reveal     |
+
+## Constructor
+
+```cairo
+fn constructor(
+    ref self: ContractState,
+    token: ContractAddress,
+) {
+    self.owner.write(get_caller_address());
+    self.token.write(token);
+    self.status.write(Status::Join0);
+    let current_block = get_block_info().unbox().block_number;
+    let end_join = current_block + 1000;
+    self.end_join.write(end_join);
+    self.end_reveal.write(end_join + 1000);
+}
+```
+
+- Caller becomes the `owner`
+- Initial status is `Join0`
 
 Deadlines are set at deployment:
 
@@ -50,7 +104,18 @@ Secrets are passed as `ByteArray`(equivalent to string in Cairo), so the commitm
 ## Player0 Joins
 
 ```cairo
-join0(hash: u256, amount: u256)
+fn join0(ref self: ContractState, hash: u256, amount: u256) {
+    assert(self.status.read() == Status::Join0, Errors::WRONG_STATUS);
+    assert(amount > MIN_BET, Errors::BET_TOO_LOW);
+    let caller  = get_caller_address();
+    let token   = IERC20Dispatcher { contract_address: self.token.read() };
+    let success = token.transfer_from(caller, get_contract_address(), amount);
+    assert(success, Errors::TRANSFER_FAILED);
+    self.player0.write(caller);
+    self.hash0.write(hash);
+    self.status.write(Status::Join1);
+    self.bet_amount.write(amount);
+}
 ```
 
 Requirements:
@@ -67,7 +132,18 @@ Actions:
 ## Player1 Joins
 
 ```cairo
-join1(hash: u256, amount: u256)
+fn join1(ref self: ContractState, hash: u256, amount: u256) {
+    assert(self.status.read() == Status::Join1, Errors::WRONG_STATUS);
+    assert(hash != self.hash0.read(), Errors::SAME_HASH);
+    assert(amount == self.bet_amount.read(), Errors::WRONG_AMOUNT);
+    let caller  = get_caller_address();
+    let token   = IERC20Dispatcher { contract_address: self.token.read() };
+    let success = token.transfer_from(caller, get_contract_address(), amount);
+    assert(success, Errors::TRANSFER_FAILED);
+    self.player1.write(caller);
+    self.hash1.write(hash);
+    self.status.write(Status::Reveal0);
+}
 ```
 
 Requirements:
@@ -85,7 +161,14 @@ Actions:
 ## Refund if Player1 Never Joins
 
 ```cairo
-redeem0_nojoin1()
+fn redeem0_nojoin1(ref self: ContractState) {
+    assert(self.status.read() == Status::Join1, Errors::WRONG_STATUS);
+    let current_block = get_block_info().unbox().block_number;
+    assert(current_block > self.end_join.read(), Errors::DEADLINE_NOT_PASSED);
+    self._transfer_all(self.player0.read());
+    self.status.write(Status::End);
+
+}
 ```
 
 Requirements:
@@ -101,7 +184,14 @@ Action:
 ## Player0 Reveals
 
 ```cairo
-reveal0(secret: ByteArray)
+fn reveal0(ref self: ContractState, secret: ByteArray) {
+    assert(self.status.read() == Status::Reveal0, Errors::WRONG_STATUS);
+    assert(get_caller_address() == self.player0.read(), Errors::WRONG_SENDER);
+    let computed_hash = compute_keccak_byte_array(@secret);
+    assert(computed_hash == self.hash0.read(), Errors::WRONG_SECRET);
+    self.secret0.write(secret);
+    self.status.write(Status::Reveal1);
+}
 ```
 
 Requirements:
@@ -118,7 +208,14 @@ Action:
 ## Refund if Player0 Never Reveals
 
 ```cairo
-redeem1_noreveal0()
+fn redeem1_noreveal0(ref self: ContractState) {
+    assert(self.status.read() == Status::Reveal0, Errors::WRONG_STATUS);
+    let current_block = get_block_info().unbox().block_number;
+    assert(current_block > self.end_reveal.read(), Errors::DEADLINE_NOT_PASSED);
+
+    self._transfer_all(self.player1.read());
+    self.status.write(Status::End);
+}
 ```
 
 Requirements:
@@ -134,7 +231,15 @@ Action:
 ## Player1 Reveals
 
 ```cairo
-reveal1(secret: ByteArray)
+fn reveal1(ref self: ContractState, secret: ByteArray) {
+    assert(self.status.read() == Status::Reveal1, Errors::WRONG_STATUS);
+    assert(get_caller_address() == self.player1.read(), Errors::WRONG_SENDER);
+
+    let computed_hash = compute_keccak_byte_array(@secret);
+    assert(computed_hash == self.hash1.read(), Errors::WRONG_SECRET);
+    self.secret1.write(secret);
+    self.status.write(Status::Win);
+}
 ```
 
 Requirements:
@@ -151,7 +256,15 @@ Action:
 ## Refund if Player1 Never Reveals
 
 ```cairo
-redeem0_noreveal1()
+fn redeem0_noreveal1(ref self: ContractState) {
+    assert(self.status.read() == Status::Reveal1, Errors::WRONG_STATUS);
+    let current_block = get_block_info().unbox().block_number;
+    assert(current_block > self.end_reveal.read(), Errors::DEADLINE_NOT_PASSED);
+
+    self._transfer_all(self.player0.read());
+    self.status.write(Status::End);
+
+}
 ```
 
 Requirements:
@@ -167,7 +280,24 @@ Action:
 ## Win
 
 ```cairo
-win()
+fn win(ref self: ContractState) {
+    assert(self.status.read() == Status::Win, Errors::WRONG_STATUS);
+    let l0: u256 = self.secret0.read().len().into();
+    let l1: u256 = self.secret1.read().len().into();
+    // mirrors: if ((l0+l1) % 2 == 0) winner = player0; else winner = player1;
+    let winner = if ((l0 + l1) % 2) == 0 {
+        self.player0.read()
+    } else {
+        self.player1.read()
+    };
+    self.winner.write(winner);
+
+    let token   = IERC20Dispatcher { contract_address: self.token.read() };
+    let balance = token.balance_of(get_contract_address());
+    let success = token.transfer(winner, balance);
+    assert(success, Errors::TRANSFER_FAILED);
+    self.status.write(Status::End);
+}
 ```
 
 Requirements:
