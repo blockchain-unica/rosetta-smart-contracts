@@ -1,9 +1,28 @@
 # HTLC (Hash Time Locked Contract) – Cairo / Starknet
 
+## Storage variables
+
+```cairo
+struct Storage {
+    owner: ContractAddress,       // committer
+    receiver: ContractAddress,    // gets funds if timeout
+    token: ContractAddress,       // ERC20 collateral token
+    hash: u256,                // Poseidon hash of the secret
+    reveal_timeout: u64,          // block number deadline
+}
+```
+
+| Field            | Type              | Description                                                          |
+| ---------------- | ----------------- | -------------------------------------------------------------------- |
+| `owner`          | `ContractAddress` | Caller at deployment — the only one who can reveal the secret        |
+| `receiver`       | `ContractAddress` | Receives all funds if the deadline passes without a reveal           |
+| `token`          | `ContractAddress` | ERC20 token used as collateral                                       |
+| `hash`           | `u256`            | `keccak256` hash of the secret — provided at deployment              |
+| `reveal_timeout` | `u64`             | Absolute block number deadline — computed as `current_block + delay` |
+
 ## Constructor
 
-```py
-#[constructor]
+```cairo
 fn constructor(
     ref self: ContractState,
     receiver: ContractAddress,
@@ -11,7 +30,20 @@ fn constructor(
     delay: u64,
     amount: u256,
     token: ContractAddress,
-)
+) {
+    assert(amount >= MIN_DEPOSIT, Errors::BELOW_MIN_DEPOSIT);
+    let owner = get_caller_address();
+    let current_block = get_block_info().unbox().block_number;
+    self.owner.write(owner);
+    self.receiver.write(receiver);
+    self.token.write(token);
+    self.hash.write(hash);
+    self.reveal_timeout.write(current_block + delay);
+    // Lock collateral immediately at deploy time
+    let token_dispatcher = IERC20Dispatcher { contract_address: token };
+    let success = token_dispatcher.transfer_from(owner, get_contract_address(), amount);
+    assert(success, Errors::TRANSFER_FAILED);
+}
 ```
 
 - Constructor immediately locks collateral.
@@ -46,7 +78,7 @@ require(msg.value >= 1 ether);
 
 ## Reveal
 
-```py
+```cairo
 fn reveal(ref self: ContractState, secret: felt252)
     let caller = get_caller_address();
     assert(caller == self.owner.read(), Errors::ONLY_OWNER);
@@ -74,7 +106,7 @@ Behavior:
 
 ## Timeout
 
-```py
+```cairo
 fn timeout(ref self: ContractState) {
     let current_block = get_block_info().unbox().block_number;
     assert(current_block > self.reveal_timeout.read(), Errors::DEADLINE_NOT_REACHED);
