@@ -1,26 +1,42 @@
 # Crowdfund
 
+## Storage variables
+
+```cairo
+struct Storage {
+        receiver: ContractAddress,
+        goal: u256,
+        end_block: u64,
+        token: ContractAddress,
+        donors: Map<ContractAddress, u256>,
+}
+```
+
+| Field       | Type                         | Description                                                    |
+| ----------- | ---------------------------- | -------------------------------------------------------------- |
+| `receiver`  | `ContractAddress`            | Address that can withdraw funds if the goal is met             |
+| `goal`      | `u256`                       | Target donation amount in ERC20 tokens                         |
+| `end_block` | `u64`                        | Absolute block number after which the campaign closes          |
+| `token`     | `ContractAddress`            | ERC20 token used for donations                                 |
+| `donors`    | `Map<ContractAddress, u256>` | Amount donated per address — used for reclaims if goal not met |
+
 ## Constructor
 
 ```cairo
 #[constructor]
 fn constructor(
     ref self: ContractState,
-    receiver: ContractAddress,
-    end_block: u64,
-    goal: u256,
-    token: ContractAddress,
-)
+    receiver: ContractAddress,          // who receives the funds on success
+    end_block: u64,                     // absolute block number — campaign closes at this block
+    goal: u256,                         // minimum token amount to consider campaign successful
+    token: ContractAddress,             // ERC20 token address
+){
+    self.receiver.write(receiver);
+    self.end_block.write(end_block);
+    self.goal.write(goal);
+    self.token.write(token);
+}
 ```
-
-Parameters:
-
-| Parameter   | Description                                        |
-| ----------- | -------------------------------------------------- |
-| `receiver`  | Address that will receive funds if goal is reached |
-| `end_block` | Block number when the campaign ends                |
-| `goal`      | Minimum funding goal                               |
-| `token`     | ERC20 token used for donations                     |
 
 Deployment effects:
 
@@ -30,7 +46,16 @@ Deployment effects:
 ## Donate
 
 ```cairo
-fn donate(amount: u256)
+fn donate(ref self: ContractState, amount: u256) {
+    let current_block = get_block_info().unbox().block_number;
+    assert(current_block <= self.end_block.read(), Errors::DEADLINE_PASSED);
+    let caller  = get_caller_address();
+    let token   = IERC20Dispatcher { contract_address: self.token.read() };
+    let success = token.transfer_from(caller, get_contract_address(), amount);
+    assert(success, Errors::TRANSFER_FAILED);
+    let prev = self.donors.read(caller);
+    self.donors.write(caller, prev + amount);
+}
 ```
 
 Requirements:
@@ -44,7 +69,7 @@ Actions:
 
 Donors must approve the contract before donating:
 
-```py
+```cairo
     token.approve(crowdfund_address, amount)
     crowdfund.donate(amount)
 ```
@@ -53,8 +78,20 @@ Donors must approve the contract before donating:
 
 ## Withdraw
 
-```py
-fn withdraw()
+```cairo
+fn withdraw(ref self: ContractState) {
+    assert(
+        get_caller_address() == self.receiver.read(),
+        Errors::ONLY_RECEIVER
+    );
+    let current_block = get_block_info().unbox().block_number;
+    assert(current_block >= self.end_block.read(), Errors::DEADLINE_NOT_REACHED);
+    let token   = IERC20Dispatcher { contract_address: self.token.read() };
+    let balance = token.balance_of(get_contract_address());
+    assert(balance >= self.goal.read(), Errors::GOAL_NOT_REACHED);
+    let success = token.transfer(self.receiver.read(), balance);
+    assert(success, Errors::TRANSFER_FAILED);
+}
 ```
 
 Callable only by the **receiver**.
@@ -70,8 +107,20 @@ Actions:
 
 ## Reclaim
 
-```py
-fn reclaim()
+```cairo
+fn reclaim(ref self: ContractState) {
+    let current_block = get_block_info().unbox().block_number;
+    assert(current_block >= self.end_block.read(), Errors::DEADLINE_NOT_REACHED);
+    let token   = IERC20Dispatcher { contract_address: self.token.read() };
+    let balance = token.balance_of(get_contract_address());
+    assert(balance < self.goal.read(), Errors::GOAL_REACHED);
+    let caller = get_caller_address();
+    let amount = self.donors.read(caller);
+    assert(amount > 0, Errors::NOTHING_TO_RECLAIM);
+    self.donors.write(caller, 0);
+    let success = token.transfer(caller, amount);
+    assert(success, Errors::TRANSFER_FAILED);
+}
 ```
 
 Allows donors to reclaim their contributions if the campaign fails.
