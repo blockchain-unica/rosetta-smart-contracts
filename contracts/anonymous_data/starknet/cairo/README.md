@@ -1,6 +1,24 @@
 # Anonymous Data
 
+## Storage variables
+
+```cairo
+struct Storage {
+    stored_data: Map<u256, ByteArray>,
+}
+```
+
+Variable that associates ID to byte array data
+
 ## Get id
+
+```cairo
+fn get_id(self: @ContractState, nonce: u256) -> u256 {
+    let caller: felt252 = get_caller_address().into();
+    let caller_u256: u256 = caller.into();
+    keccak_u256s_be_inputs(array![caller_u256, nonce].span())
+}
+```
 
 Returns the cryptographic ID for the caller, salted with the given nonce.
 
@@ -17,9 +35,16 @@ let id = contract.get_id(42_u256);
 
 ## Store data
 
-Associates binary data with the given ID.
+```cairo
+fn store_data(ref self: ContractState, data: ByteArray, id: u256) {
+    let existing = self.stored_data.read(id);
+    assert(existing.len() == 0, Errors::ALREADY_STORED);
+    self.stored_data.write(id, data);
+}
+```
 
-- `id` should be obtained via `get_id` first
+Associates byte array with the given ID.
+
 - Reverts if data is already stored for that ID
 - Data can be of arbitrary length
 - A user can store multiple entries by using different nonces to generate different IDs
@@ -30,6 +55,15 @@ contract.store_data("my secret data", id);
 ```
 
 ## Get my data
+
+```cairo
+fn get_my_data(self: @ContractState, nonce: u256) -> ByteArray {
+    let caller: felt252 = get_caller_address().into();
+    let caller_u256: u256 = caller.into();
+    let id = keccak_u256s_be_inputs(array![caller_u256, nonce].span());
+    self.stored_data.read(id)
+}
+```
 
 Retrieves the data previously stored under the ID derived from the caller's address and nonce.
 
