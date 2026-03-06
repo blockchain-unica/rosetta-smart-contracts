@@ -8,6 +8,14 @@ pub trait IAuction<TContractState> {
     fn end(ref self: TContractState);
 }
 
+#[derive(Drop, Serde, PartialEq, Copy, starknet::Store)]
+pub enum State {
+    #[default]
+    WaitStart,    // auction has not started yet
+    WaitClosing,  // auction is running, accepting bids
+    Closed,       // auction has ended
+}
+
 #[starknet::contract]
 pub mod Auction {
     use openzeppelin::token::erc20::interface::{IERC20Dispatcher, IERC20DispatcherTrait};
@@ -16,11 +24,7 @@ pub mod Auction {
         StoragePointerReadAccess, StoragePointerWriteAccess,
         Map, StorageMapReadAccess, StorageMapWriteAccess,
     };
-    use super::IAuction;
-
-    const WAIT_START: u8   = 0;
-    const WAIT_CLOSING: u8 = 1;
-    const CLOSED: u8       = 2;
+    use super::{IAuction, State};
 
     #[storage]
     struct Storage {
@@ -57,7 +61,7 @@ pub mod Auction {
         self.token.write(token);
         self.object.write(object);
         self.highest_bid.write(starting_bid);
-        self.state.write(WAIT_START);
+        self.state.write(State::WaitStart);
     }
 
     #[abi(embed_v0)]
@@ -65,15 +69,15 @@ pub mod Auction {
 
         fn start(ref self: ContractState, duration: u64) {
             assert(get_caller_address() == self.seller.read(), Errors::ONLY_SELLER);
-            assert(self.state.read() == WAIT_START, Errors::ALREADY_STARTED);
+            assert(self.state.read() == State::WaitStart, Errors::ALREADY_STARTED);
 
             let current_block = get_block_info().unbox().block_number;
             self.end_block.write(current_block + duration);
-            self.state.write(WAIT_CLOSING);
+            self.state.write(State::WaitClosing);
         }
 
         fn bid(ref self: ContractState, amount: u256) {
-            assert(self.state.read() == WAIT_CLOSING, Errors::NOT_OPEN);
+            assert(self.state.read() == State::WaitClosing, Errors::NOT_OPEN);
 
             let current_block = get_block_info().unbox().block_number;
             assert(current_block < self.end_block.read(), Errors::BIDDING_EXPIRED);
@@ -105,7 +109,7 @@ pub mod Auction {
         }
 
         fn withdraw(ref self: ContractState) {
-            assert(self.state.read() != WAIT_START, Errors::NOT_STARTED);
+            assert(self.state.read() != State::WaitStart, Errors::NOT_STARTED);
 
             let caller = get_caller_address();
             let bal    = self.bids.read(caller);
@@ -120,12 +124,12 @@ pub mod Auction {
 
         fn end(ref self: ContractState) {
             assert(get_caller_address() == self.seller.read(), Errors::ONLY_SELLER);
-            assert(self.state.read() == WAIT_CLOSING, Errors::NOT_STARTED);
+            assert(self.state.read() == State::WaitClosing, Errors::NOT_STARTED);
 
             let current_block = get_block_info().unbox().block_number;
             assert(current_block >= self.end_block.read(), Errors::AUCTION_NOT_ENDED);
 
-            self.state.write(CLOSED);
+            self.state.write(State::Closed);
 
             let highest_bid    = self.highest_bid.read();
             let token          = IERC20Dispatcher { contract_address: self.token.read() };
