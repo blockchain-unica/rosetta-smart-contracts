@@ -39,3 +39,4 @@ Details on the comparison between different smart contract languages are availab
 - [Fe](https://fe-lang.org/) (Ethereum)
 - [Vyper](https://docs.vyperlang.org/en/stable/) (Ethereum)
 - [Cairo](https://www.cairo-lang.org/) (StarkNet)
+- [Leo](https://docs.leo-lang.org/leo) (Aleo)
