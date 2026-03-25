@@ -32,3 +32,4 @@ After creation, the following actions are possible:
 - **Fe/Ethereum**: implementation similar to Solidity. The join is split in two actions.
 - **Vyper/Ethereum**: implementation similar to Solidity. The join is split in two actions.
 - **Cairo/Starknet**: implementation similar to Solidity. The join is split in two actions. There is no native token so it uses ERC-20
+- **Leo/Aleo**: the join is split in two actions, the first player acts first; deployment and initialization are separate steps; the timeout requires two separate transactions, one per player.
