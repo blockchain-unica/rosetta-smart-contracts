@@ -34,3 +34,4 @@ the ERC20's `approve` function to specify the address of the contract.
 - **Move/Aptos**: implementation coherent with the specification.
 - **Move/IOTA**: implementation coherent with the specification.
 - **Fe/Ethereum**: the token is implemented by creating a contract "ERC20" within the main.fe file.
+- **Cairo/Starknet**: the implementation is similar to SimpleTransfer use case.
