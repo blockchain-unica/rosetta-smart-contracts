@@ -20,7 +20,7 @@ program simple_transfer.aleo {
         assert(recipient.unwrap_or(aleo1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq3ljyzc) == aleo1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq3ljyzc);
         owner = owner_;
         recipient = recipient_;
-        balance = 0;
+        balance = 0u64;
     }
 
     async transition deposit(amount_: u64) -> Future {
