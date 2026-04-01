@@ -27,3 +27,4 @@ After contract creation, the contract supports two actions:
 - **Move/IOTA**: implementation coherent with the specification.
 - **Fe/Ethereum**: implementation coherent with the specification.
 - **Cairo/Starknet**: implementation coherent with the specification.
+- **Leo/Aleo**: implementation coherent with the specification.
