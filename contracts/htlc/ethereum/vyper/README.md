@@ -1,4 +1,4 @@
-# HTLC
+# HTLC in Vyper
 
 ## State variables
 
