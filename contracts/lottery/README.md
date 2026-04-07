@@ -41,4 +41,3 @@ If the platform does not support multisig transactions, then step 1 is split in 
 - **Move/Aptos**: ---
 - **Move/IOTA**: implementation coherent with the specification.
 - **Fe/Ethereum**: does not support multi-signature verification. Hash was implemented with a version of keccak256() that is different from Solidity.
-- **Vyper/Ethereum**: a single join function handles the registration for both players. The join phase is still divided in two actions (no multisig transactions). 
