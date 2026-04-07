@@ -33,3 +33,4 @@ After creation, the contract supports the following actions:
 - **Move/IOTA**: in the bid function if a higher bid is made than the previous one, the previeus bid is sent back to the sender; the withdraw function does not exist.
 - **Fe/Ethereum**: implementation coherent with the specification. Enums have been handled differently than in Solidity.
 - **Vyper/Ethereum**: implementation is similar to Solidity, but rebidding requires a manual withdrawal step. This is because Vyper does not allow calling external functions defined in the contract from within that same contract.
+- **Cairo/Starknet**: implementation coherent with the specification.
