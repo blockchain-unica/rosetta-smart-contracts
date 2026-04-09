@@ -33,4 +33,5 @@ After contract creation, the contract supports two actions:
 - **Fe/Ethereum**: many types have been adjusted to make it work with the Fe implementation of keccak256() of fe that is very different from Solidity's.
 - **Vyper/Ethereum**: in contrast to Solidity, which supports unbounded dynamic types such as string and dynamic arrays, Vyper enforces compile-time bounds on all dynamic data structures. Types like String, Bytes, and DynArray require a maximum size to be specified, ensuring predictable storage layout and gas costs.
 - **Cairo/Starknet**: implementation coherent with the specification.
+- **Leo/Aleo**: implementation coherent with the specification.
 
