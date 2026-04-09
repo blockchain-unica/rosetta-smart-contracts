@@ -32,3 +32,4 @@ After contract creation, the contract supports two actions:
 - **Move/IOTA**: implementation coherent with the specification.
 - **Fe/Ethereum**: many types have been adjusted to make it work with the Fe implementation of keccak256() of fe that is very different from Solidity's.
 - **Cairo/Starknet**: implementation coherent with the specification.
+- **Leo/Aleo**: implementation coherent with the specification.
