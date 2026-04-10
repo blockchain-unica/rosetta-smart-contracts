@@ -32,3 +32,4 @@ Once the deposit action has been performed, exactly one of the following actions
 - **Fe/Ethereum**: implementation coherent with the specification, some adjustments were made to make Enums work.
 - **Vyper/Ethereum**: implementation coherent with the specification.
 - **Cairo/Starknet**: implementation coherent with the specification.
+- **Leo/Aleo**: implementation coherent with the specification.
