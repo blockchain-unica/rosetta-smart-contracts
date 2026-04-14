@@ -8,9 +8,9 @@ This is an implementation of the **Simple Transfer contract** on the [Aleo](http
  
 The implementation is coherent with the specification. Deployment and initialization are separate steps, as Aleo does not support a deploy-time constructor for state initialization, the `constructor` keyword in Leo serves only to define the upgrade policy (set to `@noupgrade` here).
  
-The contract maintains an internal `balance` storage variable to track the deposited amount. This is necessary because the contract cannot read `credits.aleo/account` (the actual on-chain balance) during the off-chain `async transition` phase. As a consequence, only funds deposited through the `deposit` function are tracked, any direct transfer to the contract address would not be reflected in `balance`.
+The contract maintains an internal `balance` storage variable to track the deposited amount. This is necessary because the contract cannot read `credits.aleo::account` (the actual on-chain balance) during the off-chain execution phase of a `fn`. As a consequence, only funds deposited through the `deposit` function are tracked, any direct transfer to the contract address would not be reflected in `balance`.
  
-Due to the async/transition model, the `amount_` to deposit or withdraw must be passed explicitly as a parameter by the caller, since storage is not accessible in the off-chain execution phase. The on-chain `async function` then verifies the provided value against stored state.
+Due to the fn/final model, the `amount_` to deposit or withdraw must be passed explicitly as a parameter by the caller, since storage is not accessible in the off-chain execution phase. The `final { }` block then verifies the provided value against stored state.
  
 ## Contract Design
  
@@ -47,4 +47,3 @@ On-chain checks:
 - Caller must be the stored `recipient`.
 - `amount_` must be greater than 0.
 - `balance` must be ≥ `amount_`.
- 

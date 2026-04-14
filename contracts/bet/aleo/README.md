@@ -13,24 +13,27 @@ The contract involves two players and a trusted oracle. Each player deposits a w
 Leo is a statically typed programming language, inspired by Rust, designed for writing zero-knowledge programs on the Aleo blockchain. Aleo's core principle is programmable privacy: computations are performed off-chain and verified on-chain using zero-knowledge proofs (ZKPs), meaning sensitive data must never be exposed publicly.
 This impacts contract implementations.
 
-### The Async/Transition Model
+### The fn/final Model
 
 The most distinctive architectural feature of Leo (and the one with the greatest impact on smart contract design) is the strict separation between **off-chain** and **on-chain** execution:
 
-- **`async transition`**: Executes off-chain on the user's machine. It generates a ZK proof of the computation. This is where external calls (e.g., token transfers) are initiated and where inputs can remain **private**.
-- **`async function`** (finalize block): Executes on-chain by the network validators. It has access to persistent on-chain storage (mappings and storage variables) but cannot access private data. All inputs to this block are **public**.
+- **`fn`** (entry function): Executes off-chain on the user's machine. It generates a ZK proof of the computation. This is where external calls (e.g., token transfers) are initiated and where inputs can remain **private**.
+- **`final { }`** block: Executes on-chain by the network validators. It has access to persistent on-chain storage (mappings and storage variables) but cannot access private data. All inputs to this block are **public**.
 
-This separation has a major practical implication: **storage variables can only be read inside the `async function`**, not inside the `async transition`. This means that any value needed for an off-chain computation (e.g., the amount to transfer) must be passed explicitly as a parameter by the caller, and then verified on-chain against the stored state. 
+This separation has a major practical implication: **storage variables can only be read inside the `final { }` block**, not in the off-chain part of the `fn`. This means that any value needed for an off-chain computation (e.g., the amount to transfer) must be passed explicitly as a parameter by the caller, and then verified on-chain against the stored state. 
 This is a fundamental difference compared to most smart contract languages.
+
+Note that `self.signer` cannot be used directly inside a `final { }` block — it must be bound to a variable before the block:
+
 
 ### Native Token Transfers
 
 Aleo uses `credits.aleo` as the standard program for its native token. Two key functions are used in this contract:
 
-- **`credits.aleo/transfer_public_as_signer`**: Transfers tokens **from the transaction signer** (i.e., the player calling the function) to a recipient. Used when players deposit their wager.
-- **`credits.aleo/transfer_public`**: Transfers tokens **from the contract's own public balance** to a recipient. Used when paying out the winner or refunding players.
+- **`credits.aleo::transfer_public_as_signer`**: Transfers tokens **from the transaction signer** (i.e., the player calling the function) to a recipient. Used when players deposit their wager.
+- **`credits.aleo::transfer_public`**: Transfers tokens **from the contract's own public balance** to a recipient. Used when paying out the winner or refunding players.
 
-Both calls return a `Future` that must be passed to the `async function` and explicitly `await`-ed, ensuring atomicity: if any on-chain assertion fails, the entire transaction is reverted.
+Both calls return a `Final` that must be run inside the `final { }` block with `.run()`, ensuring atomicity: if any on-chain assertion fails, the entire transaction is reverted.
 
 ### Storage Variables vs. Mappings
 
@@ -57,7 +60,7 @@ Since ConsensusVersion V9, every Leo program deployed on Aleo **must include a c
 
 ```leo
 @noupgrade
-async constructor() {}
+constructor() {}
 ```
 
 ## Contract Design
@@ -112,9 +115,9 @@ On-chain checks:
  
 Called by the **oracle** to declare the winner and transfer the full pot to the winner's address. The transfer is initiated off-chain via `transfer_public`, which draws from the contract's own public balance.
  
-**Why `winner_addr` and `pot` are parameters:** the oracle must read `player1`, `player2`, and `wager` from the public chain state (e.g., via the REST API) before submitting the transaction, and pass these values explicitly. The `async transition` cannot read storage, so it cannot determine the winner's address or the pot amount on its own. The `async function` then verifies that the provided values match what is stored on-chain, making the caller's inputs trustless.
+**Why `winner_addr` and `pot` are parameters:** the oracle must read `player1`, `player2`, and `wager` from the public chain state (e.g., via the REST API) before submitting the transaction, and pass these values explicitly. The off-chain part of the `fn` cannot read storage, so it cannot determine the winner's address or the pot amount on its own. The `final { }` block then verifies that the provided values match what is stored on-chain, making the caller's inputs trustless.
  
-The `winner` parameter (0 or 1) is an index: 0 selects `player1`, 1 selects `player2`. This avoids exposing addresses in the transition inputs while still being verifiable on-chain.
+The `winner` parameter (0 or 1) is an index: 0 selects `player1`, 1 selects `player2`. This avoids exposing addresses in the off-chain inputs while still being verifiable on-chain.
  
 On-chain checks:
 - Caller must be the stored `oracle`.
@@ -128,9 +131,9 @@ On-chain checks:
  
 Called by **either player** after the deadline has passed to reclaim their individual wager. Each player must submit a separate transaction. The `redeemer` storage variable tracks who has already claimed, preventing double-spending.
  
-**Why `bet_amount` is a parameter:** the transfer back to the caller is initiated off-chain via `transfer_public`. Since the `async transition` cannot read the stored `wager`, the caller must pass the amount they expect to receive. The `async function` verifies this against the stored value.
+**Why `bet_amount` is a parameter:** the transfer back to the caller is initiated in the off-chain part of the `fn` via `transfer_public`. Since storage is not readable there, the caller must pass the amount they expect to receive. The `final { }` block verifies this against the stored value.
  
-**Why two separate transactions instead of one:** in Solidity or Vyper, a single `timeout` call can refund both players atomically. In Aleo, a single `transfer_public` call can only send to one recipient (the signer of the transition). Sending to two different addresses would require two separate `transfer_public` calls, each generating its own Future — which would require two `await` calls in sequence. While this is technically possible, it raises a practical issue: the contract cannot know at transition time whether `player2` has joined, since storage is not readable off-chain. The chosen design (one transaction per player), avoids this problem entirely.
+**Why two separate transactions instead of one:** in Solidity or Vyper, a single `timeout` call can refund both players atomically. In Aleo, a single `transfer_public` call can only send to one recipient (the signer of the function). Sending to two different addresses would require two separate `transfer_public` calls, each generating its own `Final` — which would require two `.run()` calls in sequence. While this is technically possible, it raises a practical issue: the contract cannot know at the off-chain execution stage whether `player2` has joined, since storage is not readable there. The chosen design (one transaction per player), avoids this problem entirely.
 
 On-chain checks:
 - Current block height must be > `deadline`.

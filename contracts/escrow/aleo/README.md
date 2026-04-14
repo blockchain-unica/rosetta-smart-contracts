@@ -8,7 +8,7 @@ The implementation is coherent with the specification. Deployment and initializa
 
 The contract uses two boolean storage variables, `deposit_done` and `pay_or_refund_done`, to track the contract state and enforce the correct sequence of actions.
 
-Due to the async/transition model, `seller_`, `buyer_`, and `amount_` must be passed explicitly as parameters in `pay` and `refund`, since transfers must be initiated off-chain where storage is not readable. The `async function` then verifies these values against stored state.
+Due to the fn/final model, `seller_`, `buyer_`, and `amount_` must be passed explicitly as parameters in `pay` and `refund`, since transfers must be initiated in the off-chain part of the `fn` where storage is not readable. The `final { }` block then verifies these values against stored state.
 
 ---
 

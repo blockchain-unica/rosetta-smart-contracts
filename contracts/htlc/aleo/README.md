@@ -16,7 +16,7 @@ The implementation is coherent with the specification. Deployment and initializa
 
 ### Parameter Design
 
-Due to the async/transition model, `collateral_` and `verifier_` must be passed explicitly as parameters in `timeout`, and `collateral_` in `reveal`, since the transfers must be initiated off-chain where storage is not readable. The `async function` then verifies these values against stored state.
+Due to the fn/final model, `collateral_` and `verifier_` must be passed explicitly as parameters in `timeout`, and `collateral_` in `reveal`, since the transfers must be initiated in the off-chain part of the `fn` where storage is not readable. The `final { }` block then verifies these values against stored state.
 
 ### `timeout` Can Be Called by Anyone
 
@@ -61,7 +61,6 @@ On-chain checks:
 #### `timeout(collateral_, verifier_)`
 
 Called by **anyone** after the deadline to transfer the collateral to the verifier.
-
 
 On-chain checks:
 - `owner` must not be the zero address (contract must be initialized).

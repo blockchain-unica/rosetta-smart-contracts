@@ -6,67 +6,62 @@ program escrow.aleo {
     storage buyer: address;
     storage required_amount: u64;
     storage deposit_done: bool;
-    storage pay_or_refund_done :bool;
-    
-   
+    storage pay_or_refund_done: bool;
+
     @noupgrade
-    async constructor() {}
+    constructor() {}
 
-    async transition initialize(buyer_:address, required_amount_: u64) -> Future{
-        return finalize_initialize(self.signer,buyer_,required_amount_);
+    fn initialize(buyer_: address, required_amount_: u64) -> Final {
+        let caller: address = self.signer;
+        return final {
+            assert(seller.unwrap_or(aleo1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq3ljyzc) == aleo1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq3ljyzc);
+            assert(buyer.unwrap_or(aleo1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq3ljyzc) == aleo1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq3ljyzc);
+            seller = caller;
+            buyer = buyer_;
+            required_amount = required_amount_;
+            deposit_done = false;
+            pay_or_refund_done = false;
+        };
     }
 
-    async function finalize_initialize(seller_: address, buyer_:address,required_amount_: u64){
-        assert(seller.unwrap_or(aleo1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq3ljyzc) == aleo1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq3ljyzc);
-        assert(buyer.unwrap_or(aleo1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq3ljyzc) == aleo1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq3ljyzc);
-        seller = seller_;
-        buyer = buyer_;
-        required_amount = required_amount_;
-        deposit_done = false;
-        pay_or_refund_done = false;
+    fn deposit(amount_: u64) -> Final {
+        let caller: address = self.signer;
+        let f: Final = credits.aleo::transfer_public_as_signer(self.address, amount_);
+        return final {
+            assert(!deposit_done.unwrap_or(false));
+            assert(seller.unwrap_or(aleo1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq3ljyzc) != aleo1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq3ljyzc);
+            assert(caller == buyer.unwrap_or(aleo1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq3ljyzc));
+            assert(amount_ == required_amount.unwrap_or(0u64));
+            f.run();
+            deposit_done = true;
+        };
     }
 
-    async transition deposit(amount_: u64) -> Future {
-        let f: Future = credits.aleo/transfer_public_as_signer(self.address,amount_);
-        return finalize_deposit(f,self.signer,amount_);
+    fn pay(seller_: address, amount_: u64) -> Final {
+        let caller: address = self.signer;
+        let f: Final = credits.aleo::transfer_public(seller_, amount_);
+        return final {
+            assert(deposit_done.unwrap_or(false));
+            assert(!pay_or_refund_done.unwrap_or(false));
+            assert(caller == buyer.unwrap_or(aleo1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq3ljyzc));
+            assert(seller_ == seller.unwrap_or(aleo1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq3ljyzc));
+            assert(amount_ == required_amount.unwrap_or(0u64));
+            f.run();
+            pay_or_refund_done = true;
+        };
     }
 
-    async function finalize_deposit(f: Future, buyer_: address, amount_: u64){
-        assert(!deposit_done.unwrap_or(false));
-        assert(seller.unwrap_or(aleo1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq3ljyzc) != aleo1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq3ljyzc);
-        assert(buyer_ == buyer.unwrap_or(aleo1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq3ljyzc));
-        assert(amount_ == required_amount.unwrap_or(0u64));
-        f.await();
-        deposit_done = true;
-    }
-
-    async transition pay(seller_: address,amount_: u64) -> Future {
-        let f: Future = credits.aleo/transfer_public(seller_,amount_);
-        return finalize_pay(f,self.signer,seller_,amount_);
-    }
-
-    async function finalize_pay(f: Future, buyer_: address, seller_:address, amount_: u64){
-        assert(deposit_done.unwrap_or(false));
-        assert(!pay_or_refund_done.unwrap_or(false));
-        assert(buyer_ == buyer.unwrap_or(aleo1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq3ljyzc));
-        assert(seller_ == seller.unwrap_or(aleo1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq3ljyzc));
-        assert(amount_ == required_amount.unwrap_or(0u64));
-        f.await();
-        pay_or_refund_done = true;
-    }
-
-    async transition refund(buyer_: address,amount_: u64) -> Future {
-        let f: Future = credits.aleo/transfer_public(buyer_,amount_);
-        return finalize_refund(f,self.signer,buyer_,amount_);
-    }
-
-    async function finalize_refund(f: Future, seller_: address, buyer_:address, amount_: u64){
-        assert(deposit_done.unwrap_or(false));
-        assert(!pay_or_refund_done.unwrap_or(false));
-        assert(seller_ == seller.unwrap_or(aleo1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq3ljyzc));
-        assert(buyer_ == buyer.unwrap_or(aleo1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq3ljyzc));
-        assert(amount_ == required_amount.unwrap_or(0u64));
-        f.await();
-        pay_or_refund_done = true;
+    fn refund(buyer_: address, amount_: u64) -> Final {
+        let caller: address = self.signer;
+        let f: Final = credits.aleo::transfer_public(buyer_, amount_);
+        return final {
+            assert(deposit_done.unwrap_or(false));
+            assert(!pay_or_refund_done.unwrap_or(false));
+            assert(caller == seller.unwrap_or(aleo1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq3ljyzc));
+            assert(buyer_ == buyer.unwrap_or(aleo1qqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq3ljyzc));
+            assert(amount_ == required_amount.unwrap_or(0u64));
+            f.run();
+            pay_or_refund_done = true;
+        };
     }
 }
