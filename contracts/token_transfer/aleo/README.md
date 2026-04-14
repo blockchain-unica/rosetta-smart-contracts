@@ -14,7 +14,7 @@ This is analogous to how ERC-20 works on Ethereum, but instead of each token bei
 
 ### Token Lifecycle
 
-1. **Register**: anyone can register a new token by calling `token_registry.aleo/register_token` with a unique `token_id`, name, symbol, decimals, and max supply.
+1. **Register**: anyone can register a new token by calling `token_registry.aleo::register_token` with a unique `token_id`, name, symbol, decimals, and max supply.
 2. **Mint**: the token admin mints tokens to recipients via `mint_public` or `mint_private`.
 3. **Transfer**: tokens are transferred via `transfer_public`, `transfer_public_as_signer`.
 
@@ -77,21 +77,17 @@ The contract is coherent with the specification. The owner specifies the recipie
 
 ### The `token_id` Parameter Problem
 
-Due to the async/transition model, `token_id` must be passed explicitly as a parameter in `deposit` and `withdraw`, even though it is already stored in the contract's storage. This is because `transfer_public_as_signer` and `transfer_public` must be called in the off-chain `async transition`, where storage is not readable. The `async function` then verifies that the provided `token_id` matches the stored one.
+Due to the fn/final model, `token_id` must be passed explicitly as a parameter in `deposit` and `withdraw`, even though it is already stored in the contract's storage. This is because `transfer_public_as_signer` and `transfer_public` must be called in the off-chain part of the `fn`, where storage is not readable. The `final { }` block then verifies that the provided `token_id` matches the stored one.
 
 This is the same architectural constraint described in the Bet contract README.
 
 ### Internal Balance Tracking
 
-The contract maintains an internal `balance: u128` storage variable. This mirrors the approach used in `simple_transfer`, it is necessary because the contract cannot read the `token_registry.aleo/balances` mapping directly in the off-chain transition phase.
+The contract maintains an internal `balance: u128` storage variable. This mirrors the approach used in `simple_transfer`, it is necessary because the contract cannot read the `token_registry.aleo::balances` mapping directly in the off-chain execution phase.
 
 ---
 
 ## Contract Design
-
-### Imports
-
-This contract imports `token_registry.aleo` as an external dependency. 
 
 ### State
 
@@ -114,9 +110,9 @@ On-chain checks:
 
 #### `deposit(amount_, token_id_)`
 
-Called by the **owner** to deposit `amount_` tokens into the contract via `token_registry.aleo/transfer_public_as_signer`. The internal `balance` is incremented accordingly.
+Called by the **owner** to deposit `amount_` tokens into the contract via `token_registry.aleo::transfer_public_as_signer`. The internal `balance` is incremented accordingly.
 
-**Why `token_id_` is a parameter:** the transfer to `token_registry.aleo` must be initiated off-chain in the `async transition`, before storage is readable. The `async function` verifies that the provided `token_id_` matches the stored `token_id`.
+**Why `token_id_` is a parameter:** the transfer to `token_registry.aleo` must be initiated in the off-chain part of the `fn`, before storage is readable. The `final { }` block verifies that the provided `token_id_` matches the stored `token_id`.
 
 On-chain checks:
 - Caller must be the stored `owner`.
@@ -124,7 +120,7 @@ On-chain checks:
 
 #### `withdraw(amount_, token_id_)`
 
-Called by the **recipient** to withdraw `amount_` tokens from the contract via `token_registry.aleo/transfer_public`. The internal `balance` is decremented accordingly.
+Called by the **recipient** to withdraw `amount_` tokens from the contract via `token_registry.aleo::transfer_public`. The internal `balance` is decremented accordingly.
 
 **Why `token_id_` is a parameter:** same reason as `deposit`.
 
@@ -139,4 +135,3 @@ On-chain checks:
 ## Running the Contract
 
 This contract requires `token_registry.aleo` to be deployed on the target network. It is available on the Aleo testnet but not on a local devnet.
-
