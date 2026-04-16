@@ -34,3 +34,4 @@ After creation, the contract supports the following actions:
 - **Fe/Ethereum**: implementation coherent with the specification. Enums have been handled differently than in Solidity.
 - **Vyper/Ethereum**: implementation is similar to Solidity, but rebidding requires a manual withdrawal step. This is because Vyper does not allow calling external functions defined in the contract from within that same contract.
 - **Cairo/Starknet**: implementation coherent with the specification.
+- **Leo/Aleo**: rebidding requires a manual withdrawal step, as Leo cannot perform two transfers in the same fn. If no bids are placed before the deadline, end does not need to be called since the contract has no balance to transfer.
