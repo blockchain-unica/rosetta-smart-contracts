@@ -31,3 +31,4 @@ Once the vault contract have been created, it supports the following actions:
 - **Move/IOTA**: implementation coherent with the specification.
 - **Fe/Ethereum**: implementation coherent with the specification.
 - **Cairo/Starknet**: implementation coherent with the specification.
+- **Leo/Aleo**: implementation coherent with the specification.
