@@ -32,3 +32,4 @@ After creation, the contract supports the following action:
 - **Move/Aptos**: implementation coherent with the specification.
 - **Move/IOTA**: implementation coherent with the specification.
 - **Fe/Ethereum**: immutable variables are not supported, const is not implemented yet.
+- **Leo/Aleo**: the beneficiary must pass the exact amount to release as a parameter; the contract verifies it against the vested formula on-chain, which can cause the exact-match assertion to fail if blocks advance between client calculation and transaction processing.
