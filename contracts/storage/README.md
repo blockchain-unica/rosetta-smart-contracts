@@ -22,3 +22,4 @@ After contract creation, the contract supports two actions:
 - **Move/Aptos**: implementation coherent with the specification.
 - **Move/IOTA**: implementation coherent with the specification.
 - **Fe/Ethereum**: dynamic arrays not supported. The implementation **does not** allow arbitrary-size byte sequences and strings.
+- **Leo/Aleo**: dynamic arrays not supported. The implementation stores byte sequences and strings of up to 512 bytes each, using fixed-size arrays padded with zeros and a separate length field.
