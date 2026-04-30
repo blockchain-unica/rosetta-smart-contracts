@@ -34,3 +34,5 @@ After creation, the following actions are possible:
 - **Move/IOTA**: implementation coherent with the specification.
 - **Fe/Ethereum**: implementation coherent with the specification. Contract-to-contract call was achieved via Ingot (which can be interpreted as a workaround).
 - **Cairo/Starknet**: implementation similar to Solidity.
+- **Leo/Aleo**: implementation coherent with the specification.
+
