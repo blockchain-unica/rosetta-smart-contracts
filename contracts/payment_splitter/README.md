@@ -30,3 +30,4 @@ After creation, the contract supports the following actions:
 - **Fe/Ethereum**: since Fe does not support dynamic arrays, it requires the amount of payees and shares to be set permanently at deploy time, and also requires the deploy to exactly contain the exact amount of elements of said array in each array.
 - **Vyper/Ethereum**: Vyper requires dynamic arrays to have a maximum length defined at compile time. Aside from this constraint, the implementation is similar to Solidity.
 - **Cairo/Starknet**: implementation similar to Solidity.
+- **Leo/Aleo**: implementation coherent with the specification, with the maximum number of shareholders fixed to 10 at compile time, since Leo does not support dynamic arrays or loops with runtime bounds.
