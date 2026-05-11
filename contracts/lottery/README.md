@@ -42,3 +42,4 @@ If the platform does not support multisig transactions, then step 1 is split in 
 - **Move/IOTA**: implementation coherent with the specification.
 - **Fe/Ethereum**: does not support multi-signature verification. Hash was implemented with a version of keccak256() that is different from Solidity.
 - **Vyper/Ethereum**: a single join function handles the registration for both players. The join phase is still divided in two actions (no multisig transactions). 
+- **Leo/Aleo**: implementation coherent with the specification, with the join phase split into two separate actions since Aleo does not support multi-signature verification. The fairness function is derived from a Poseidon2 hash of the two secrets' sum.
