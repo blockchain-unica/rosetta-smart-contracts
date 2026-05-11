@@ -47,4 +47,4 @@ maintain the integrity of the exchange.
 - **Move/Aptos**:
 - **Fe/Ethereum**:
 - **Vyper/Ethereum**: implementation is similar to Solidity, but Vyper requires more explicit handling of low-level details, such as manual ABI encoding, calldata construction, and decoding of return values when interacting with ERC20 contracts.
-
+- **Leo/Aleo**: implementation coherent with the specification.
