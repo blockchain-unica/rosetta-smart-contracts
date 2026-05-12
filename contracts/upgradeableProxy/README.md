@@ -39,3 +39,4 @@ with the address of the Caller contract as an argument.  
 SmartPy has no anonymous functions and no delegate calls and the workaround consists of the Proxy emulating the expected behavior by using a function that has the same name as the target function in Logic.
 - **Move/Aptos**: cannot be implemented.
 - **Fe/Ethereum**: implementation of the Upgradeable Proxy is more high level and there are some limitations. The Logic contract that can be upgraded is treated as a Fe Ingot (meaning signatures of functions can't change)
+- **Leo/Aleo**: Aleo natively supports upgradability of contracts and requires no proxy.
