@@ -59,3 +59,4 @@ Using validDelegate, this action verifies that the delegation is valid within th
 - **SmartPy/Tezos**:
 - **Move/Aptos**:
 - **Fe/Ethereum**: dynamic data structures not supported. Hash creation was simplified to comply with Fe limitations.
+- **Leo/Aleo**: implementation coherent with the specification, plus an additional fully-private pattern.
