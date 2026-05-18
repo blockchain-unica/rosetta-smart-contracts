@@ -37,7 +37,7 @@ If the platform does not support multisig transactions, then step 1 is split in 
 - **Anchor/Solana**: implementation coherent with the specification.
 - **Aiken/Cardano**: ---
 - **PyTeal/Algorand**: ---
-- **SmartPy/Tezos**: ---
+- **SmartPy/Tezos**: implementation coherent with the specification.
 - **Move/Aptos**: ---
 - **Move/IOTA**: implementation coherent with the specification.
 - **Fe/Ethereum**: does not support multi-signature verification. Hash was implemented with a version of keccak256() that is different from Solidity.
