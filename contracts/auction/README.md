@@ -28,7 +28,7 @@ After creation, the contract supports the following actions:
 - **Anchor/Solana**: Previous bidders are not stored, the contract sends the currency back to the previous bidder in the same transaction in which the new bid is made. 
 - **Aiken/Cardano**: differently from the Solidity implementation, the withdraw action returns only one outbid at a time as this action must be called on the single outbid UTXO. To collect the whole balance, it is necessary to insert all the outbid UTXOs in the same transaction. 
 - **PyTeal/Algorand**: implementation coherent with the specification.
-- **SmartPy/Tezos**: implementation coherent with the specification.
+- **SmartPy/Tezos**: implementation coherent with the specification. When an already-outbid user bids again, the contract internally triggers its own `withdraw` entrypoint; this is a Tezos/SmartPy-specific way to reuse logic.
 - **Move/Aptos**: current bid is not sent to the contract but rather stored on chain. Bid can be any asset type. Each bidder refunds the previous one; the withdraw function does not exist.
 - **Move/IOTA**: in the bid function if a higher bid is made than the previous one, the previeus bid is sent back to the sender; the withdraw function does not exist.
 - **Fe/Ethereum**: implementation coherent with the specification. Enums have been handled differently than in Solidity.
