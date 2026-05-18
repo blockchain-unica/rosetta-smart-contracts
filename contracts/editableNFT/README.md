@@ -35,3 +35,4 @@ Owner2 seals a token by passing the token ID of the token he wants to seal.
 - **SmartPy/Tezos**:
 - **Move/Aptos**:
 - **Fe/Ethereum**: the token is implemented by creating a custom ERC20 contract that is used as a token.
+- **Leo/Aleo**: implementation coherent with the specification, with a record-based design that makes ownership, data, token IDs, and sealed state all private by default. 
