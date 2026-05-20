@@ -27,3 +27,4 @@ Once the contract is deployed, it supports the following actions:
 - **SmartPy/Tezos**:
 - **Move/Aptos**: not implemented, since transaction batches are natively supported by the platform.
 - **Fe/Ethereum**: dynamic arrays not supported. Not implemented, the language lacks a substitute for Solidity's delegatecall() function or is not documented.
+- **Leo/Aleo**: not implemented, since transaction batches are natively supported by the platform, both at the snarkVM execution level and through the JavaScript SDK. Leo lacks dynamic arrays and delegatecall equivalent.
