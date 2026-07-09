@@ -27,6 +27,7 @@ After creation, the contract supports the following actions:
 - **Solidity/Ethereum**: implementation coherent with the specification.
 - **Anchor/Solana**: Previous bidders are not stored, the contract sends the currency back to the previous bidder in the same transaction in which the new bid is made. 
 - **Aiken/Cardano**: differently from the Solidity implementation, the withdraw action returns only one outbid at a time as this action must be called on the single outbid UTXO. To collect the whole balance, it is necessary to insert all the outbid UTXOs in the same transaction. 
+- **Scalus/Cardano**: each auction instance is parameterized by a one-shot UTxO, giving it a unique policy ID. The minted NFT represents the auctioned item. The datum tracks the seller, highest bidder, current bid, end time, and item ID.
 - **PyTeal/Algorand**: implementation coherent with the specification.
 - **SmartPy/Tezos**: implementation coherent with the specification.
 - **Move/Aptos**: current bid is not sent to the contract but rather stored on chain. Bid can be any asset type. Each bidder refunds the previous one; the withdraw function does not exist.

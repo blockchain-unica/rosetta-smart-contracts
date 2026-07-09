@@ -33,6 +33,7 @@ Details on the comparison between different smart contract languages are availab
 - [Rust](https://solana.com/docs/programs/lang-rust) (Solana)
 - [Anchor](https://www.anchor-lang.com/) (Solana)
 - [Aiken](https://aiken-lang.org/) (Cardano)
+- [Scalus](https://scalus.org/) (Cardano)
 - [PyTEAL](https://pyteal.readthedocs.io/en/stable/) (Algorand)
 - [SmartPy](https://smartpy.io/) (Tezos)
 - [Move](https://move-language.github.io/move/) (Aptos, Sui, IOTA)

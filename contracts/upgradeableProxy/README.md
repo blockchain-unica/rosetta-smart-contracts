@@ -33,7 +33,7 @@ with the address of the Caller contract as an argument.  
 
 - **Solidity/Ethereum**: the implementation is adapted from the ERC1967 Openzeppelin implementation. It uses low-level instructions for memory accessing and forwarding the message to the Logic.
 - **Anchor/Solana**: Solana natively supports upgradability of contracts and requires no proxy.
-- **Aiken/Cardano**: cannot be implemented.
+- **Scalus/Cardano**: proxy pattern that forwards calls to a logic contract. The owner can upgrade the logic by updating the hash in the datum. On Cardano this is implemented via the stake validator pattern: the spending validator checks that a withdrawal from the logic contract's stake validator is present in the transaction, which forces the logic validator to execute. The datum stores the current logic validator hash and the owner's public key hash.
 - **PyTeal/Algorand**: Algorand natively supports upgradability of contracts and requires no proxy.
 - **SmartPy/Tezos**: A contract function cannot read the balance of a given address directly, and the workaround consists of implementing a getter (*onchain view*) in the contract Caller to be read from the Logic contract. 
 SmartPy has no anonymous functions and no delegate calls and the workaround consists of the Proxy emulating the expected behavior by using a function that has the same name as the target function in Logic.

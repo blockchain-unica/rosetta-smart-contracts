@@ -25,6 +25,7 @@ Once the vault contract have been created, it supports the following actions:
 - **Solidity/Ethereum**: the waiting time is based on the current block number.
 - **Anchor/Solana**: a step has been added for initializing the data of the vault (owner, recovery key, wait time).
 - **Aiken/Cardano**: implementation coherent with the specification.
+- **Scalus/Cardano**: The owner issues a withdrawal request; after a mandatory wait time, the withdrawal can be finalized. During the wait time, a separate **recovery key** holder can cancel the request — so even if the owner's key is stolen, the funds can be saved.
 - **PyTeal/Algorand**: implementation coherent with the specification.
 - **SmartPy/Tezos**: implementation coherent with the specification.
 - **Move/Aptos**: implementation coherent with the specification.

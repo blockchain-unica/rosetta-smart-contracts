@@ -21,7 +21,9 @@ Note: a user can always use a new nonce to generate a new ID and store new data.
 
 - **Solidity/Ethereum**:  implementation coherent with the specification. The hashing process uses the built-in encoding function to combine the user's address with the nonce. 
 - **Anchor/Solana**: 
-- **Aiken/Cardano**:
+- **Scalus/Cardano**: on Cardano this **doesn't require a smart contract**. It is built entirely from a native ledger
+feature — the **datum hash** — and all logic is off-chain. The example exists to show that this requirement does not
+call for on-chain execution at all.
 - **PyTeal/Algorand**:
 - **SmartPy/Tezos**:
 - **Move/Aptos**:

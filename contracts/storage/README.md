@@ -17,6 +17,7 @@ After contract creation, the contract supports two actions:
 - **Solidity/Ethereum**: implementation coherent with the specification.
 - **Anchor/Solana**: a step has been added for initializing storage accounts.
 - **Aiken/Cardano**: implementation coherent with the specification.
+- **Scalus/Cardano**: Cardano transactions have a size limit (~16 KB), so storing large data requires splitting it across multiple UTxOs. This implementation uses the Linked List pattern to create a chain of UTxOs, each holding a chunk of the data as its datum. NFTs link the chunks together in order.
 - **PyTeal/Algorand**: implementation coherent with the specification.
 - **SmartPy/Tezos**: implementation coherent with the specification.
 - **Move/Aptos**: implementation coherent with the specification.
