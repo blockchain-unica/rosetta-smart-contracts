@@ -27,9 +27,12 @@ After creation, the contract supports the following actions:
 - **Solidity/Ethereum**: implementation coherent with the specification.
 - **Anchor/Solana**: Previous bidders are not stored, the contract sends the currency back to the previous bidder in the same transaction in which the new bid is made. 
 - **Aiken/Cardano**: differently from the Solidity implementation, the withdraw action returns only one outbid at a time as this action must be called on the single outbid UTXO. To collect the whole balance, it is necessary to insert all the outbid UTXOs in the same transaction. 
+- **Scalus/Cardano**: each auction instance is parameterized by a one-shot UTxO, giving it a unique policy ID. The minted NFT represents the auctioned item. The datum tracks the seller, highest bidder, current bid, end time, and item ID.
 - **PyTeal/Algorand**: implementation coherent with the specification.
 - **SmartPy/Tezos**: implementation coherent with the specification.
 - **Move/Aptos**: current bid is not sent to the contract but rather stored on chain. Bid can be any asset type. Each bidder refunds the previous one; the withdraw function does not exist.
 - **Move/IOTA**: in the bid function if a higher bid is made than the previous one, the previeus bid is sent back to the sender; the withdraw function does not exist.
 - **Fe/Ethereum**: implementation coherent with the specification. Enums have been handled differently than in Solidity.
 - **Vyper/Ethereum**: implementation is similar to Solidity, but rebidding requires a manual withdrawal step. This is because Vyper does not allow calling external functions defined in the contract from within that same contract.
+- **Cairo/Starknet**: implementation coherent with the specification.
+- **Leo/Aleo**: rebidding requires a manual withdrawal step, as Leo cannot perform two transfers in the same fn. If no bids are placed before the deadline, end does not need to be called since the contract has no balance to transfer.

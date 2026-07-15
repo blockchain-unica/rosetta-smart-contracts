@@ -26,8 +26,13 @@ After contract creation, the contract supports two actions:
 - **Solidity/Ethereum**: implementation coherent with the specification.
 - **Anchor/Solana**: a step has been added for initializing the data of the contract (owner, verifier, deadline, etc.).
 - **Aiken/Cardano**: implementation coherent with the specification.
+- **Scalus/Cardano**: implementation coherent with the specification. The committer deposits cryptocurrency and commits to the SHA3-256 hash of a secret. The receiver can claim by revealing the preimage before the deadline. After the deadline, the committer reclaims the deposit. Used as a building block for cross-chain atomic swaps.
 - **PyTeal/Algorand**: implementation coherent with the specification.
 - **SmartPy/Tezos**: implementation coherent with the specification.
 - **Move/Aptos**: implementation coherent with the specification.
 - **Move/IOTA**: implementation coherent with the specification.
 - **Fe/Ethereum**: many types have been adjusted to make it work with the Fe implementation of keccak256() of fe that is very different from Solidity's.
+- **Vyper/Ethereum**: in contrast to Solidity, which supports unbounded dynamic types such as string and dynamic arrays, Vyper enforces compile-time bounds on all dynamic data structures. Types like String, Bytes, and DynArray require a maximum size to be specified, ensuring predictable storage layout and gas costs.
+- **Cairo/Starknet**: implementation coherent with the specification.
+- **Leo/Aleo**: implementation coherent with the specification.
+

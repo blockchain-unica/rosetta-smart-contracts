@@ -23,7 +23,9 @@ Once the contract is deployed, it supports the following actions:
 - **Solidity/Ethereum**: implementation coherent with the specification. Uses all features.
 - **Anchor/Solana**: not implemented, since transaction batches are natively supported via a list of contract calls in the transaction.
 - **Aiken/Cardano**: not implemented, since transaction batches are natively supported by the EUTXO-model.
+- **Scalus/Cardano**: On Cardano every transaction is atomic by ledger rules: all inputs are consumed and all outputs created in one step, or nothing changes. No smart contract is needed to guarantee atomicity.
 - **PyTeal/Algorand**: not implemented, since transaction batches are natively supported by the platform.
 - **SmartPy/Tezos**:
 - **Move/Aptos**: not implemented, since transaction batches are natively supported by the platform.
 - **Fe/Ethereum**: dynamic arrays not supported. Not implemented, the language lacks a substitute for Solidity's delegatecall() function or is not documented.
+- **Leo/Aleo**: not implemented, since transaction batches are natively supported by the platform, both at the snarkVM execution level and through the JavaScript SDK. Leo lacks dynamic arrays and delegatecall equivalent.
