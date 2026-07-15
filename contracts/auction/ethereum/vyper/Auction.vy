@@ -4,7 +4,7 @@ MAX_OBJECT_NAME: constant(uint256) = 64
 seller: public(address)
 highestBid: public(uint256)
 startingBid: public(uint256)
-duration: public(uint256)   # Duration in seconds
+duration: public(uint256)   # Duration in blocks
 deadline: public(uint256)   # Time when auction ends 
 objectName: public(String[64])
 auctionStarted: public(bool)
@@ -29,7 +29,7 @@ def start():
     assert not self.auctionStarted, "Auction already started"
 
     self.auctionStarted = True
-    self.deadline = block.timestamp + self.duration
+    self.deadline = block.number + self.duration
 
 
 @payable
@@ -37,7 +37,7 @@ def start():
 def bid():
     assert self.auctionStarted, "Auction not started yet"
     assert not self.auctionEnded, "Auction ended"
-    assert self.deadline > block.timestamp, "Bidding time expired"
+    assert block.number < self.deadline, "Bidding time expired"
     assert msg.sender != self.highestBidder, "Already highest bidder"
     assert msg.value > self.highestBid, "Amount is lower than the highest bid"
     assert msg.sender != self.seller, "Seller cannot bid"
@@ -73,7 +73,7 @@ def end():
     assert self.auctionStarted, "Auction not started"
     assert not self.auctionEnded, "Auction already ended"
     assert msg.sender == self.seller, "Only the seller"
-    assert self.deadline < block.timestamp, "Bids are still open"
+    assert block.number >= self.deadline, "Bids are still open"
     self.auctionEnded = True 
 
     # Send the highest bid to seller 

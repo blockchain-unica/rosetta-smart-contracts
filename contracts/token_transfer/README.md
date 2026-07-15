@@ -29,8 +29,11 @@ This implies that the `deposit` function can be activated only after calling
 the ERC20's `approve` function to specify the address of the contract.
 - **Anchor/Solana**: implementation coherent with the specification.
 - **Aiken/Cardano**: implementation coherent with the specification.
+- **Scalus/Cardano**: token transfer blueprint is identical to the simple transfer, since on Cardano ADA and tokens are following the same CNT (Cardano Native Tokens) standard, enforced on the ledger level.
 - **PyTeal/Algorand**: implementation coherent with the specification.
 - **SmartPy/Tezos**: implementation coherent with the specification.
 - **Move/Aptos**: implementation coherent with the specification.
 - **Move/IOTA**: implementation coherent with the specification.
 - **Fe/Ethereum**: the token is implemented by creating a contract "ERC20" within the main.fe file.
+- **Cairo/Starknet**: the implementation is similar to SimpleTransfer use case.
+- **Leo/Aleo**: implementation coherent with the specification.
