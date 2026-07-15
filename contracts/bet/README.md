@@ -25,10 +25,12 @@ After creation, the following actions are possible:
 - **Solidity/Ethereum**: since the platform does not support multisig transactions, the join is split in two actions. The first player acts first; after that, the second player joins.
 - **Anchor/Solana**: implementation coherent with the specification.
 - **Aiken/Cardano**: the oracle cannot be one of the two players; the first player will always pay the join and the timeout transactions fees.
+- **Scalus/Cardano**: two players and an oracle. Both players join by depositing equal bets. The oracle determines the winner, who receives the whole pot. If the oracle does not act by the deadline, both players can reclaim their bets. The contract is parameterized by the two players, the oracle, and an expiration time. A beacon token tracks the contract state.
 - **PyTeal/Algorand**: two join functions, one for each player; the first player who joins is also the owner of the contract and its creator.
-- **SmartPy/Tezos**: two join functions, one for each player; the first player **could** also be the owner of the contract and its creator.
+- **SmartPy/Tezos**: The SmartPy implementation is effectively a **two-step join flow**: player1 is fixed at origination and player2 joins later, because it is not possible to have the 'dual-join' call. The first player's stake is expected to be present in the contract balance at origination time, rather than being deposited by an explicit SmartPy entrypoint.
 - **Move/Aptos**: the deadline is a timestamp; the bets can be paid in any token type.
 - **Move/IOTA**: two join function, the first player acts first and after the second player joins; the deadline is a timestamp; the bets can be paid in any token type.
 - **Fe/Ethereum**: implementation similar to Solidity. The join is split in two actions.
 - **Vyper/Ethereum**: implementation similar to Solidity. The join is split in two actions.
 - **Cairo/Starknet**: implementation similar to Solidity. The join is split in two actions. There is no native token so it uses ERC-20
+- **Leo/Aleo**: the join is split in two actions, the first player acts first; deployment and initialization are separate steps; the timeout requires two separate transactions, one per player.

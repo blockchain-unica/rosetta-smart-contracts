@@ -41,10 +41,11 @@ maintain the integrity of the exchange.
 
 - **Solidity/Ethereum**: implementation coherent with the specification.
 - **Anchor/Solana**: a step has been added for initializing the data of the AMM contract (supply, if ever deposited, resources, mints, etc.).
-- **Aiken/Cardano**: 
-- **PyTeal/Algorand**:
+- **Scalus/Cardano**: users can deposit a token pair to receive LP tokens, redeem LP tokens to withdraw proportional reserves, or swap one token for the other with a fee. The pool is parameterized by a token pair (`t0`, `t1`) and a fee ratio. Its datum tracks the current reserves of both tokens and the total LP token supply.
+- **PyTeal/Algorand**: 
 - **SmartPy/Tezos**:
 - **Move/Aptos**:
 - **Fe/Ethereum**:
 - **Vyper/Ethereum**: implementation is similar to Solidity, but Vyper requires more explicit handling of low-level details, such as manual ABI encoding, calldata construction, and decoding of return values when interacting with ERC20 contracts.
-
+- **Cairo/Starknet**: implementation similar to Solidity, but it is used OpenZeppelin ERC20 interface
+- **Leo/Aleo**: implementation coherent with the specification.

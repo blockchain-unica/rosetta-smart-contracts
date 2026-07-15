@@ -21,8 +21,10 @@ Once a Product contract has been deplyoed, it supports the following actions:
 ## Implementations
 - **Solidity/Ethereum**: implementation coherent with the specification.
 - **Anchor/Solana**: 
-- **Aiken/Cardano**:
+- **Scalus/Cardano**: rreates and manages product NFTs using the factory pattern. Each product gets a unique token name derived from `blake2b_256(seedUtxO)`. The minting policy enforces one-shot spending of a seed UTxO to guarantee unique token names. A spending validator governs the product lifecycle. Each product NFT is locked at the script address with a datum containing a tag string and the creator's public key hash.
 - **PyTeal/Algorand**: implementation coherent with the specification.
 - **SmartPy/Tezos**: implementation coherent with the specification.
 - **Move/Aptos**:
 - **Fe/Ethereum**: the implementation is coherent with the specification, but (possible Fe bug, Issue was created on Fe repo) the chain is not actually affected by the deployment of the product of the factory.
+- **Cairo/Starknet**: implementation coherent with the specification.
+- **Leo/Aleo**: cannot be implemented. Aleo does not support runtime program deployment and dynamic arrays.

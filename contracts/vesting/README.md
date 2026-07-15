@@ -27,8 +27,12 @@ After creation, the contract supports the following action:
 - **Solidity/Ethereum**: implementation coherent with the specification.
 - **Anchor/Solana**:  a step has been added for initializing the data of the vesting (beneficiary, start, duration, etc.).
 - **Aiken/Cardano**: implementation coherent with the specification.
+- **Scalus/Cardano**: implementation coherent with the specification.
 - **PyTeal/Algorand**: implementation coherent with the specification.
 - **SmartPy/Tezos**: implementation coherent with the specification.
 - **Move/Aptos**: implementation coherent with the specification.
 - **Move/IOTA**: implementation coherent with the specification.
 - **Fe/Ethereum**: immutable variables are not supported, const is not implemented yet.
+- **Cairo/Starknet**: implementation similar to Solidity.
+- **Leo/Aleo**: the beneficiary must pass the exact amount to release as a parameter; the contract verifies it against the vested formula on-chain, which can cause the exact-match assertion to fail if blocks advance between client calculation and transaction processing.
+

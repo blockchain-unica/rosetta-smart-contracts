@@ -54,8 +54,9 @@ Using validDelegate, this action verifies that the delegation is valid within th
 
 - **Solidity/Ethereum**: implementation coherent with the specification.
 - **Anchor/Solana**: 
-- **Aiken/Cardano**:
+- **Scalus/Cardano**: an owner mints an identity token and can delegate attribute creation to other parties. Delegations are time-bounded and can be revoked. Token name prefixes distinguish types: `"i"` for identity, `"d"` for delegation, `"a"` for attribute. Delegation and attribute names are derived via `blake2b_224` for unlinkability.
 - **PyTeal/Algorand**: implementation coherent with the specification.
 - **SmartPy/Tezos**:
 - **Move/Aptos**:
 - **Fe/Ethereum**: dynamic data structures not supported. Hash creation was simplified to comply with Fe limitations.
+- **Leo/Aleo**: implementation coherent with the specification, plus an additional fully-private pattern.
