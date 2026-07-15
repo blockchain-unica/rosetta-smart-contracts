@@ -21,8 +21,11 @@ After contract creation, the contract supports two actions:
 - **Solidity/Ethereum**: implementation coherent with the specification.
 - **Anchor/Solana**: implementation coherent with the specification.
 - **Aiken/Cardano**: implementation coherent with the specification; however, a full withdrawal operation would not preserve the covenant as an output associated with the contract would not be created. Therefore, the withdrawal is considered valid if the recipient leaves a predefined minimum amount of cryptocurrency in the contract during a withdraw.
+- **Scalus/Cardano**: implementation coherent with the specification. The contract is parameterized by the owner and recipient public key hashes.
 - **PyTeal/Algorand**: implementation coherent with the specification.
 - **SmartPy/Tezos**: implementation coherent with the specification.
 - **Move/Aptos**: implementation coherent with the specification.
 - **Move/IOTA**: implementation coherent with the specification.
 - **Fe/Ethereum**: implementation coherent with the specification.
+- **Cairo/Starknet**: implementation coherent with the specification.
+- **Leo/Aleo**: implementation coherent with the specification.

@@ -30,9 +30,10 @@ Owner2 seals a token by passing the token ID of the token he wants to seal.
 
 - **Solidity/Ethereum**: the token is implemented by importing an Openzeppelin ERC721 token.
 - **Anchor/Solana**: 
-- **Aiken/Cardano**:
+- **Scalus/Cardano**: NFT with mutable metadata that can be permanently sealed. Minting creates a reference NFT (CIP-68 label 100) holding the data and a user NFT (label 222) for ownership. The reference NFT datum contains a token ID, an arbitrary data field, and a sealed flag. The owner of the user NFT controls the reference NFT.
 - **PyTeal/Algorand**:
 - **SmartPy/Tezos**:
 - **Move/Aptos**:
 - **Fe/Ethereum**: the token is implemented by creating a custom ERC20 contract that is used as a token.
 - **Cairo/Starknet**: implementation similar to Solidity, using an Openzeppelin ERC721 token.
+- **Leo/Aleo**: implementation coherent with the specification, with a record-based design that makes ownership, data, token IDs, and sealed state all private by default. 
