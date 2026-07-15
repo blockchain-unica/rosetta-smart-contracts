@@ -28,6 +28,7 @@ After creation, the following actions are possible:
 - **Solidity/Ethereum**: implementation coherent with the specification.
 - **Anchor/Solana**: a after the deployment step has been added for allowing the owner to initialize the data
 - **Aiken/Cardano**: the validator retrieves an UTXO (passed as an input of the transaction) with the same address as the oracle, containing a script and accesses its datum, where the exchange rate is stored
+- **Scalus/Cardano**: the owner creates the contract by depositing a bet and specifying a target exchange rate and a deadline. The datum tracks both players, the deadline, and the target rate.
 - **PyTeal/Algorand**: ---
 - **SmartPy/Tezos**: the contract owner has to be passed as parameter during contract creation
 - **Move/Aptos**: ---

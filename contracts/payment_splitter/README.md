@@ -22,7 +22,8 @@ After creation, the contract supports the following actions:
 
 - **Solidity/Ethereum**: implementation coherent with the specification.
 - **Anchor/Solana**: a step has been added for initializing the data of the contract (payees, shares, released amounts, etc.).
-- **Aiken/Cardano**: implementation coherent with the specification.
+- **Aiken/Cardano**: implementation coherent with the specification. 
+- **Scalus/Cardano**: implementation coherent with the specification. The spending validator runs full validation logic for each UTxO being spent. When spending N UTxOs in one transaction, this results in O(N^2) cost because each invocation iterates through all inputs and outputs.
 - **PyTeal/Algorand**:
 - **SmartPy/Tezos**: implementation coherent with the specification.
 - **Move/Aptos**:
