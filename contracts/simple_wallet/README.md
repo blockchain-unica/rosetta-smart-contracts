@@ -30,4 +30,5 @@ After contract creation, the contract supports the following actions:
 - **Move/Aptos**: implementation coherent with the specification.
 - **Move/IOTA**: implementation coherent with the specification.
 - **Fe/Ethereum**: dynamic arrays not supported. The wallet only supports 5 transactions after which refuses creation of more transactions.
+- **Cairo/Starknet**: implementation similar to Solidity.
 - **Leo/Aleo**: implementation coherent with the specification. The data field of each transaction is stored on-chain but is informational only, since Leo does not support arbitrary contract calls with payload like Solidity.
