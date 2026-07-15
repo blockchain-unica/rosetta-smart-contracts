@@ -28,7 +28,7 @@ After contract creation, the contract supports two actions:
 - **Aiken/Cardano**: implementation coherent with the specification.
 - **Scalus/Cardano**: implementation coherent with the specification. The committer deposits cryptocurrency and commits to the SHA3-256 hash of a secret. The receiver can claim by revealing the preimage before the deadline. After the deadline, the committer reclaims the deposit. Used as a building block for cross-chain atomic swaps.
 - **PyTeal/Algorand**: implementation coherent with the specification.
-- **SmartPy/Tezos**: implementation coherent with the specification.
+- **SmartPy/Tezos**: implementation coherent with the specification. `reveal` checks that the contract already has positive balance, instead of checking during origination as done in Solidity.
 - **Move/Aptos**: implementation coherent with the specification.
 - **Move/IOTA**: implementation coherent with the specification.
 - **Fe/Ethereum**: many types have been adjusted to make it work with the Fe implementation of keccak256() of fe that is very different from Solidity's.
