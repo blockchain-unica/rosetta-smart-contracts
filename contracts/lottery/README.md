@@ -35,10 +35,12 @@ If the platform does not support multisig transactions, then step 1 is split in 
 
 - **Solidity/Ethereum**: since the platform does not support multi-signature verification, step 1 is split in two actions as described above.
 - **Anchor/Solana**: implementation coherent with the specification.
-- **Aiken/Cardano**: ---
+- **Scalus/Cardano**: both players join in a single multisig transaction by paying their bets and committing SHA-256 hashes of secret preimages. The contract then enters the reveal phase. The winner is determined by `(len(preimage1) + len(preimage2)) mod 2`. If the sum is even, the revealing player wins; if odd, they lose. Players should use preimages of at least 32 bytes to prevent brute-force guessing.
 - **PyTeal/Algorand**: ---
 - **SmartPy/Tezos**: ---
 - **Move/Aptos**: ---
 - **Move/IOTA**: implementation coherent with the specification.
 - **Fe/Ethereum**: does not support multi-signature verification. Hash was implemented with a version of keccak256() that is different from Solidity.
 - **Cairo/Starknet**: implementation similar to Solidity.
+- **Vyper/Ethereum**: a single join function handles the registration for both players. The join phase is still divided in two actions (no multisig transactions). 
+- **Leo/Aleo**: implementation coherent with the specification, with the join phase split into two separate actions since Aleo does not support multi-signature verification. The fairness function is derived from a Poseidon2 hash of the two secrets' sum.

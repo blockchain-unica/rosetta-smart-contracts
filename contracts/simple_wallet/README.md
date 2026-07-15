@@ -24,8 +24,10 @@ After contract creation, the contract supports the following actions:
 - **Solidity/Ethereum**: implementation coherent with the specification.
 - **Anchor/Solana**: no byte sequence to send to the receiver during the execution of the custom transaction since the transfer instruction in Solana does not allow for the transfer of data.
 - **Aiken/Cardano**: a full withdrawal operation would not preserve the covenant since an output associated with the contract would not be created. Therefore, in the withdrawal, the owner must leave some amount of currency in the contract. Additionally, a check may fail when "executing a transaction" if the owner is also the recipient. 
+- **Scalus/Cardano**: on Cardano, wallets are native — no smart contract needed. Public key addresses handle deposits and withdrawals at the ledger level. The owner's signature is the only authorization required to spend UTxOs.
 - **PyTeal/Algorand**: implementation coherent with the specification.
 - **SmartPy/Tezos**: use of an 'emit' for the transaction ID.
 - **Move/Aptos**: implementation coherent with the specification.
 - **Move/IOTA**: implementation coherent with the specification.
 - **Fe/Ethereum**: dynamic arrays not supported. The wallet only supports 5 transactions after which refuses creation of more transactions.
+- **Leo/Aleo**: implementation coherent with the specification. The data field of each transaction is stored on-chain but is informational only, since Leo does not support arbitrary contract calls with payload like Solidity.

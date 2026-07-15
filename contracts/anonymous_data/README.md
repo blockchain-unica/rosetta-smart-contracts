@@ -21,9 +21,12 @@ Note: a user can always use a new nonce to generate a new ID and store new data.
 
 - **Solidity/Ethereum**:  implementation coherent with the specification. The hashing process uses the built-in encoding function to combine the user's address with the nonce. 
 - **Anchor/Solana**: 
-- **Aiken/Cardano**:
+- **Scalus/Cardano**: on Cardano this **doesn't require a smart contract**. It is built entirely from a native ledger
+feature — the **datum hash** — and all logic is off-chain. The example exists to show that this requirement does not
+call for on-chain execution at all.
 - **PyTeal/Algorand**:
 - **SmartPy/Tezos**:
 - **Move/Aptos**:
 - **Fe/Ethereum**: since Fe does not support dynamic data structures, the Fe implementation cap the amount of any data sructure to a fixed amount. There can only be 100 users storing data, and the stored data has to be a single uint256. The hashing process uses the built-in encoding function to combine the user's address with the nonce. 
 - **Vyper/Ethereum**: since Vyper requires dynamic arrays to declare a maximum size, storage structures must be explicitly bounded at compile time. This design emphasizes safety and determinism at the cost of flexibility. Additionally, hashing and argument packing rely on manual ABI-encoded construction rather than automatic encoding helpers.
+- **Leo/Aleo**: since Leo does not support dynamic arrays, stored data is capped to a fixed-size array ([field; 4]). The hashing process uses the native Poseidon2 algorithm to combine the user's address and nonce.

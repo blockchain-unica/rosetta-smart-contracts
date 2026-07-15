@@ -23,6 +23,7 @@ Once the contract is deployed, it supports the following actions:
 - **Solidity/Ethereum**: implementation coherent with the specification. Uses all features.
 - **Anchor/Solana**: not implemented, since transaction batches are natively supported via a list of contract calls in the transaction.
 - **Aiken/Cardano**: not implemented, since transaction batches are natively supported by the EUTXO-model.
+- **Scalus/Cardano**: On Cardano every transaction is atomic by ledger rules: all inputs are consumed and all outputs created in one step, or nothing changes. No smart contract is needed to guarantee atomicity.
 - **PyTeal/Algorand**: not implemented, since transaction batches are natively supported by the platform.
 - **SmartPy/Tezos**:
 - **Move/Aptos**: not implemented, since transaction batches are natively supported by the platform.
